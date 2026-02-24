@@ -1,0 +1,16 @@
+﻿# Python
+__pycache__/
+*.pyc
+venv/
+
+# Build
+build/
+dist/
+*.spec
+
+# Backups
+*_backup.py
+*_backup.html
+
+# Sessions cache
+.vidslide_sessions/

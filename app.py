@@ -1,16 +1,17 @@
 """
-影幻智提 (VidSlide) - PPT 幻灯片智能提取工具
-==============================================
+影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (多任务版)
+======================================================
 基于 Flask 的本地 Web 应用，提供可视化界面来提取、管理和打包 PPT 幻灯片。
+支持同时对多个视频进行提取（最多 3 个并行标签页）。
 
 使用方法：
     python app.py
 
 依赖安装：
-    pip install flask opencv-python numpy pillow python-pptx
+    pip install flask opencv-python numpy pillow python-pptx psutil
 
 作者: PWO-CHINA
-版本: v0.1.2
+版本: v0.2.0
 """
 
 import cv2
@@ -20,6 +21,7 @@ import sys
 import shutil
 import threading
 import time
+import uuid
 import zipfile
 import webbrowser
 import socket
@@ -30,7 +32,7 @@ from flask import Flask, request, jsonify, send_file, send_from_directory, rende
 from PIL import Image
 
 # ============================================================
-#  无控制台模式兼容：PyInstaller --noconsole 时 stdout/stderr 为 None
+#  无控制台模式兼容
 # ============================================================
 if sys.stdout is None:
     sys.stdout = open(os.devnull, 'w', encoding='utf-8')
@@ -45,33 +47,36 @@ except ImportError:
     HAS_PPTX = False
     print("⚠️  未安装 python-pptx，PPTX 导出将不可用。安装命令: pip install python-pptx")
 
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
+    print("⚠️  未安装 psutil，系统资源监控将不可用。安装命令: pip install psutil")
+
 
 # ============================================================
 #  PyInstaller 兼容：资源路径寻路
 # ============================================================
 def get_resource_path(relative_path):
-    """获取资源的绝对路径，兼容开发环境和 PyInstaller 打包后的环境"""
     if hasattr(sys, '_MEIPASS'):
-        # PyInstaller 打包后的临时目录
         return os.path.join(sys._MEIPASS, relative_path)
-    # 开发环境的当前目录
     return os.path.join(os.path.abspath(os.path.dirname(__file__)), relative_path)
 
 
 # ============================================================
 #  配置
 # ============================================================
-# 模板和静态文件目录（兼容打包后的路径）
 TEMPLATE_DIR = get_resource_path('templates')
 
-# 临时文件存放目录（始终使用 exe 所在的真实目录，而非 _MEIPASS 临时目录）
 if hasattr(sys, '_MEIPASS'):
     BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-TEMP_CACHE = os.path.join(BASE_DIR, '.temp_cache')
-TEMP_PACKAGES = os.path.join(BASE_DIR, '.temp_packages')
+# 多会话的根目录
+SESSIONS_ROOT = os.path.join(BASE_DIR, '.vidslide_sessions')
+MAX_SESSIONS = 3   # 最大并行标签页数
 
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 
@@ -94,39 +99,114 @@ def handle_error(e):
 
 
 # ============================================================
-#  全局提取状态 (线程安全)
+#  多会话状态管理 (线程安全)
 # ============================================================
-_state_lock = threading.Lock()
-_state = {
-    'status': 'idle',       # idle | running | done | error | cancelled
-    'progress': 0,          # 0-100
-    'message': '',
-    'saved_count': 0,
-    'video_path': '',
-    'cancel_flag': False,
-    'eta_seconds': -1,      # 预计剩余秒数，-1 表示尚未计算
-    'elapsed_seconds': 0,   # 已用时间（秒）
-}
+_sessions_lock = threading.Lock()
+_sessions = {}  # session_id -> session dict
 
-# 心跳机制：浏览器定期发送心跳，如果超时未收到则自动关闭服务
+# 资源告警阈值
+CPU_WARN_THRESHOLD = 90
+MEMORY_WARN_THRESHOLD = 85
+DISK_WARN_THRESHOLD_MB = 500
+
+
+def _create_session():
+    """创建一个新会话"""
+    sid = uuid.uuid4().hex[:8]
+    cache_dir = os.path.join(SESSIONS_ROOT, sid, 'cache')
+    pkg_dir = os.path.join(SESSIONS_ROOT, sid, 'packages')
+    os.makedirs(cache_dir, exist_ok=True)
+    os.makedirs(pkg_dir, exist_ok=True)
+
+    session = {
+        'id': sid,
+        'created_at': time.time(),
+        'status': 'idle',
+        'progress': 0,
+        'message': '',
+        'saved_count': 0,
+        'video_path': '',
+        'video_name': '',
+        'cancel_flag': False,
+        'eta_seconds': -1,
+        'elapsed_seconds': 0,
+        'cache_dir': cache_dir,
+        'pkg_dir': pkg_dir,
+        'lock': threading.Lock(),
+    }
+    with _sessions_lock:
+        _sessions[sid] = session
+    return sid
+
+
+def _get_session(sid):
+    with _sessions_lock:
+        return _sessions.get(sid)
+
+
+def _get_session_state(sid):
+    sess = _get_session(sid)
+    if not sess:
+        return None
+    with sess['lock']:
+        return {k: v for k, v in sess.items() if k != 'lock'}
+
+
+def _update_session(sid, **kw):
+    sess = _get_session(sid)
+    if not sess:
+        return
+    with sess['lock']:
+        sess.update(kw)
+
+
+def _delete_session(sid):
+    with _sessions_lock:
+        sess = _sessions.pop(sid, None)
+    if sess:
+        session_dir = os.path.join(SESSIONS_ROOT, sid)
+        if os.path.exists(session_dir):
+            shutil.rmtree(session_dir, ignore_errors=True)
+
+
+def _get_all_sessions_summary():
+    with _sessions_lock:
+        sids = list(_sessions.keys())
+    result = []
+    for sid in sids:
+        state = _get_session_state(sid)
+        if state:
+            result.append({
+                'id': state['id'],
+                'status': state['status'],
+                'progress': state['progress'],
+                'message': state['message'],
+                'saved_count': state['saved_count'],
+                'video_path': state['video_path'],
+                'video_name': state['video_name'],
+                'eta_seconds': state['eta_seconds'],
+                'elapsed_seconds': state['elapsed_seconds'],
+            })
+    return result
+
+
+def _count_running():
+    with _sessions_lock:
+        sids = list(_sessions.keys())
+    count = 0
+    for sid in sids:
+        sess = _get_session(sid)
+        if sess:
+            with sess['lock']:
+                if sess['status'] == 'running':
+                    count += 1
+    return count
+
+
+# 心跳
 _last_heartbeat = 0.0
-_heartbeat_received = False   # 是否收到过至少一次心跳
-HEARTBEAT_TIMEOUT = 20       # 秒：浏览器断开后多久关闭服务
-
-
-def _update(**kw):
-    with _state_lock:
-        _state.update(kw)
-
-
-def _get_state():
-    with _state_lock:
-        return dict(_state)
-
-
-def _ensure_dirs():
-    os.makedirs(TEMP_CACHE, exist_ok=True)
-    os.makedirs(TEMP_PACKAGES, exist_ok=True)
+_heartbeat_received = False
+HEARTBEAT_TIMEOUT = 20
 
 
 # ============================================================
@@ -138,13 +218,48 @@ def index():
 
 
 # ============================================================
-#  路由 — 选择视频（弹出系统对话框，带格式限制防呆）
+#  路由 — 会话管理
+# ============================================================
+@app.route('/api/sessions', methods=['GET'])
+def list_sessions():
+    return jsonify(success=True, sessions=_get_all_sessions_summary(), max_sessions=MAX_SESSIONS)
+
+
+@app.route('/api/session/create', methods=['POST'])
+def create_session():
+    with _sessions_lock:
+        current_count = len(_sessions)
+    if current_count >= MAX_SESSIONS:
+        return jsonify(success=False,
+                       message=f'已达到最大标签页数量（{MAX_SESSIONS}个）。请先关闭不需要的标签页。')
+
+    warning = _check_resource_warning()
+    if warning:
+        return jsonify(success=False, message=f'系统资源不足，无法新建标签页：{warning}')
+
+    sid = _create_session()
+    return jsonify(success=True, session_id=sid)
+
+
+@app.route('/api/session/<sid>/close', methods=['POST'])
+def close_session(sid):
+    sess = _get_session(sid)
+    if not sess:
+        return jsonify(success=False, message='会话不存在')
+    with sess['lock']:
+        if sess['status'] == 'running':
+            sess['cancel_flag'] = True
+    time.sleep(0.3)
+    _delete_session(sid)
+    return jsonify(success=True)
+
+
+# ============================================================
+#  路由 — 选择视频
 # ============================================================
 @app.route('/api/select-video', methods=['POST'])
 def select_video():
-    """弹出系统文件选择框，在独立线程中运行 tkinter 避免阻塞 Flask"""
     try:
-        # 修复 Windows 高 DPI 下文件选择对话框模糊问题
         try:
             import ctypes
             ctypes.windll.shcore.SetProcessDpiAwareness(2)
@@ -167,7 +282,6 @@ def select_video():
                 root.withdraw()
                 root.wm_attributes('-topmost', 1)
                 root.focus_force()
-                # 【防呆】限制只能选视频文件
                 path = filedialog.askopenfilename(
                     title="请选择要提取的课程视频",
                     filetypes=[
@@ -183,7 +297,7 @@ def select_video():
 
         t = threading.Thread(target=_pick, daemon=True)
         t.start()
-        t.join(timeout=120)  # 最多等待 2 分钟
+        t.join(timeout=120)
 
         path = result_queue.get_nowait() if not result_queue.empty() else ''
 
@@ -197,17 +311,25 @@ def select_video():
 
 
 # ============================================================
-#  路由 — 开始提取
+#  路由 — 开始提取（会话级）
 # ============================================================
-@app.route('/api/extract', methods=['POST'])
-def start_extraction():
-    cur = _get_state()
-    if cur['status'] == 'running':
-        return jsonify(success=False, message='正在提取中，请等待完成或取消')
+@app.route('/api/session/<sid>/extract', methods=['POST'])
+def start_extraction(sid):
+    sess = _get_session(sid)
+    if not sess:
+        return jsonify(success=False, message='会话不存在')
+
+    with sess['lock']:
+        if sess['status'] == 'running':
+            return jsonify(success=False, message='该标签页正在提取中，请等待完成或取消')
+
+    warning = _check_resource_warning()
+    if warning:
+        return jsonify(success=False, message=f'系统资源不足：{warning}\n请等待其他任务完成或关闭不需要的标签页。')
 
     data = request.json or {}
     video_path = data.get('video_path', '')
-    print(f'[DEBUG] 收到提取请求，视频路径: {repr(video_path)}')
+    print(f'[DEBUG][{sid}] 收到提取请求，视频路径: {repr(video_path)}')
 
     threshold = float(data.get('threshold', 5.0))
     enable_history = bool(data.get('enable_history', False))
@@ -219,23 +341,23 @@ def start_extraction():
         return jsonify(success=False, message='未提供视频路径')
 
     if not os.path.exists(video_path):
-        print(f'[DEBUG] 文件不存在: {video_path}')
         return jsonify(success=False, message=f'视频文件不存在: {video_path}')
 
-    # 清空上次缓存
-    if os.path.exists(TEMP_CACHE):
-        shutil.rmtree(TEMP_CACHE)
-    _ensure_dirs()
+    cache_dir = sess['cache_dir']
+    if os.path.exists(cache_dir):
+        shutil.rmtree(cache_dir)
+    os.makedirs(cache_dir, exist_ok=True)
 
-    _update(
+    video_name = Path(video_path).stem or '未命名视频'
+    _update_session(sid,
         status='running', progress=0, message='正在初始化…',
-        saved_count=0, video_path=video_path, cancel_flag=False,
-        eta_seconds=-1, elapsed_seconds=0,
+        saved_count=0, video_path=video_path, video_name=video_name,
+        cancel_flag=False, eta_seconds=-1, elapsed_seconds=0,
     )
 
     threading.Thread(
         target=_extract_worker,
-        args=(video_path, TEMP_CACHE, threshold, enable_history, max_history, use_roi, fast_mode),
+        args=(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode),
         daemon=True,
     ).start()
 
@@ -243,14 +365,14 @@ def start_extraction():
 
 
 # ============================================================
-#  后台提取 Worker（带全局异常捕获）
+#  后台提取 Worker（多会话版）
 # ============================================================
-def _extract_worker(video_path, output_dir, threshold, enable_history, max_history, use_roi, fast_mode=True):
+def _extract_worker(sid, video_path, output_dir, threshold, enable_history, max_history, use_roi, fast_mode=True):
     try:
         cap = cv2.VideoCapture(video_path)
         ok, prev_frame = cap.read()
         if not ok:
-            _update(status='error', message='无法读取视频文件')
+            _update_session(sid, status='error', message='无法读取视频文件')
             return
 
         total_frames = max(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), 1)
@@ -265,7 +387,6 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
             y1, y2 = 0, h
             x1, x2 = 0, w
 
-        # ── 快速模式：缩小 ROI 到 ~480px 宽度用于比较，大幅减少计算量 ──
         roi_w = x2 - x1
         COMPARE_WIDTH = 480
         if fast_mode and roi_w > COMPARE_WIDTH:
@@ -274,7 +395,6 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
             _scale = 1.0
 
         def _to_gray(frame):
-            """提取 ROI → (可选缩小) → 灰度，用于帧间比较"""
             roi = frame[y1:y2, x1:x2]
             if _scale < 1.0:
                 roi = cv2.resize(roi, None, fx=_scale, fy=_scale,
@@ -286,22 +406,24 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
 
         count = 0
         saved = 0
-        _extract_start_time = time.time()   # ETA 计时起点
+        _extract_start_time = time.time()
 
-        # 保存第一帧（始终用原始分辨率保存）
         fp = os.path.join(output_dir, f"slide_{saved:04d}.jpg")
         cv2.imencode('.jpg', prev_frame, [cv2.IMWRITE_JPEG_QUALITY, 95])[1].tofile(fp)
         saved += 1
-        _update(saved_count=saved, message=f'已提取 {saved} 张')
+        _update_session(sid, saved_count=saved, message=f'已提取 {saved} 张')
 
-        # ── 主循环：用 grab() 跳帧代替 set(POS_FRAMES)，避免昂贵的随机 seek ──
         while True:
-            if _get_state()['cancel_flag']:
-                _update(status='cancelled', message=f'已取消，已保存 {saved} 张')
+            sess = _get_session(sid)
+            if not sess:
                 cap.release()
                 return
+            with sess['lock']:
+                if sess['cancel_flag']:
+                    _update_session(sid, status='cancelled', message=f'已取消，已保存 {saved} 张')
+                    cap.release()
+                    return
 
-            # grab() 只解码帧头不解码像素，比 read() 快很多
             grabbed = True
             for _ in range(frame_step):
                 count += 1
@@ -311,24 +433,22 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
             if not grabbed:
                 break
 
-            # 到达目标帧才 retrieve() 解码像素
             ok, curr_frame = cap.retrieve()
             if not ok:
                 break
 
             pct = min(99, int(count / total_frames * 100))
             elapsed = time.time() - _extract_start_time
-            if pct > 2:  # 前 2% 数据不稳定，不计算 ETA
+            if pct > 2:
                 eta = elapsed / pct * (100 - pct)
             else:
                 eta = -1
-            _update(progress=pct, eta_seconds=round(eta, 1), elapsed_seconds=round(elapsed, 1))
+            _update_session(sid, progress=pct, eta_seconds=round(eta, 1), elapsed_seconds=round(elapsed, 1))
 
             curr_gray = _to_gray(curr_frame)
             mean_diff = np.mean(cv2.absdiff(curr_gray, prev_gray))
 
             if mean_diff > threshold:
-                # ── 等待画面稳定 ──
                 check_step = max(1, int(fps * 0.5))
                 stable = 0
                 last_gray = curr_gray
@@ -358,7 +478,6 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
                         settled_gray = tmp_gray
                         break
 
-                # ── 去重核验 ──
                 if settled_gray is not None:
                     final_diff = np.mean(cv2.absdiff(settled_gray, prev_gray))
                     dup = False
@@ -374,7 +493,7 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
                         fp = os.path.join(output_dir, f"slide_{saved:04d}.jpg")
                         cv2.imencode('.jpg', settled_frame, [cv2.IMWRITE_JPEG_QUALITY, 95])[1].tofile(fp)
                         saved += 1
-                        _update(saved_count=saved, message=f'已提取 {saved} 张')
+                        _update_session(sid, saved_count=saved, message=f'已提取 {saved} 张')
                         prev_gray = settled_gray
                         if enable_history:
                             history_pool.append(settled_gray)
@@ -385,44 +504,55 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
 
         cap.release()
         elapsed_total = round(time.time() - _extract_start_time, 1)
-        _update(status='done', progress=100, eta_seconds=0, elapsed_seconds=elapsed_total,
+        _update_session(sid, status='done', progress=100, eta_seconds=0, elapsed_seconds=elapsed_total,
                message=f'提取完成！共 {saved} 张幻灯片，耗时 {int(elapsed_total)}s')
     except Exception as e:
         error_detail = traceback.format_exc()
-        print(f"！！！发生严重错误！！！\n{error_detail}")
-        _update(status='error', message=f'提取出错: {e}')
+        print(f"！！！[{sid}] 发生严重错误！！！\n{error_detail}")
+        _update_session(sid, status='error', message=f'提取出错: {e}')
 
 
 # ============================================================
 #  路由 — 进度 / 取消
 # ============================================================
-@app.route('/api/progress')
-def progress():
-    return jsonify(_get_state())
+@app.route('/api/session/<sid>/progress')
+def session_progress(sid):
+    state = _get_session_state(sid)
+    if not state:
+        return jsonify(success=False, message='会话不存在'), 404
+    return jsonify(state)
 
 
-@app.route('/api/cancel', methods=['POST'])
-def cancel():
-    _update(cancel_flag=True)
+@app.route('/api/session/<sid>/cancel', methods=['POST'])
+def session_cancel(sid):
+    _update_session(sid, cancel_flag=True)
     return jsonify(success=True)
 
 
 # ============================================================
 #  路由 — 图片列表 / 提供图片
 # ============================================================
-@app.route('/api/images')
-def list_images():
-    _ensure_dirs()
+@app.route('/api/session/<sid>/images')
+def session_list_images(sid):
+    sess = _get_session(sid)
+    if not sess:
+        return jsonify(images=[])
+    cache_dir = sess['cache_dir']
+    if not os.path.exists(cache_dir):
+        return jsonify(images=[])
     imgs = sorted(
-        f for f in os.listdir(TEMP_CACHE)
+        f for f in os.listdir(cache_dir)
         if f.lower().endswith(('.jpg', '.jpeg', '.png'))
     )
     return jsonify(images=imgs)
 
 
-@app.route('/api/image/<path:filename>')
-def serve_image(filename):
-    resp = send_from_directory(TEMP_CACHE, filename)
+@app.route('/api/session/<sid>/image/<path:filename>')
+def session_serve_image(sid, filename):
+    sess = _get_session(sid)
+    if not sess:
+        return jsonify(success=False, message='会话不存在'), 404
+    resp = send_from_directory(sess['cache_dir'], filename)
     resp.headers['Cache-Control'] = 'no-store'
     return resp
 
@@ -430,8 +560,12 @@ def serve_image(filename):
 # ============================================================
 #  路由 — 打包导出
 # ============================================================
-@app.route('/api/package', methods=['POST'])
-def package():
+@app.route('/api/session/<sid>/package', methods=['POST'])
+def session_package(sid):
+    sess = _get_session(sid)
+    if not sess:
+        return jsonify(success=False, message='会话不存在')
+
     data = request.json or {}
     fmt = data.get('format', 'pdf')
     files = data.get('files', [])
@@ -439,27 +573,31 @@ def package():
     if not files:
         return jsonify(success=False, message='没有图片可打包')
 
-    _ensure_dirs()
+    cache_dir = sess['cache_dir']
+    pkg_dir = sess['pkg_dir']
+    os.makedirs(pkg_dir, exist_ok=True)
+
     paths = []
     for f in files:
-        p = os.path.join(TEMP_CACHE, f)
+        p = os.path.join(cache_dir, f)
         if os.path.exists(p):
             paths.append(p)
     if not paths:
         return jsonify(success=False, message='图片文件不存在')
 
-    vname = Path(_get_state().get('video_path', '') or 'slides').stem or 'slides'
+    with sess['lock']:
+        vname = Path(sess.get('video_path', '') or 'slides').stem or 'slides'
 
     try:
         if fmt == 'pdf':
-            out = os.path.join(TEMP_PACKAGES, f'{vname}_整理版.pdf')
+            out = os.path.join(pkg_dir, f'{vname}_整理版.pdf')
             imgs = [Image.open(p).convert('RGB') for p in paths]
             imgs[0].save(out, save_all=True, append_images=imgs[1:])
 
         elif fmt == 'pptx':
             if not HAS_PPTX:
                 return jsonify(success=False, message='未安装 python-pptx，请执行 pip install python-pptx')
-            out = os.path.join(TEMP_PACKAGES, f'{vname}_整理版.pptx')
+            out = os.path.join(pkg_dir, f'{vname}_整理版.pptx')
             prs = Presentation()
             prs.slide_width = Inches(13.333)
             prs.slide_height = Inches(7.5)
@@ -469,7 +607,7 @@ def package():
             prs.save(out)
 
         elif fmt == 'zip':
-            out = os.path.join(TEMP_PACKAGES, f'{vname}_整理版.zip')
+            out = os.path.join(pkg_dir, f'{vname}_整理版.zip')
             with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for i, p in enumerate(paths):
                     zf.write(p, f'slide_{i + 1:03d}{Path(p).suffix}')
@@ -481,30 +619,123 @@ def package():
         return jsonify(success=False, message=str(e))
 
 
-@app.route('/api/download/<path:filename>')
-def download(filename):
-    return send_from_directory(TEMP_PACKAGES, filename, as_attachment=True)
+@app.route('/api/session/<sid>/download/<path:filename>')
+def session_download(sid, filename):
+    sess = _get_session(sid)
+    if not sess:
+        return jsonify(success=False, message='会话不存在'), 404
+    return send_from_directory(sess['pkg_dir'], filename, as_attachment=True)
 
 
 # ============================================================
-#  路由 — 清理缓存
+#  路由 — 清理单个会话缓存
 # ============================================================
-@app.route('/api/cleanup', methods=['POST'])
-def cleanup():
-    for d in [TEMP_CACHE, TEMP_PACKAGES]:
+@app.route('/api/session/<sid>/cleanup', methods=['POST'])
+def session_cleanup(sid):
+    sess = _get_session(sid)
+    if not sess:
+        return jsonify(success=False, message='会话不存在')
+    for d in [sess['cache_dir'], sess['pkg_dir']]:
         if os.path.exists(d):
             shutil.rmtree(d)
-    _update(status='idle', progress=0, message='', saved_count=0, video_path='', cancel_flag=False,
-           eta_seconds=-1, elapsed_seconds=0)
+        os.makedirs(d, exist_ok=True)
+    _update_session(sid,
+        status='idle', progress=0, message='', saved_count=0,
+        video_path='', video_name='', cancel_flag=False,
+        eta_seconds=-1, elapsed_seconds=0)
     return jsonify(success=True)
 
 
 # ============================================================
-#  路由 — 心跳 & 关闭（僵尸进程防呆）
+#  路由 — 全局清理
+# ============================================================
+@app.route('/api/cleanup-all', methods=['POST'])
+def cleanup_all():
+    with _sessions_lock:
+        sids = list(_sessions.keys())
+    for sid in sids:
+        sess = _get_session(sid)
+        if sess:
+            with sess['lock']:
+                sess['cancel_flag'] = True
+    time.sleep(0.3)
+    for sid in sids:
+        _delete_session(sid)
+    return jsonify(success=True)
+
+
+# ============================================================
+#  路由 — 系统资源监控
+# ============================================================
+@app.route('/api/system/status')
+def system_status():
+    result = {
+        'cpu_percent': 0,
+        'memory_percent': 0,
+        'memory_used_gb': 0,
+        'memory_total_gb': 0,
+        'disk_free_gb': 0,
+        'disk_total_gb': 0,
+        'disk_percent': 0,
+        'active_tasks': _count_running(),
+        'total_sessions': len(_sessions),
+        'max_sessions': MAX_SESSIONS,
+        'warning': None,
+        'sessions': _get_all_sessions_summary(),
+    }
+
+    if HAS_PSUTIL:
+        try:
+            result['cpu_percent'] = psutil.cpu_percent(interval=0.3)
+            mem = psutil.virtual_memory()
+            result['memory_percent'] = mem.percent
+            result['memory_used_gb'] = round(mem.used / (1024**3), 1)
+            result['memory_total_gb'] = round(mem.total / (1024**3), 1)
+
+            disk = psutil.disk_usage(BASE_DIR)
+            result['disk_free_gb'] = round(disk.free / (1024**3), 1)
+            result['disk_total_gb'] = round(disk.total / (1024**3), 1)
+            result['disk_percent'] = disk.percent
+        except Exception as e:
+            print(f'[WARN] 获取系统资源信息失败: {e}')
+
+    warnings = []
+    if result['cpu_percent'] > CPU_WARN_THRESHOLD:
+        warnings.append(f'CPU 使用率过高 ({result["cpu_percent"]:.0f}%)')
+    if result['memory_percent'] > MEMORY_WARN_THRESHOLD:
+        warnings.append(f'内存使用率过高 ({result["memory_percent"]:.0f}%)')
+    if result['disk_free_gb'] < DISK_WARN_THRESHOLD_MB / 1024:
+        warnings.append(f'磁盘空间不足 (仅剩 {result["disk_free_gb"]:.1f} GB)')
+    if warnings:
+        result['warning'] = '；'.join(warnings)
+
+    return jsonify(result)
+
+
+def _check_resource_warning():
+    if not HAS_PSUTIL:
+        return None
+    try:
+        cpu = psutil.cpu_percent(interval=0.3)
+        mem = psutil.virtual_memory()
+        disk = psutil.disk_usage(BASE_DIR)
+        warnings = []
+        if cpu > CPU_WARN_THRESHOLD:
+            warnings.append(f'CPU 使用率 {cpu:.0f}% 超过 {CPU_WARN_THRESHOLD}%')
+        if mem.percent > MEMORY_WARN_THRESHOLD:
+            warnings.append(f'内存使用率 {mem.percent:.0f}% 超过 {MEMORY_WARN_THRESHOLD}%')
+        if disk.free < DISK_WARN_THRESHOLD_MB * 1024 * 1024:
+            warnings.append(f'磁盘空间仅剩 {disk.free / (1024**3):.1f} GB')
+        return '；'.join(warnings) if warnings else None
+    except Exception:
+        return None
+
+
+# ============================================================
+#  路由 — 心跳 & 关闭
 # ============================================================
 @app.route('/api/heartbeat', methods=['POST'])
 def heartbeat():
-    """浏览器每 8 秒发一次，证明页面还开着"""
     global _last_heartbeat, _heartbeat_received
     _last_heartbeat = time.time()
     _heartbeat_received = True
@@ -513,27 +744,22 @@ def heartbeat():
 
 @app.route('/api/shutdown', methods=['POST'])
 def shutdown():
-    """前端主动请求关闭服务 — 僵尸进程防呆"""
     _do_cleanup()
     print('\n  Shutdown requested, exiting...')
-    # 延迟 0.5s 后退出，让响应先返回
     threading.Timer(0.5, lambda: os._exit(0)).start()
     return jsonify(ok=True)
 
 
 def _do_cleanup():
-    """清理所有临时文件"""
-    for d in [TEMP_CACHE, TEMP_PACKAGES]:
-        if os.path.exists(d):
-            shutil.rmtree(d, ignore_errors=True)
+    if os.path.exists(SESSIONS_ROOT):
+        shutil.rmtree(SESSIONS_ROOT, ignore_errors=True)
 
 
 def _heartbeat_watcher():
-    """后台线程：监控心跳，浏览器关闭后自动退出服务"""
     while True:
         time.sleep(5)
         if not _heartbeat_received:
-            continue  # 还没有任何浏览器连接过，不要退出
+            continue
         elapsed = time.time() - _last_heartbeat
         if elapsed > HEARTBEAT_TIMEOUT:
             print(f'\n  Browser disconnected for {int(elapsed)}s, shutting down...')
@@ -544,10 +770,9 @@ def _heartbeat_watcher():
 
 
 # ============================================================
-#  启动 — 端口冲突防呆
+#  启动
 # ============================================================
 def _find_free_port(start=5873):
-    """从冷门端口开始扫描，避免常见端口冲突"""
     for port in range(start, start + 100):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -561,23 +786,22 @@ def _find_free_port(start=5873):
 
 if __name__ == '__main__':
     try:
-        _ensure_dirs()
+        os.makedirs(SESSIONS_ROOT, exist_ok=True)
         port = _find_free_port(5873)
         url = f'http://127.0.0.1:{port}'
 
-        # 延迟 1.5 秒后自动在默认浏览器中打开网页
         threading.Timer(1.5, lambda: webbrowser.open(url)).start()
 
-        # 启动心跳监控线程（守护线程，主线程退出时自动结束）
         watcher = threading.Thread(target=_heartbeat_watcher, daemon=True)
         watcher.start()
 
         print()
         print('=' * 55)
-        print('  影幻智提 (VidSlide) - PPT Slide Extractor')
+        print('  影幻智提 (VidSlide) v0.2.0 - 多任务版')
         print(f'  浏览器将自动打开: {url}')
-        print(f'  临时文件目录: {BASE_DIR}')
-        print('  关闭浏览器标签页后服务将在 30 秒内自动退出')
+        print(f'  临时文件目录: {SESSIONS_ROOT}')
+        print(f'  最大并行标签页: {MAX_SESSIONS}')
+        print('  关闭浏览器标签页后服务将在 20 秒内自动退出')
         print('  也可以按 Ctrl+C 手动停止')
         print('=' * 55)
         print()
@@ -590,7 +814,6 @@ if __name__ == '__main__':
     except Exception as e:
         error_detail = traceback.format_exc()
         print(f"！！！发生严重错误！！！\n{error_detail}")
-        # 无控制台模式下用 MessageBox 弹窗显示错误；有控制台则 input() 阻塞
         if sys.stdin is None or not sys.stdout.isatty():
             try:
                 import ctypes
@@ -598,7 +821,7 @@ if __name__ == '__main__':
                     0,
                     f"影幻智提启动失败，请截图此对话框发给开发者：\n\n{error_detail}",
                     "影幻智提 (VidSlide) - 严重错误",
-                    0x10  # MB_ICONERROR
+                    0x10
                 )
             except Exception:
                 pass
