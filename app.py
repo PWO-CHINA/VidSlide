@@ -11,7 +11,7 @@
     pip install flask opencv-python numpy pillow python-pptx psutil
 
 作者: PWO-CHINA
-版本: v0.2.0
+版本: v0.2.1
 """
 
 import cv2
@@ -56,11 +56,21 @@ except ImportError:
 
 
 # ============================================================
-#  PyInstaller 兼容：资源路径寻路
+#  PyInstaller / Nuitka 兼容：资源路径寻路
 # ============================================================
+def _is_frozen():
+    """判断是否以打包后的 exe 运行（PyInstaller 或 Nuitka）"""
+    return (getattr(sys, 'frozen', False)
+            or hasattr(sys, '_MEIPASS')
+            or '__compiled__' in globals())
+
+
 def get_resource_path(relative_path):
+    """获取打包后的资源文件路径"""
     if hasattr(sys, '_MEIPASS'):
+        # PyInstaller 解压临时目录
         return os.path.join(sys._MEIPASS, relative_path)
+    # Nuitka --include-data-dir 或源码模式：文件在 __file__ 旁边
     return os.path.join(os.path.abspath(os.path.dirname(__file__)), relative_path)
 
 
@@ -69,7 +79,8 @@ def get_resource_path(relative_path):
 # ============================================================
 TEMPLATE_DIR = get_resource_path('templates')
 
-if hasattr(sys, '_MEIPASS'):
+if _is_frozen():
+    # PyInstaller / Nuitka exe: 用户文件放在 exe 所在目录
     BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -95,7 +106,13 @@ def after_request(response):
 @app.errorhandler(Exception)
 def handle_error(e):
     traceback.print_exc()
-    return jsonify(success=False, message=f'服务器内部错误: {str(e)}'), 500
+    return jsonify(
+        success=False,
+        message=f'服务器内部错误: {str(e)}',
+        error_type=type(e).__name__,
+        hint='如果问题持续出现，请前往 https://github.com/PWO-CHINA/VidSlide/issues 提交 Issue，'
+             '并附上此错误信息的截图。'
+    ), 500
 
 
 # ============================================================
@@ -108,6 +125,24 @@ _sessions = {}  # session_id -> session dict
 CPU_WARN_THRESHOLD = 90
 MEMORY_WARN_THRESHOLD = 85
 DISK_WARN_THRESHOLD_MB = 500
+
+# ── 后台 CPU 采样（避免 psutil.cpu_percent 阻塞请求线程）──
+_cpu_cache = {'percent': 0.0}
+
+def _cpu_sampler_loop():
+    """后台线程：每 2 秒采样一次 CPU，结果写入 _cpu_cache"""
+    if not HAS_PSUTIL:
+        return
+    psutil.cpu_percent(interval=1)  # 首次初始化
+    while True:
+        try:
+            _cpu_cache['percent'] = psutil.cpu_percent(interval=0)
+        except Exception:
+            pass
+        time.sleep(2)
+
+_cpu_sampler_thread = threading.Thread(target=_cpu_sampler_loop, daemon=True)
+_cpu_sampler_thread.start()
 
 
 def _create_session():
@@ -341,7 +376,42 @@ def start_extraction(sid):
         return jsonify(success=False, message='未提供视频路径')
 
     if not os.path.exists(video_path):
-        return jsonify(success=False, message=f'视频文件不存在: {video_path}')
+        return jsonify(success=False, message=f'视频文件不存在: {video_path}',
+                       hint='请检查文件是否已被移动或删除，然后重新选择视频。')
+
+    # ── 视频文件预检测 ──
+    try:
+        _test_cap = cv2.VideoCapture(video_path)
+        if not _test_cap.isOpened():
+            _test_cap.release()
+            return jsonify(success=False,
+                           message='无法打开视频文件，可能文件已损坏或格式不支持。',
+                           hint='建议：1) 检查文件是否完整下载；2) 尝试用播放器打开验证；'
+                                '3) 如果是 m3u8 格式，请先用猫抓完整下载为 mp4。')
+        _test_ok, _test_frame = _test_cap.read()
+        _fourcc = int(_test_cap.get(cv2.CAP_PROP_FOURCC))
+        _codec = ''.join([chr((_fourcc >> 8 * i) & 0xFF) for i in range(4)]) if _fourcc else 'N/A'
+        _total = int(_test_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        _fps = _test_cap.get(cv2.CAP_PROP_FPS) or 0
+        _test_cap.release()
+        if not _test_ok or _test_frame is None:
+            return jsonify(success=False,
+                           message=f'视频解码失败（编解码器: {_codec}）。',
+                           hint='可能原因：1) 视频编码不被 OpenCV 支持；2) 文件不完整。'
+                                '建议：尝试用 FFmpeg 转码为 mp4 后重试。')
+        if _total < 10 or _fps <= 0:
+            return jsonify(success=False,
+                           message=f'视频信息异常：帧数={_total}，FPS={_fps:.1f}。',
+                           hint='该文件可能不是有效的视频文件，或已严重损坏。')
+        print(f'[DEBUG][{sid}] 视频预检通过: codec={_codec}, frames={_total}, fps={_fps:.1f}')
+    except cv2.error as e:
+        return jsonify(success=False,
+                       message=f'OpenCV 视频检测出错: {str(e)}',
+                       hint='可能是视频编码不兼容。建议用 FFmpeg 转码为 H.264 mp4 后重试。')
+    except Exception as e:
+        return jsonify(success=False,
+                       message=f'视频文件预检测失败: {str(e)}',
+                       hint='请确认文件路径正确且文件未被其他程序占用。')
 
     cache_dir = sess['cache_dir']
     if os.path.exists(cache_dir):
@@ -509,7 +579,18 @@ def _extract_worker(sid, video_path, output_dir, threshold, enable_history, max_
     except Exception as e:
         error_detail = traceback.format_exc()
         print(f"！！！[{sid}] 发生严重错误！！！\n{error_detail}")
-        _update_session(sid, status='error', message=f'提取出错: {e}')
+        # 为用户提供可操作的错误信息
+        err_msg = str(e)
+        if 'memory' in err_msg.lower() or 'MemoryError' in type(e).__name__:
+            hint = '内存不足，请关闭其他标签页或程序后重试。'
+        elif 'permission' in err_msg.lower() or 'access' in err_msg.lower():
+            hint = '文件权限被拒绝，请检查文件是否正在被其他程序使用。'
+        elif isinstance(e, cv2.error):
+            hint = '视频处理出错，建议用 FFmpeg 转码后重试。'
+        else:
+            hint = '请截图此错误并前往 GitHub Issues 反馈。'
+        _update_session(sid, status='error',
+                        message=f'提取出错: {err_msg}\n💡 {hint}')
 
 
 # ============================================================
@@ -615,8 +696,20 @@ def session_package(sid):
             return jsonify(success=False, message=f'不支持的格式: {fmt}')
 
         return jsonify(success=True, filename=os.path.basename(out))
+    except PermissionError:
+        return jsonify(success=False,
+                       message='文件写入权限被拒绝',
+                       hint='请确保目标目录未被占用，或尝试关闭正在使用导出文件的程序。')
+    except OSError as e:
+        if 'No space' in str(e) or 'disk' in str(e).lower():
+            return jsonify(success=False,
+                           message='磁盘空间不足，无法导出文件',
+                           hint='请清理磁盘空间后重试。')
+        return jsonify(success=False, message=f'文件系统错误: {str(e)}',
+                       hint='请检查磁盘状态后重试。')
     except Exception as e:
-        return jsonify(success=False, message=str(e))
+        return jsonify(success=False, message=str(e),
+                       hint='导出失败，请重试或换一种导出格式。如果持续出错，请提交 Issue。')
 
 
 @app.route('/api/session/<sid>/download/<path:filename>')
@@ -686,7 +779,7 @@ def system_status():
 
     if HAS_PSUTIL:
         try:
-            result['cpu_percent'] = psutil.cpu_percent(interval=0.3)
+            result['cpu_percent'] = _cpu_cache['percent']  # 使用后台采样缓存（非阻塞）
             mem = psutil.virtual_memory()
             result['memory_percent'] = mem.percent
             result['memory_used_gb'] = round(mem.used / (1024**3), 1)
@@ -716,7 +809,7 @@ def _check_resource_warning():
     if not HAS_PSUTIL:
         return None
     try:
-        cpu = psutil.cpu_percent(interval=0.3)
+        cpu = _cpu_cache['percent']  # 使用后台采样缓存（非阻塞）
         mem = psutil.virtual_memory()
         disk = psutil.disk_usage(BASE_DIR)
         warnings = []
@@ -797,7 +890,7 @@ if __name__ == '__main__':
 
         print()
         print('=' * 55)
-        print('  影幻智提 (VidSlide) v0.2.0 - 多任务版')
+        print('  影幻智提 (VidSlide) v0.2.1 - 多任务版')
         print(f'  浏览器将自动打开: {url}')
         print(f'  临时文件目录: {SESSIONS_ROOT}')
         print(f'  最大并行标签页: {MAX_SESSIONS}')
@@ -819,11 +912,23 @@ if __name__ == '__main__':
                 import ctypes
                 ctypes.windll.user32.MessageBoxW(
                     0,
-                    f"影幻智提启动失败，请截图此对话框发给开发者：\n\n{error_detail}",
-                    "影幻智提 (VidSlide) - 严重错误",
+                    f"影幻智提启动失败！\n\n"
+                    f"错误信息：\n{error_detail}\n\n"
+                    f"💡 建议操作：\n"
+                    f"1. 截图此对话框\n"
+                    f"2. 前往 https://github.com/PWO-CHINA/VidSlide/issues 提交 Issue\n"
+                    f"3. 在 Issue 中粘贴截图，开发者会尽快修复\n\n"
+                    f"常见原因：端口被占用、依赖缺失、杀毒软件拦截",
+                    "影幻智提 (VidSlide) - 启动失败",
                     0x10
                 )
             except Exception:
                 pass
         else:
-            input("请截图以上错误信息发给开发者，按回车键退出...")
+            print("\n" + "=" * 55)
+            print("  💡 建议操作：")
+            print("  1. 截图以上错误信息")
+            print("  2. 前往 https://github.com/PWO-CHINA/VidSlide/issues 提交 Issue")
+            print("  3. 在 Issue 中粘贴截图")
+            print("=" * 55)
+            input("\n按回车键退出...")

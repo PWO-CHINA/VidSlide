@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>影幻智提 (VidSlide) v0.2 - 多任务版</title>
+    <title>影幻智提 (VidSlide) v0.2.1 - 多任务版</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
@@ -325,12 +325,48 @@
             display: none;
         }
         .resource-warning-banner.visible { display: block; }
+
+        /* ─── 错误详情弹窗 ─── */
+        .error-modal-backdrop {
+            position: fixed; inset: 0; z-index: 9000;
+            background: rgba(15,23,42,0.6); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity .25s;
+        }
+        .error-modal-backdrop.visible { opacity: 1; pointer-events: auto; }
+        .error-modal {
+            background: white; border-radius: 16px; max-width: 560px; width: 92%;
+            box-shadow: 0 25px 60px rgba(0,0,0,.25); padding: 32px;
+            transform: scale(.95); transition: transform .25s;
+        }
+        .error-modal-backdrop.visible .error-modal { transform: scale(1); }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 min-h-screen pb-8">
 
     <!-- Toast 容器 -->
     <div id="toasts" class="fixed top-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none" style="max-width:360px"></div>
+
+    <!-- 错误详情弹窗 -->
+    <div id="errorModal" class="error-modal-backdrop" onclick="if(event.target===this)closeErrorModal()">
+        <div class="error-modal">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-3"><span class="text-3xl">❌</span><h2 class="text-lg font-bold text-gray-900" id="errorModalTitle">出错了</h2></div>
+                <button onclick="closeErrorModal()" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+            </div>
+            <div id="errorModalMessage" class="text-sm text-gray-700 mb-3 leading-relaxed"></div>
+            <div id="errorModalHint" class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 mb-4 hidden">
+                <p class="font-semibold mb-1">💡 建议操作：</p>
+                <p id="errorModalHintText"></p>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <button onclick="closeErrorModal()" class="btn-secondary" style="min-width:80px">关闭</button>
+                <a id="errorModalIssueLink" href="#" target="_blank" class="btn-primary flex items-center gap-2" style="text-decoration:none;font-size:13px">
+                    🐛 提交 Issue 反馈
+                </a>
+            </div>
+        </div>
+    </div>
 
     <!-- ═══════ Header ═══════ -->
     <header class="bg-gradient-to-r from-brand-700 via-brand-600 to-blue-500 text-white shadow-xl">
@@ -619,12 +655,24 @@
             clearTimeout(timer);
             if (!resp.ok) {
                 const text = await resp.text();
-                let msg;
-                try { msg = JSON.parse(text).message; } catch { msg = text; }
-                showToast('服务器错误: ' + (msg || resp.statusText), 'error');
-                return { success: false, message: msg || resp.statusText };
+                let parsed = {};
+                try { parsed = JSON.parse(text); } catch { parsed = { message: text }; }
+                const msg = parsed.message || resp.statusText;
+                // 如果后端返回了 hint 字段，弹出详细错误弹窗
+                if (parsed.hint) {
+                    showErrorModal('请求失败', msg, parsed.hint);
+                } else {
+                    showToast('服务器错误: ' + msg, 'error');
+                }
+                return { success: false, message: msg, hint: parsed.hint };
             }
-            return await resp.json();
+            const data = await resp.json();
+            // 对于 success=false 且有 hint 的响应，弹出错误弹窗
+            if (!data.success && data.hint) {
+                showErrorModal(data.message, data.hint, null);
+                // hint 已在弹窗中显示，用 toast 做简短提醒
+            }
+            return data;
         } catch (e) {
             if (e.name === 'AbortError') {
                 showToast('请求超时，请重试', 'error');
@@ -654,6 +702,35 @@
             el.classList.add('toast-leave');
             setTimeout(() => el.remove(), 300);
         }, duration);
+    }
+
+    // ============================================================
+    //  错误详情弹窗（含 Issue 提交）
+    // ============================================================
+    function showErrorModal(title, message, hint) {
+        document.getElementById('errorModalTitle').textContent = title || '出错了';
+        document.getElementById('errorModalMessage').textContent = message || '未知错误';
+        const hintBox = document.getElementById('errorModalHint');
+        if (hint) {
+            document.getElementById('errorModalHintText').textContent = hint;
+            hintBox.classList.remove('hidden');
+        } else {
+            hintBox.classList.add('hidden');
+        }
+        // 构建 Issue 预填链接
+        const issueTitle = encodeURIComponent(`[Bug] ${title || '错误报告'}`);
+        const issueBody = encodeURIComponent(
+            `## 错误描述\n${message}\n\n` +
+            (hint ? `## 建议\n${hint}\n\n` : '') +
+            `## 环境信息\n- 浏览器: ${navigator.userAgent}\n- 时间: ${new Date().toLocaleString()}\n` +
+            `\n## 复现步骤\n1. \n2. \n3. \n`
+        );
+        document.getElementById('errorModalIssueLink').href =
+            `https://github.com/PWO-CHINA/VidSlide/issues/new?title=${issueTitle}&body=${issueBody}`;
+        document.getElementById('errorModal').classList.add('visible');
+    }
+    function closeErrorModal() {
+        document.getElementById('errorModal').classList.remove('visible');
     }
 
     // ============================================================
@@ -925,69 +1002,79 @@
         if (!ts) return;
         if (ts.pollTimer) clearInterval(ts.pollTimer);
         let polling = false;
+        let _pollInterval = 800; // 初始高频轮询
 
-        ts.pollTimer = setInterval(async () => {
-            if (polling) return;
-            polling = true;
-            try {
-                const s = await api(`/api/session/${sid}/progress`);
-                if (!s.status) { polling = false; return; }
+        function schedulePoll() {
+            ts.pollTimer = setTimeout(async () => {
+                if (polling) { schedulePoll(); return; }
+                polling = true;
+                try {
+                    const s = await api(`/api/session/${sid}/progress`);
+                    if (!s.status) { polling = false; schedulePoll(); return; }
 
-                q(sid, 'js-progress-bar').style.width = s.progress + '%';
-                q(sid, 'js-progress-pct').textContent = s.progress + '%';
-                q(sid, 'js-progress-message').textContent = s.message || '';
+                    q(sid, 'js-progress-bar').style.width = s.progress + '%';
+                    q(sid, 'js-progress-pct').textContent = s.progress + '%';
+                    q(sid, 'js-progress-message').textContent = s.message || '';
 
-                if (s.eta_seconds != null && s.eta_seconds >= 0 && s.status === 'running') {
-                    const eta = Math.round(s.eta_seconds);
-                    const elapsed = Math.round(s.elapsed_seconds || 0);
-                    const etaStr = eta >= 60 ? Math.floor(eta/60)+'分'+(eta%60)+'秒' : eta+'秒';
-                    const elapsedStr = elapsed >= 60 ? Math.floor(elapsed/60)+'分'+(elapsed%60)+'秒' : elapsed+'秒';
-                    q(sid, 'js-progress-hint').textContent = '已用 '+elapsedStr+'，预计还剩 '+etaStr;
-                } else if (s.status === 'running') {
-                    q(sid, 'js-progress-hint').textContent = '正在估算剩余时间…';
-                }
-
-                if (s.status === 'idle') {
-                    // 安全停止：如果会话回到空闲态（可能是被清理了），停止轮询
-                    stopPolling(sid);
-                    ts.isExtracting = false;
-                    polling = false;
-                    return;
-                }
-
-                if (s.status === 'done' || s.status === 'cancelled' || s.status === 'error') {
-                    stopPolling(sid);
-                    ts.isExtracting = false;
-                    q(sid, 'js-btn-extract').classList.remove('hidden');
-                    q(sid, 'js-btn-cancel').classList.add('hidden');
-                    q(sid, 'js-progress-bar').style.width = '100%';
-                    q(sid, 'js-progress-pct').textContent = '100%';
-                    updateTabStatus(sid, s.status);
-
-                    if (s.status === 'done') {
-                        q(sid, 'js-progress-message').textContent = '✅ ' + s.message;
-                        showToast(s.message, 'success', 5000);
-                        await loadImages(sid);
-                    } else if (s.status === 'cancelled') {
-                        q(sid, 'js-progress-message').textContent = '⏹ ' + s.message;
-                        showToast(s.message, 'warning');
-                        await loadImages(sid);
-                    } else {
-                        q(sid, 'js-progress-message').textContent = '❌ ' + s.message;
-                        showToast(s.message, 'error', 6000);
+                    if (s.eta_seconds != null && s.eta_seconds >= 0 && s.status === 'running') {
+                        const eta = Math.round(s.eta_seconds);
+                        const elapsed = Math.round(s.elapsed_seconds || 0);
+                        const etaStr = eta >= 60 ? Math.floor(eta/60)+'分'+(eta%60)+'秒' : eta+'秒';
+                        const elapsedStr = elapsed >= 60 ? Math.floor(elapsed/60)+'分'+(elapsed%60)+'秒' : elapsed+'秒';
+                        q(sid, 'js-progress-hint').textContent = '已用 '+elapsedStr+'，预计还剩 '+etaStr;
+                        _pollInterval = 800; // 运行中：高频轮询
+                    } else if (s.status === 'running') {
+                        q(sid, 'js-progress-hint').textContent = '正在估算剩余时间…';
+                        _pollInterval = 800;
                     }
+
+                    if (s.status === 'idle') {
+                        stopPolling(sid);
+                        ts.isExtracting = false;
+                        polling = false;
+                        return; // 不再 schedule
+                    }
+
+                    if (s.status === 'done' || s.status === 'cancelled' || s.status === 'error') {
+                        stopPolling(sid);
+                        ts.isExtracting = false;
+                        q(sid, 'js-btn-extract').classList.remove('hidden');
+                        q(sid, 'js-btn-cancel').classList.add('hidden');
+                        q(sid, 'js-progress-bar').style.width = '100%';
+                        q(sid, 'js-progress-pct').textContent = '100%';
+                        updateTabStatus(sid, s.status);
+
+                        if (s.status === 'done') {
+                            q(sid, 'js-progress-message').textContent = '✅ ' + s.message;
+                            showToast(s.message, 'success', 5000);
+                            await loadImages(sid);
+                        } else if (s.status === 'cancelled') {
+                            q(sid, 'js-progress-message').textContent = '⏹ ' + s.message;
+                            showToast(s.message, 'warning');
+                            await loadImages(sid);
+                        } else {
+                            q(sid, 'js-progress-message').textContent = '❌ ' + s.message;
+                            // 提取出错时弹出详细错误弹窗（含 Issue 提交按钮）
+                            showErrorModal('提取出错', s.message,
+                                '如果问题持续出现，请点击下方按钮提交 Issue，开发者会尽快修复。');
+                        }
+                        polling = false;
+                        return; // 不再 schedule
+                    }
+                } catch (e) {
+                    console.warn('[Poll] 轮询异常:', e);
+                } finally {
+                    polling = false;
                 }
-            } catch (e) {
-                console.warn('[Poll] 轮询异常:', e);
-            } finally {
-                polling = false;
-            }
-        }, 800);
+                schedulePoll(); // 继续下一轮
+            }, _pollInterval);
+        }
+        schedulePoll();
     }
 
     function stopPolling(sid) {
         const ts = G.tabs[sid];
-        if (ts && ts.pollTimer) { clearInterval(ts.pollTimer); ts.pollTimer = null; }
+        if (ts && ts.pollTimer) { clearTimeout(ts.pollTimer); ts.pollTimer = null; }
     }
 
     // ============================================================
@@ -1325,7 +1412,7 @@
         // 停止所有轮询
         for (const sid of Object.keys(G.tabs)) {
             const ts = G.tabs[sid];
-            if (ts.pollTimer) clearInterval(ts.pollTimer);
+            if (ts.pollTimer) clearTimeout(ts.pollTimer);
         }
         await api('/api/cleanup-all', { method: 'POST' });
 
@@ -1415,8 +1502,9 @@
                         <li>重新双击 <b>VidSlide.exe</b> 启动</li>
                     </ol>
                 </div>
-                <div style="display:flex;gap:12px;justify-content:center;">
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
                     <button onclick="location.reload()" style="padding:10px 20px;background:#e2e8f0;color:#334155;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;">🔄 刷新重试</button>
+                    <a href="https://github.com/PWO-CHINA/VidSlide/issues/new?title=${encodeURIComponent('[Bug] 后端服务意外断开')}&body=${encodeURIComponent('## 问题描述\\n后端服务意外断开连接。\\n\\n## 环境信息\\n- 时间: ' + new Date().toLocaleString() + '\\n\\n## 复现步骤\\n1. \\n2. \\n3. ')}" target="_blank" style="padding:10px 20px;background:#6366f1;color:white;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;">🐛 提交 Issue</a>
                 </div>
             </div>`;
         document.body.appendChild(overlay);
