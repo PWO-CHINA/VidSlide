@@ -535,6 +535,11 @@
                 return { success: false, message: '请求超时' };
             }
             showToast('网络错误: ' + e.message, 'error');
+            // 检测是否为后端断连（fetch 失败通常是 TypeError: Failed to fetch）
+            if (e instanceof TypeError && e.message.includes('fetch')) {
+                // 立即触发一次心跳检测确认
+                sendHeartbeat();
+            }
             console.error('[API Error]', path, e);
             return { success: false, message: e.message };
         }
@@ -1083,20 +1088,78 @@
     }
 
     // ============================================================
-    //  关闭服务 & 心跳
+    //  后端断连检测 & 全屏提示
     // ============================================================
-    // 心跳：每 8 秒告诉服务器"浏览器还开着"
-    setInterval(() => {
-        navigator.sendBeacon('/api/heartbeat', '');
-    }, 8000);
+    let _serverAlive = true;
+    let _heartbeatFailCount = 0;
+    const HEARTBEAT_FAIL_THRESHOLD = 2; // 连续失败 2 次才判定断连（避免偶发抖动）
+
+    function showDisconnectOverlay() {
+        if (document.getElementById('disconnectOverlay')) return;
+        _serverAlive = false;
+        const overlay = document.createElement('div');
+        overlay.id = 'disconnectOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,0.85);backdrop-filter:blur(4px);';
+        overlay.innerHTML = `
+            <div style="text-align:center;max-width:480px;padding:48px 36px;background:white;border-radius:16px;box-shadow:0 25px 50px rgba(0,0,0,0.25);">
+                <div style="font-size:56px;margin-bottom:16px;">⚠️</div>
+                <h1 style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:12px;">后端服务已断开</h1>
+                <p style="color:#475569;line-height:1.7;font-size:15px;margin-bottom:20px;">
+                    服务进程已意外退出或被关闭。<br>
+                    当前页面的数据可能无法保存。
+                </p>
+                <div style="background:#f1f5f9;border-radius:10px;padding:16px 20px;text-align:left;margin-bottom:20px;">
+                    <p style="color:#334155;font-size:14px;font-weight:600;margin-bottom:8px;">🔧 如何恢复：</p>
+                    <ol style="color:#475569;font-size:14px;line-height:1.8;padding-left:20px;margin:0;">
+                        <li>关闭当前浏览器页面</li>
+                        <li>重新双击 <b>VidSlide.exe</b> 启动</li>
+                        <li>如果反复出现此问题，请提交 Issue</li>
+                    </ol>
+                </div>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                    <a href="https://github.com/PWO-CHINA/VidSlide/issues/new"
+                       target="_blank" rel="noopener"
+                       style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:#3b82f6;color:white;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;transition:background 0.2s;"
+                       onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
+                        🐛 提交 Issue 反馈
+                    </a>
+                    <button onclick="location.reload()"
+                            style="padding:10px 20px;background:#e2e8f0;color:#334155;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:background 0.2s;"
+                            onmouseover="this.style.background='#cbd5e1'" onmouseout="this.style.background='#e2e8f0'">
+                        🔄 刷新重试
+                    </button>
+                </div>
+                <p style="color:#94a3b8;font-size:12px;margin-top:16px;">影幻智提 (VidSlide) · PWO-CHINA</p>
+            </div>`;
+        document.body.appendChild(overlay);
+    }
+
+    // 心跳：每 8 秒用 fetch 探测后端是否存活
+    async function sendHeartbeat() {
+        try {
+            const resp = await fetch('/api/heartbeat', { method: 'POST', signal: AbortSignal.timeout(5000) });
+            if (resp.ok) {
+                _heartbeatFailCount = 0;
+                _serverAlive = true;
+            } else {
+                _heartbeatFailCount++;
+            }
+        } catch {
+            _heartbeatFailCount++;
+        }
+        if (_heartbeatFailCount >= HEARTBEAT_FAIL_THRESHOLD) {
+            showDisconnectOverlay();
+        }
+    }
+    setInterval(sendHeartbeat, 8000);
     // 立即发一次心跳
-    navigator.sendBeacon('/api/heartbeat', '');
+    sendHeartbeat();
 
     async function shutdownServer() {
         const running = App.images.length > 0 && !App.downloadLinks.length;
         let msg = '确定要关闭工具吗？\n\n关闭后：\n• 服务将停止运行\n• 临时缓存会自动清理';
         if (running) msg += '\n• ⚠️ 已提取但未导出的图片将丢失';
-        msg += '\n\n如需再次使用，重新双击 start.bat 即可。';
+        msg += '\n\n如需再次使用，重新双击 VidSlide.exe 即可。';
         if (!confirm(msg)) return;
         showToast('正在关闭服务…', 'info');
         try {

@@ -10,7 +10,7 @@
     pip install flask opencv-python numpy pillow python-pptx
 
 作者: PWO-CHINA
-版本: v0.1.1
+版本: v0.1.2
 """
 
 import cv2
