@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幻影智提 (VidSlide) - PPT 幻灯片智能提取工具</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* ─── 全局 ─── */
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, -apple-system, sans-serif; }
+        .card { @apply bg-white rounded-2xl shadow-md border border-gray-100 p-6 transition-shadow hover:shadow-lg; }
+
+        /* ─── 进度条 ─── */
+        .progress-track { @apply w-full h-5 bg-gray-200 rounded-full overflow-hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,.06); }
+        .progress-fill  {
+            height: 100%; border-radius: 9999px;
+            background: linear-gradient(90deg, #4f46e5 0%, #818cf8 50%, #6366f1 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s linear infinite;
+            transition: width .4s cubic-bezier(.4,0,.2,1);
+            box-shadow: 0 0 14px rgba(99,102,241,.45);
+            position: relative;
+        }
+        .progress-fill::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.35) 50%, transparent 100%);
+            animation: progressGlow 1.8s ease-in-out infinite;
+        }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        @keyframes progressGlow { 0%,100%{opacity:0;transform:translateX(-100%)} 50%{opacity:1;transform:translateX(100%)} }
+
+        /* ─── Gallery 卡片 ─── */
+        .slide-card {
+            @apply relative rounded-xl overflow-hidden bg-gray-100 border-2 border-transparent cursor-grab;
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+            aspect-ratio: 16/9;
+        }
+        .slide-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,.12); border-color: #818cf8; }
+        .slide-card img  { @apply w-full h-full object-cover; pointer-events: none; }
+        .slide-card .overlay {
+            @apply absolute inset-0 flex items-start justify-between p-2;
+            opacity: 0; transition: opacity .2s;
+            background: linear-gradient(180deg, rgba(0,0,0,.45) 0%, transparent 50%, transparent 80%, rgba(0,0,0,.35) 100%);
+        }
+        .slide-card:hover .overlay { opacity: 1; }
+
+        /* ─── Sortable ─── */
+        .sortable-ghost  { opacity:.35; border: 2px dashed #818cf8; }
+        .sortable-chosen { box-shadow: 0 0 0 3px #4f46e5; }
+        .sortable-drag   { opacity:.9; transform: rotate(2deg) scale(1.05); }
+
+        /* ─── 预览弹窗 ─── */
+        .modal-backdrop {
+            background: rgba(0,0,0,.88); backdrop-filter: blur(12px);
+            transition: opacity .25s;
+        }
+
+        /* ─── Toast ─── */
+        .toast-enter  { animation: slideInRight .35s ease forwards; }
+        .toast-leave  { animation: slideOutRight .3s ease forwards; }
+        @keyframes slideInRight  { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
+        @keyframes slideOutRight { from{transform:translateX(0);opacity:1} to{transform:translateX(120%);opacity:0} }
+
+        /* ─── 按钮系统 — 纯 CSS，不依赖 @apply 自引用 ─── */
+
+        /* 基础按钮：用于与 Tailwind 工具类组合的一次性按钮 */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.5rem 1rem; border-radius: 0.625rem;
+            font-weight: 500; font-size: 0.875rem; line-height: 1.5;
+            transition: all 0.15s ease;
+            user-select: none; cursor: pointer; white-space: nowrap;
+            border: 1.5px solid transparent; background: none;
+            font-family: inherit;
+        }
+        .btn:active:not(:disabled) { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+
+        /* 主要操作 — 柔和紫色，清晰可识别 */
+        .btn-primary {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.625rem 1.5rem; border-radius: 0.75rem;
+            font-weight: 600; font-size: 0.9375rem; line-height: 1.5;
+            color: #fff; background: #6366f1; border: 1.5px solid #5b5df0;
+            box-shadow: 0 1px 3px rgba(99,102,241,.2);
+            transition: all 0.2s ease; cursor: pointer; user-select: none;
+            white-space: nowrap; font-family: inherit;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #5558e8; border-color: #4f52dc;
+            box-shadow: 0 4px 14px -2px rgba(99,102,241,.35);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active:not(:disabled) { transform: scale(0.97); box-shadow: 0 1px 2px rgba(99,102,241,.15); }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+        /* 次要操作 — 白底灰边，干净整洁 */
+        .btn-secondary {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.5rem 1rem; border-radius: 0.625rem;
+            font-weight: 500; font-size: 0.875rem;
+            color: #374151; background: #fff; border: 1.5px solid #e5e7eb;
+            box-shadow: 0 1px 2px rgba(0,0,0,.05);
+            transition: all 0.15s ease; cursor: pointer; user-select: none;
+            white-space: nowrap; font-family: inherit;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #f9fafb; border-color: #d1d5db;
+            box-shadow: 0 2px 8px rgba(0,0,0,.07);
+        }
+        .btn-secondary:active:not(:disabled) { transform: scale(0.97); }
+
+        /* 危险操作 — 红色但不刚硬 */
+        .btn-danger {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.625rem 1.5rem; border-radius: 0.75rem;
+            font-weight: 600; font-size: 0.9375rem;
+            color: #fff; background: #ef4444; border: 1.5px solid #e03e3e;
+            box-shadow: 0 1px 3px rgba(239,68,68,.2);
+            transition: all 0.2s ease; cursor: pointer; user-select: none;
+            white-space: nowrap; font-family: inherit;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+            box-shadow: 0 4px 14px -2px rgba(239,68,68,.3);
+            transform: translateY(-1px);
+        }
+        .btn-danger:active:not(:disabled) { transform: scale(0.97); }
+
+        /* 成功 */
+        .btn-success {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.5rem 1rem; border-radius: 0.625rem;
+            font-weight: 500; font-size: 0.875rem;
+            color: #fff; background: #10b981; border: 1.5px solid #059669;
+            box-shadow: 0 1px 2px rgba(16,185,129,.2);
+            transition: all 0.15s ease; cursor: pointer; user-select: none;
+            font-family: inherit;
+        }
+        .btn-success:hover:not(:disabled) { background: #059669; }
+        .btn-success:active:not(:disabled) { transform: scale(0.97); }
+
+        /* Header 幽灵按钮 */
+        .btn-ghost {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+            padding: 0.4rem 0.75rem; border-radius: 0.5rem;
+            font-weight: 500; font-size: 0.75rem;
+            color: rgba(255,255,255,.85);
+            background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+            transition: all 0.15s ease; cursor: pointer; user-select: none;
+            font-family: inherit;
+        }
+        .btn-ghost:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.22); color: #fff; }
+        .btn-ghost:active { transform: scale(0.96); }
+
+        /* Header 关闭按钮（幽灵+红色） */
+        .btn-ghost-danger {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+            padding: 0.4rem 0.75rem; border-radius: 0.5rem;
+            font-weight: 500; font-size: 0.75rem;
+            color: rgba(255,255,255,.9);
+            background: rgba(239,68,68,.35); border: 1px solid rgba(239,68,68,.25);
+            transition: all 0.15s ease; cursor: pointer; user-select: none;
+            font-family: inherit;
+        }
+        .btn-ghost-danger:hover { background: rgba(239,68,68,.55); border-color: rgba(239,68,68,.4); color: #fff; }
+        .btn-ghost-danger:active { transform: scale(0.96); }
+
+        /* 导出卡片 */
+        .btn-export {
+            display: flex; flex-direction: column; align-items: center; gap: 0.625rem;
+            padding: 1.5rem 1rem; border-radius: 1rem;
+            font-weight: 500; font-size: 0.875rem;
+            color: #374151; background: #fff;
+            border: 2px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,.04);
+            transition: all 0.2s ease; cursor: pointer; user-select: none;
+            font-family: inherit;
+        }
+        .btn-export:hover {
+            border-color: #a5b4fc; color: #4338ca; background: #eef2ff;
+            box-shadow: 0 8px 24px rgba(99,102,241,.1);
+            transform: translateY(-3px);
+        }
+        .btn-export:active { transform: translateY(-1px) scale(0.98); }
+
+        /* ─── 滚动条 ─── */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 8px; }
+
+        /* ─── 设置控件 ─── */
+        .range-input {
+            @apply w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer;
+        }
+        .range-input::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: #4f46e5; border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(79,70,229,.4);
+            cursor: pointer;
+        }
+
+        /* ─── 删除动画 ─── */
+        .slide-card.removing {
+            transform: scale(.75); opacity: 0;
+            transition: transform .3s ease, opacity .3s ease;
+        }
+        .slide-card.restoring {
+            animation: popIn .35s ease forwards;
+        }
+        @keyframes popIn { from{transform:scale(.7);opacity:0} to{transform:scale(1);opacity:1} }
+
+        /* ─── 回收站抽屉 ─── */
+        .recycle-drawer {
+            position: fixed; top: 0; right: 0; bottom: 0; width: 380px; max-width: 92vw;
+            background: white; z-index: 60;
+            box-shadow: -8px 0 40px rgba(0,0,0,.15);
+            transform: translateX(100%); transition: transform .35s cubic-bezier(.4,0,.2,1);
+            display: flex; flex-direction: column;
+        }
+        .recycle-drawer.open { transform: translateX(0); }
+        .recycle-backdrop {
+            position: fixed; inset: 0; z-index: 55;
+            background: rgba(0,0,0,.3); backdrop-filter: blur(4px);
+            opacity: 0; transition: opacity .3s; pointer-events: none;
+        }
+        .recycle-backdrop.open { opacity: 1; pointer-events: auto; }
+        .recycle-item {
+            @apply flex items-center gap-3 p-3 rounded-xl border-2 border-transparent hover:border-brand-300 hover:bg-brand-50 transition cursor-pointer;
+        }
+        .recycle-item img {
+            width: 90px; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 min-h-screen pb-16">
+
+    <!-- ═══════ Toast 容器 ═══════ -->
+    <div id="toasts" class="fixed top-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none" style="max-width:360px"></div>
+
+    <!-- ═══════ Header ═══════ -->
+    <header class="bg-gradient-to-r from-brand-700 via-brand-600 to-blue-500 text-white shadow-xl">
+        <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <span class="text-3xl">📊</span> 幻影智提 (VidSlide)
+                </h1>
+                <p class="text-brand-200 text-sm mt-1">从录播视频中一键提取 PPT · 拖拽排序 · 打包导出</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="cleanupCache()" class="btn-ghost" title="清空所有缓存">
+                    🗑️ 清空缓存
+                </button>
+                <button onclick="shutdownServer()" class="btn-ghost-danger" title="关闭服务并清理临时文件">
+                    ⏻ 关闭工具
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════ 恢复提示 ═══════ -->
+    <div id="recoveryBanner" class="hidden max-w-6xl mx-auto px-6 mt-4">
+        <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">💡</span>
+                <span class="text-amber-800 text-sm font-medium" id="recoveryText"></span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="recoverImages()" class="btn" style="background:#f59e0b;color:#fff;border-color:#d97706;font-size:.75rem;padding:.375rem .75rem">恢复图片</button>
+                <button onclick="dismissRecovery()" class="btn-secondary" style="font-size:.75rem;padding:.375rem .75rem;color:#92400e">忽略</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ 主内容 ═══════ -->
+    <main class="max-w-6xl mx-auto px-6 py-8 space-y-6">
+
+        <!-- ── 步骤 1: 选择视频 ── -->
+        <section class="card">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+                <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-bold">1</span>
+                选择视频文件
+            </h2>
+            <div class="flex flex-col sm:flex-row gap-3 items-stretch">
+                <button onclick="selectVideo()" class="btn-primary shrink-0" id="btnSelectVideo">
+                    📁 浏览选择视频文件
+                </button>
+                <div class="relative flex-1">
+                    <input id="videoPathInput" type="text"
+                        placeholder='粘贴路径，支持引号包裹，如 "D:\video\lecture.mp4"'
+                        class="w-full h-full px-4 py-3 text-sm rounded-2xl border-2 border-gray-200 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition bg-gray-50 placeholder-gray-400"
+                        onkeydown="if(event.key==='Enter') confirmManualPath()"
+                        onpaste="setTimeout(()=>autoConfirmPath(),100)">
+                    <button onclick="confirmManualPath()" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-white bg-brand-500 hover:bg-brand-600 font-medium px-3 py-1.5 rounded-lg transition shadow-sm">确认 ↵</button>
+                </div>
+            </div>
+            <div id="videoInfo" class="hidden mt-3 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <p class="text-sm text-emerald-800 flex items-center gap-2">
+                    <span class="text-lg">✅</span>
+                    <span id="videoPathDisplay" class="font-mono text-xs break-all"></span>
+                </p>
+            </div>
+        </section>
+
+        <!-- ── 步骤 2: 参数设置 ── -->
+        <section class="card" id="settingsSection">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+                <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-bold">2</span>
+                提取参数
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 灵敏度 -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-gray-700">场景检测灵敏度</label>
+                    <input type="range" id="threshold" min="1" max="15" step="0.5" value="5"
+                        class="range-input" oninput="document.getElementById('thresholdVal').textContent=this.value">
+                    <div class="flex justify-between text-xs text-gray-400">
+                        <span>敏感 (1)</span>
+                        <span class="text-sm font-bold text-brand-600" id="thresholdVal">5</span>
+                        <span>保守 (15)</span>
+                    </div>
+                </div>
+                <!-- ROI -->
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                        <input type="checkbox" id="useRoi" checked class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-400">
+                        PPT 录屏裁剪
+                    </label>
+                    <p class="text-xs text-gray-400 leading-relaxed">启用后忽略左侧缩略图栏（~20%）和顶部工具栏（~18%），更精准地检测 PPT 主画面变化</p>
+                </div>
+                <!-- 历史池 -->
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                        <input type="checkbox" id="enableHistory" class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-400"
+                            onchange="document.getElementById('maxHistoryGroup').style.display=this.checked?'flex':'none'">
+                        历史记忆池
+                    </label>
+                    <p class="text-xs text-gray-400 leading-relaxed">防止 A→B→A 跳页导致重复提取</p>
+                    <div id="maxHistoryGroup" class="items-center gap-2 text-sm text-gray-600" style="display:none">
+                        <span>容量:</span>
+                        <input type="number" id="maxHistory" value="5" min="2" max="20"
+                            class="w-16 px-2 py-1 text-sm rounded-lg border border-gray-200 text-center">
+                        <span class="text-xs text-gray-400">张</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── 步骤 3: 提取 ── -->
+        <section class="card">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+                <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-bold">3</span>
+                提取幻灯片
+            </h2>
+            <div class="flex items-center gap-3">
+                <button onclick="startExtraction()" id="btnExtract" class="btn-primary" disabled>
+                    ▶️ 开始提取幻灯片
+                </button>
+                <button onclick="cancelExtraction()" id="btnCancel" class="btn-danger hidden">
+                    ⏹️ 取消提取
+                </button>
+                <span id="extractStatus" class="text-sm text-gray-500"></span>
+            </div>
+            <div id="progressSection" class="hidden mt-5 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span id="progressMessage" class="text-sm text-gray-600 font-medium">正在初始化…</span>
+                    <span id="progressPct" class="font-bold text-brand-600 text-lg tabular-nums">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div id="progressBar" class="progress-fill" style="width:0%"></div>
+                </div>
+                <p class="text-xs text-gray-400" id="progressHint">提取中，请勿关闭此页面…</p>
+            </div>
+        </section>
+
+        <!-- ── 步骤 4: 画廊管理 ── -->
+        <section id="gallerySection" class="card hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-bold">4</span>
+                    图片管理
+                    <span id="imageCount" class="text-sm font-normal text-gray-400 ml-2"></span>
+                </h2>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="openRecycleBin()" id="btnRecycleBin" class="btn-secondary text-sm hidden">
+                        🗑️ 回收站 <span id="recycleCount" class="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 ml-1"></span>
+                    </button>
+                </div>
+            </div>
+            <p class="text-sm text-gray-400 mb-4 flex items-center gap-4">
+                <span>🖱️ 拖拽调整顺序</span>
+                <span>🔍 点击预览大图</span>
+                <span>❌ 悬停显示删除</span>
+                <span>⌨️ Ctrl+Z 撤销删除</span>
+            </p>
+            <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            </div>
+        </section>
+
+        <!-- ── 步骤 5: 打包导出 ── -->
+        <section id="exportSection" class="card hidden">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+                <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-bold">5</span>
+                打包导出
+            </h2>
+            <p class="text-sm text-gray-500 mb-5">将当前排好序的图片打包下载（只包含画廊中可见的图片，按当前顺序）</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <button onclick="packageImages('pdf')"  id="btnPdf"  class="btn-export">
+                    <span class="text-3xl">📄</span>
+                    <span class="text-base font-bold">生成 PDF</span>
+                    <span class="text-xs text-gray-400 font-normal">适合打印和阅读</span>
+                </button>
+                <button onclick="packageImages('pptx')" id="btnPptx" class="btn-export">
+                    <span class="text-3xl">📊</span>
+                    <span class="text-base font-bold">生成 PPTX</span>
+                    <span class="text-xs text-gray-400 font-normal">可编辑的演示文稿</span>
+                </button>
+                <button onclick="packageImages('zip')"  id="btnZip"  class="btn-export">
+                    <span class="text-3xl">📦</span>
+                    <span class="text-base font-bold">打包 ZIP</span>
+                    <span class="text-xs text-gray-400 font-normal">原图打包压缩</span>
+                </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-3">💡 导出的文件会保存到浏览器的默认<b>下载文件夹</b>中（通常是"下载"目录）</p>
+            <div id="downloadSection" class="hidden mt-5 space-y-2"></div>
+        </section>
+
+    </main>
+
+    <!-- ═══════ 底部说明 ═══════ -->
+    <footer class="max-w-5xl mx-auto px-4 pb-8 text-center">
+        <p class="text-xs text-gray-300">🔒 所有数据仅保存在本地。关闭浏览器页面后服务会在 30 秒内自动退出并清理临时文件。</p>
+        <p class="text-xs text-gray-300 mt-1">幻影智提 (VidSlide) v1.0.0 · Made by PWO-CHINA</p>
+    </footer>
+
+    <!-- ═══════ 回收站抽屉 ═══════ -->
+    <div id="recycleBackdrop" class="recycle-backdrop" onclick="closeRecycleBin()"></div>
+    <div id="recycleDrawer" class="recycle-drawer">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                🗑️ 回收站 <span id="recycleDrawerCount" class="text-sm font-normal text-gray-400"></span>
+            </h3>
+            <div class="flex gap-2">
+                <button onclick="restoreAll()" id="btnRestoreAll" class="btn-secondary" style="font-size:.75rem;padding:.375rem .75rem;color:#4f46e5;border-color:#c7d2fe;background:#eef2ff">
+                    ↩️ 全部恢复
+                </button>
+                <button onclick="closeRecycleBin()" class="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 flex items-center justify-center transition">✕</button>
+            </div>
+        </div>
+        <div id="recycleList" class="flex-1 overflow-y-auto p-4 space-y-2">
+            <p id="recycleEmpty" class="text-center text-gray-400 text-sm py-12">回收站是空的</p>
+        </div>
+    </div>
+
+    <!-- ═══════ 图片预览弹窗 ═══════ -->
+    <div id="previewModal" class="fixed inset-0 z-50 hidden flex items-center justify-center modal-backdrop" onclick="if(event.target===this)hidePreview()">
+        <!-- 关闭 -->
+        <button onclick="hidePreview()" class="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white text-xl flex items-center justify-center transition">✕</button>
+        <!-- 上一张 -->
+        <button onclick="prevPreview()" id="btnPrevPreview" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/25 text-white text-2xl flex items-center justify-center transition">◀</button>
+        <!-- 下一张 -->
+        <button onclick="nextPreview()" id="btnNextPreview" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/25 text-white text-2xl flex items-center justify-center transition">▶</button>
+        <!-- 图片 -->
+        <img id="previewImage" class="max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl object-contain select-none" draggable="false">
+        <!-- 计数器 -->
+        <div id="previewCounter" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-4 py-1.5 rounded-full backdrop-blur"></div>
+    </div>
+
+
+    <!-- ═══════════════════════════ JavaScript ═══════════════════════════ -->
+    <script>
+    // ============================================================
+    //  App 状态
+    // ============================================================
+    const App = {
+        videoPath: '',
+        images: [],          // 当前画廊中的图片文件名列表（有序）
+        deletedStack: [],    // 栈: [filename, ...]
+        isExtracting: false,
+        pollTimer: null,
+        sortable: null,
+        previewIndex: -1,
+        hasWork: false,      // 是否有未保存的工作
+        downloadLinks: [],
+    };
+
+    // ============================================================
+    //  工具函数
+    // ============================================================
+    async function api(path, opts = {}) {
+        try {
+            // 选择视频弹窗可能需要很长时间，给 3 分钟超时
+            const timeout = path.includes('select-video') ? 180000 : 60000;
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeout);
+            opts.signal = controller.signal;
+
+            const resp = await fetch(path, opts);
+            clearTimeout(timer);
+
+            if (!resp.ok) {
+                const text = await resp.text();
+                let msg;
+                try { msg = JSON.parse(text).message; } catch { msg = text; }
+                showToast('服务器错误: ' + (msg || resp.statusText), 'error');
+                return { success: false, message: msg || resp.statusText };
+            }
+            return await resp.json();
+        } catch (e) {
+            if (e.name === 'AbortError') {
+                showToast('请求超时，请重试', 'error');
+                return { success: false, message: '请求超时' };
+            }
+            showToast('网络错误: ' + e.message, 'error');
+            console.error('[API Error]', path, e);
+            return { success: false, message: e.message };
+        }
+    }
+
+    function $(id) { return document.getElementById(id); }
+
+    // ============================================================
+    //  Toast 通知
+    // ============================================================
+    function showToast(msg, type = 'info', duration = 3500) {
+        const colors = {
+            info: 'bg-blue-500', success: 'bg-emerald-500',
+            error: 'bg-red-500',  warning: 'bg-amber-500',
+        };
+        const icons = { info:'ℹ️', success:'✅', error:'❌', warning:'⚠️' };
+        const el = document.createElement('div');
+        el.className = `${colors[type]||colors.info} text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium pointer-events-auto flex items-center gap-2 toast-enter`;
+        el.innerHTML = `<span>${icons[type]||''}</span><span>${msg}</span>`;
+        $('toasts').appendChild(el);
+        setTimeout(() => {
+            el.classList.remove('toast-enter');
+            el.classList.add('toast-leave');
+            setTimeout(() => el.remove(), 300);
+        }, duration);
+    }
+
+    // ============================================================
+    //  1. 视频选择
+    // ============================================================
+    async function selectVideo() {
+        $('btnSelectVideo').disabled = true;
+        $('btnSelectVideo').textContent = '⏳ 请在弹出窗口中选择文件…';
+        const data = await api('/api/select-video', { method: 'POST' });
+        $('btnSelectVideo').disabled = false;
+        $('btnSelectVideo').innerHTML = '📁 选择视频';
+        if (data.success && data.path) {
+            setVideoPath(data.path);
+        } else if (data.message && data.message !== '未选择文件') {
+            showToast(data.message, 'warning');
+        }
+    }
+
+    function confirmManualPath() {
+        let v = $('videoPathInput').value.trim();
+        // 自动去除两端的引号（用户可能从资源管理器复制带引号的路径）
+        v = v.replace(/^["']+|["']+$/g, '').trim();
+        if (v) {
+            $('videoPathInput').value = v;
+            setVideoPath(v);
+        }
+    }
+
+    function autoConfirmPath() {
+        let v = $('videoPathInput').value.trim();
+        v = v.replace(/^["']+|["']+$/g, '').trim();
+        if (v && (v.endsWith('.mp4') || v.endsWith('.avi') || v.endsWith('.mkv') || v.endsWith('.mov') || v.endsWith('.flv') || v.endsWith('.wmv') || v.includes('\\'))) {
+            $('videoPathInput').value = v;
+            setVideoPath(v);
+        }
+    }
+
+    function setVideoPath(p) {
+        App.videoPath = p;
+        $('videoPathInput').value = p;
+        $('videoPathDisplay').textContent = p;
+        $('videoInfo').classList.remove('hidden');
+        $('btnExtract').disabled = false;
+        showToast('已选择视频文件', 'success');
+    }
+
+    // ============================================================
+    //  3. 提取
+    // ============================================================
+    async function startExtraction() {
+        if (!App.videoPath) { showToast('请先选择视频文件', 'warning'); return; }
+        if (App.isExtracting) return;
+
+        // 如果画廊有内容，二次确认
+        if (App.images.length > 0) {
+            if (!confirm('重新提取将清空当前画廊中的所有图片，确认继续？')) return;
+        }
+
+        const data = await api('/api/extract', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                video_path: App.videoPath,
+                threshold: parseFloat($('threshold').value),
+                enable_history: $('enableHistory').checked,
+                max_history: parseInt($('maxHistory').value),
+                use_roi: $('useRoi').checked,
+            }),
+        });
+
+        if (!data.success) { showToast(data.message, 'error'); return; }
+
+        App.isExtracting = true;
+        App.images = [];
+        App.deletedStack = [];
+        App.downloadLinks = [];
+        $('downloadSection').innerHTML = '';
+        $('downloadSection').classList.add('hidden');
+        $('btnExtract').classList.add('hidden');
+        $('btnCancel').classList.remove('hidden');
+        $('progressSection').classList.remove('hidden');
+        $('gallerySection').classList.add('hidden');
+        $('exportSection').classList.add('hidden');
+        $('extractStatus').textContent = '';
+        startPolling();
+    }
+
+    async function cancelExtraction() {
+        await api('/api/cancel', { method: 'POST' });
+        showToast('正在取消…', 'warning');
+    }
+
+    function startPolling() {
+        if (App.pollTimer) clearInterval(App.pollTimer);
+        let polling = false; // 防止重入
+        App.pollTimer = setInterval(async () => {
+            if (polling) return;
+            polling = true;
+            try {
+                const s = await api('/api/progress');
+
+                // 关键：如果请求失败（无 status 字段），忽略本次轮询，继续等下一次
+                if (!s.status) { polling = false; return; }
+
+                $('progressBar').style.width = s.progress + '%';
+                $('progressPct').textContent = s.progress + '%';
+                $('progressMessage').textContent = s.message || '';
+
+                if (s.status === 'done' || s.status === 'cancelled' || s.status === 'error') {
+                    stopPolling();
+                    App.isExtracting = false;
+                    $('btnExtract').classList.remove('hidden');
+                    $('btnCancel').classList.add('hidden');
+
+                    // 隐藏进度条，显示完成状态
+                    $('progressBar').style.width = '100%';
+                    $('progressPct').textContent = '100%';
+
+                    if (s.status === 'done') {
+                        $('progressMessage').textContent = '✅ ' + s.message;
+                        showToast(s.message, 'success', 5000);
+                        await loadImages();
+                    } else if (s.status === 'cancelled') {
+                        $('progressMessage').textContent = '⏹ ' + s.message;
+                        showToast(s.message, 'warning');
+                        await loadImages();
+                    } else if (s.status === 'error') {
+                        $('progressMessage').textContent = '❌ ' + s.message;
+                        showToast(s.message, 'error', 6000);
+                    }
+                }
+            } catch (e) {
+                console.warn('[Poll] 轮询异常，将重试:', e);
+            } finally {
+                polling = false;
+            }
+        }, 800);
+    }
+
+    function stopPolling() {
+        if (App.pollTimer) { clearInterval(App.pollTimer); App.pollTimer = null; }
+    }
+
+    // ============================================================
+    //  4. 画廊
+    // ============================================================
+    async function loadImages() {
+        const data = await api('/api/images');
+        App.images = data.images || [];
+        App.deletedStack = [];  // [{filename, originalIndex}, ...]
+        App.hasWork = App.images.length > 0;
+        renderGallery();
+        if (App.images.length > 0) {
+            $('gallerySection').classList.remove('hidden');
+            $('exportSection').classList.remove('hidden');
+        }
+        updateRecycleBinBtn();
+    }
+
+    // ── 创建单张卡片 DOM ──
+    function createCardEl(fn, idx) {
+        const card = document.createElement('div');
+        card.className = 'slide-card';
+        card.dataset.filename = fn;
+        card.innerHTML = `
+            <img src="/api/image/${encodeURIComponent(fn)}" alt="Slide ${idx + 1}" loading="lazy">
+            <div class="overlay">
+                <span class="bg-black/60 text-white text-xs px-2 py-0.5 rounded-full font-bold backdrop-blur">${idx + 1}</span>
+                <button class="del-btn w-7 h-7 rounded-full bg-red-500/80 hover:bg-red-600 text-white text-sm flex items-center justify-center backdrop-blur transition" title="删除">✕</button>
+            </div>
+        `;
+        // 用事件委托而不是 inline onclick
+        card.querySelector('.del-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const curIdx = Array.from($('gallery').children).indexOf(card);
+            if (curIdx >= 0) deleteImage(curIdx);
+        });
+        card.addEventListener('click', () => {
+            const curIdx = Array.from($('gallery').children).indexOf(card);
+            if (curIdx >= 0) showPreview(curIdx);
+        });
+        return card;
+    }
+
+    function renderGallery() {
+        const g = $('gallery');
+        g.innerHTML = '';
+        App.images.forEach((fn, i) => g.appendChild(createCardEl(fn, i)));
+        $('imageCount').textContent = `共 ${App.images.length} 张`;
+        initSortable();
+    }
+
+    function initSortable() {
+        if (App.sortable) App.sortable.destroy();
+        App.sortable = Sortable.create($('gallery'), {
+            animation: 200,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            delay: 120,
+            delayOnTouchOnly: true,
+            onEnd(evt) {
+                const [moved] = App.images.splice(evt.oldIndex, 1);
+                App.images.splice(evt.newIndex, 0, moved);
+                App.hasWork = true;
+                refreshBadges();
+            },
+        });
+    }
+
+    // 只刷新序号徽章，不重建 DOM
+    function refreshBadges() {
+        const cards = $('gallery').children;
+        for (let i = 0; i < cards.length; i++) {
+            const badge = cards[i].querySelector('.overlay span');
+            if (badge) badge.textContent = i + 1;
+        }
+        $('imageCount').textContent = `共 ${App.images.length} 张`;
+    }
+
+    // ── 删除（平滑动画、不重建画廊）──
+    function deleteImage(idx) {
+        if (idx < 0 || idx >= App.images.length) return;
+        const fn = App.images.splice(idx, 1)[0];
+        App.deletedStack.push({ filename: fn, originalIndex: idx });
+        App.hasWork = true;
+
+        const g = $('gallery');
+        const card = g.children[idx];
+        if (card) {
+            card.classList.add('removing');
+            card.addEventListener('transitionend', () => {
+                card.remove();
+                refreshBadges();
+            }, { once: true });
+            // 兜底：如果 transitionend 没触发
+            setTimeout(() => { if (card.parentNode) { card.remove(); refreshBadges(); } }, 350);
+        }
+
+        updateRecycleBinBtn();
+        showToast(`已移入回收站 (Ctrl+Z 撤销)`, 'info', 2000);
+    }
+
+    // ── Ctrl+Z 撤销最后一次删除，恢复到原位置 ──
+    function undoLastDelete() {
+        if (App.deletedStack.length === 0) return;
+        const { filename, originalIndex } = App.deletedStack.pop();
+        restoreImageAt(filename, originalIndex);
+        updateRecycleBinBtn();
+        showToast(`已恢复「${filename}」`, 'success', 2000);
+    }
+
+    // ── 恢复指定图片到指定位置 ──
+    function restoreImageAt(filename, targetIdx) {
+        // 限制 index 在合法范围
+        const insertIdx = Math.min(targetIdx, App.images.length);
+        App.images.splice(insertIdx, 0, filename);
+        App.hasWork = true;
+
+        const g = $('gallery');
+        const card = createCardEl(filename, insertIdx);
+        card.classList.add('restoring');
+        card.addEventListener('animationend', () => card.classList.remove('restoring'), { once: true });
+
+        if (insertIdx >= g.children.length) {
+            g.appendChild(card);
+        } else {
+            g.insertBefore(card, g.children[insertIdx]);
+        }
+        refreshBadges();
+    }
+
+    // ── 回收站按钮 ──
+    function updateRecycleBinBtn() {
+        const btn = $('btnRecycleBin');
+        const cnt = $('recycleCount');
+        if (App.deletedStack.length > 0) {
+            btn.classList.remove('hidden');
+            cnt.textContent = App.deletedStack.length;
+        } else {
+            btn.classList.add('hidden');
+        }
+    }
+
+    // ── 回收站抽屉 ──
+    function openRecycleBin() {
+        renderRecycleList();
+        $('recycleDrawer').classList.add('open');
+        $('recycleBackdrop').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeRecycleBin() {
+        $('recycleDrawer').classList.remove('open');
+        $('recycleBackdrop').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function renderRecycleList() {
+        const list = $('recycleList');
+        list.innerHTML = '';
+        $('recycleDrawerCount').textContent = App.deletedStack.length > 0 ? `(${App.deletedStack.length} 张)` : '';
+        $('btnRestoreAll').style.display = App.deletedStack.length > 0 ? '' : 'none';
+
+        if (App.deletedStack.length === 0) {
+            list.innerHTML = '<p class="text-center text-gray-400 text-sm py-12">回收站是空的</p>';
+            return;
+        }
+
+        // 从最新删除的开始显示
+        for (let i = App.deletedStack.length - 1; i >= 0; i--) {
+            const { filename, originalIndex } = App.deletedStack[i];
+            const item = document.createElement('div');
+            item.className = 'recycle-item';
+            item.innerHTML = `
+                <img src="/api/image/${encodeURIComponent(filename)}" alt="${filename}">
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-700 truncate">${filename}</p>
+                    <p class="text-xs text-gray-400">原位置: 第 ${originalIndex + 1} 张</p>
+                </div>
+                <button class="shrink-0 btn text-xs bg-brand-50 text-brand-600 hover:bg-brand-100 border border-brand-200" title="恢复到原位置">
+                    ↩️ 恢复
+                </button>
+            `;
+            const stackIdx = i;
+            item.querySelector('button').addEventListener('click', (e) => {
+                e.stopPropagation();
+                restoreFromRecycleBin(stackIdx);
+            });
+            list.appendChild(item);
+        }
+    }
+
+    function restoreFromRecycleBin(stackIdx) {
+        if (stackIdx < 0 || stackIdx >= App.deletedStack.length) return;
+        const { filename, originalIndex } = App.deletedStack.splice(stackIdx, 1)[0];
+        restoreImageAt(filename, originalIndex);
+        updateRecycleBinBtn();
+        renderRecycleList();
+        showToast(`已恢复「${filename}」到第 ${Math.min(originalIndex + 1, App.images.length)} 位`, 'success', 2000);
+        if (App.deletedStack.length === 0) closeRecycleBin();
+    }
+
+    function restoreAll() {
+        if (App.deletedStack.length === 0) return;
+        // 按 originalIndex 排序恢复，保证位置尽量准确
+        const sorted = [...App.deletedStack].sort((a, b) => a.originalIndex - b.originalIndex);
+        App.deletedStack = [];
+        sorted.forEach(({ filename, originalIndex }) => restoreImageAt(filename, originalIndex));
+        updateRecycleBinBtn();
+        renderRecycleList();
+        closeRecycleBin();
+        showToast(`已恢复全部 ${sorted.length} 张图片`, 'success');
+    }
+
+    // ============================================================
+    //  预览弹窗
+    // ============================================================
+    function showPreview(idx) {
+        if (idx < 0 || idx >= App.images.length) return;
+        App.previewIndex = idx;
+        const fn = App.images[idx];
+        $('previewImage').src = `/api/image/${encodeURIComponent(fn)}`;
+        $('previewCounter').textContent = `${idx + 1} / ${App.images.length}`;
+        $('previewModal').classList.remove('hidden');
+        $('previewModal').classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function hidePreview() {
+        $('previewModal').classList.add('hidden');
+        $('previewModal').classList.remove('flex');
+        document.body.style.overflow = '';
+        App.previewIndex = -1;
+    }
+
+    function prevPreview() {
+        if (App.previewIndex > 0) showPreview(App.previewIndex - 1);
+    }
+
+    function nextPreview() {
+        if (App.previewIndex < App.images.length - 1) showPreview(App.previewIndex + 1);
+    }
+
+    // 键盘控制
+    document.addEventListener('keydown', (e) => {
+        // 回收站打开时 ESC 关闭
+        if ($('recycleDrawer').classList.contains('open')) {
+            if (e.key === 'Escape') { closeRecycleBin(); return; }
+        }
+        // 预览弹窗键盘导航
+        if (!$('previewModal').classList.contains('hidden')) {
+            if (e.key === 'Escape') hidePreview();
+            if (e.key === 'ArrowLeft')  prevPreview();
+            if (e.key === 'ArrowRight') nextPreview();
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                // 在预览中按 Delete 删除当前图片
+                const idx = App.previewIndex;
+                if (idx >= 0 && idx < App.images.length) {
+                    hidePreview();
+                    deleteImage(idx);
+                }
+            }
+            return;
+        }
+        // Ctrl+Z 全局撤销删除
+        if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undoLastDelete(); }
+        // Delete 键删除（在画廊无焦点时暂不处理）
+    });
+
+    // ============================================================
+    //  5. 打包导出
+    // ============================================================
+    async function packageImages(fmt) {
+        if (App.images.length === 0) { showToast('画廊中没有图片', 'warning'); return; }
+
+        const btnMap = { pdf: $('btnPdf'), pptx: $('btnPptx'), zip: $('btnZip') };
+        const btn = btnMap[fmt];
+        const origText = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ 打包中…'; }
+
+        const data = await api('/api/package', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ format: fmt, files: App.images }),
+        });
+
+        if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+
+        if (data.success) {
+            showToast(`${fmt.toUpperCase()} 打包完成！`, 'success');
+            addDownloadLink(data.filename, fmt);
+        } else {
+            showToast(data.message, 'error');
+        }
+    }
+
+    function addDownloadLink(filename, fmt) {
+        const sec = $('downloadSection');
+        sec.classList.remove('hidden');
+
+        // 避免重复
+        if (App.downloadLinks.includes(filename)) return;
+        App.downloadLinks.push(filename);
+
+        const icons = { pdf:'📄', pptx:'📊', zip:'📦' };
+        const el = document.createElement('a');
+        el.href = `/api/download/${encodeURIComponent(filename)}`;
+        el.className = 'flex items-center gap-3 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition text-emerald-800 text-sm font-medium';
+        el.innerHTML = `<span class="text-xl">${icons[fmt]||'📎'}</span> ${filename} <span class="ml-auto text-xs text-emerald-500">点击下载 ↓</span>`;
+        el.download = filename;
+        sec.appendChild(el);
+    }
+
+    // ============================================================
+    //  清理缓存
+    // ============================================================
+    async function cleanupCache() {
+        if (App.images.length > 0 || App.deletedStack.length > 0) {
+            if (!confirm('确定要清空所有缓存吗？这将删除所有已提取的图片和打包文件。')) return;
+        }
+        await api('/api/cleanup', { method: 'POST' });
+        App.images = [];
+        App.deletedStack = [];
+        App.hasWork = false;
+        App.downloadLinks = [];
+        $('gallery').innerHTML = '';
+        $('gallerySection').classList.add('hidden');
+        $('exportSection').classList.add('hidden');
+        $('progressSection').classList.add('hidden');
+        $('progressBar').style.width = '0%';
+        $('downloadSection').innerHTML = '';
+        $('downloadSection').classList.add('hidden');
+        $('recoveryBanner').classList.add('hidden');
+        closeRecycleBin();
+        updateRecycleBinBtn();
+        showToast('缓存已清空', 'success');
+    }
+
+    // ============================================================
+    //  恢复之前的缓存
+    // ============================================================
+    async function checkRecovery() {
+        const data = await api('/api/images');
+        if (data.images && data.images.length > 0) {
+            $('recoveryText').textContent = `发现上次提取的 ${data.images.length} 张图片，是否恢复到画廊？`;
+            $('recoveryBanner').classList.remove('hidden');
+        }
+    }
+
+    async function recoverImages() {
+        $('recoveryBanner').classList.add('hidden');
+        await loadImages();
+        showToast('已恢复图片', 'success');
+    }
+
+    function dismissRecovery() {
+        $('recoveryBanner').classList.add('hidden');
+    }
+
+    // ============================================================
+    //  关闭服务 & 心跳
+    // ============================================================
+    // 心跳：每 8 秒告诉服务器"浏览器还开着"
+    setInterval(() => {
+        navigator.sendBeacon('/api/heartbeat', '');
+    }, 8000);
+    // 立即发一次心跳
+    navigator.sendBeacon('/api/heartbeat', '');
+
+    async function shutdownServer() {
+        const running = App.images.length > 0 && !App.downloadLinks.length;
+        let msg = '确定要关闭工具吗？\n\n关闭后：\n• 服务将停止运行\n• 临时缓存会自动清理';
+        if (running) msg += '\n• ⚠️ 已提取但未导出的图片将丢失';
+        msg += '\n\n如需再次使用，重新双击 start.bat 即可。';
+        if (!confirm(msg)) return;
+        showToast('正在关闭服务…', 'info');
+        try {
+            await fetch('/api/shutdown', { method: 'POST' });
+        } catch {}
+        // 服务已关闭，显示提示
+        setTimeout(() => {
+            document.body.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#f8fafc;">
+                    <div style="text-align:center;max-width:400px;padding:40px;">
+                        <div style="font-size:64px;margin-bottom:20px;">👋</div>
+                        <h1 style="font-size:24px;font-weight:bold;color:#1e293b;margin-bottom:12px;">工具已关闭</h1>
+                        <p style="color:#64748b;line-height:1.6;">服务已安全退出，临时文件已清理。<br>可以关闭此页面了。</p>
+                        <p style="color:#94a3b8;font-size:13px;margin-top:20px;">如需再次使用，双击 <b>幻影智提.exe</b> 启动</p>
+                    </div>
+                </div>`;
+        }, 600);
+    }
+
+    // ============================================================
+    //  退出提醒 & 页面关闭时发送关闭信号
+    // ============================================================
+    // beforeunload 仅用于确认对话框（不要在这里发 beacon，否则用户取消也会触发关闭）
+    window.addEventListener('beforeunload', (e) => {
+        if (App.hasWork && App.images.length > 0) {
+            e.preventDefault();
+            e.returnValue = '你还有未导出的图片，确定要离开吗？关闭后临时文件将被清理。';
+            return e.returnValue;
+        }
+    });
+
+    // pagehide：页面真正被关闭/导航走时才通知服务器
+    // （即使 beacon 失败，心跳超时 30 秒也会兜底）
+    window.addEventListener('pagehide', () => {
+        navigator.sendBeacon('/api/shutdown', '');
+    });
+
+    // ============================================================
+    //  初始化
+    // ============================================================
+    checkRecovery();
+
+    </script>
+</body>
+</html>
