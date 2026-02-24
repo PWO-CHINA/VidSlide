@@ -16,12 +16,23 @@
 
 ## 前置步骤：先获取视频文件
 
-延河课堂的录播视频需要借助浏览器插件下载到本地，推荐使用：
+延河课堂的录播视频需要借助浏览器插件下载到本地，**推荐使用 [猫抓 (cat-catch)](https://github.com/xifangczy/cat-catch)**（开源，支持 Chrome / Edge / Firefox）。
 
-- [**猫抓 (cat-catch)**](https://github.com/xifangczy/cat-catch) — 开源浏览器资源嗅探插件（Chrome / Edge / Firefox）
-- [**Video DownloadHelper**](https://www.downloadhelper.net/) — 老牌视频下载插件
+> 也可以使用 [Video DownloadHelper](https://www.downloadhelper.net/) 等其他视频下载插件。
 
-安装插件后，打开延河课堂的录播页面，插件会自动嗅探视频地址，点击下载即可获得 `.mp4` 文件。
+### 以猫抓为例
+
+1. 从 [猫抓 GitHub](https://github.com/xifangczy/cat-catch) 或浏览器扩展商店安装猫抓插件
+2. 进入延河课堂的**录播课程页面**，刷新页面
+3. 点击浏览器工具栏的猫抓图标，会嗅探到**两个视频**：
+   - `video1.m3u8` — 这是**摄像头录播**（拍教室的，不需要）
+   - `VGA.m3u8` — 这是**屏幕录播**（PPT 画面，我们要下载的）
+
+   ![猫抓嗅探示例](docs/cat-catch-demo.png)
+
+4. 点击 **VGA.m3u8** 旁边的下载按钮
+5. 第一次使用猫抓下载时会弹出两个页面，**不用点击任何按钮**，等待猫抓自动完成下载
+6. 下载完成后选择保存位置，确认该视频是屏幕录制画面后，即可使用本工具提取 PPT
 
 ## 快速开始
 
