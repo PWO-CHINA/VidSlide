@@ -15,6 +15,7 @@
 """
 
 import cv2
+import gc
 import numpy as np
 import os
 import sys
@@ -438,6 +439,8 @@ def start_extraction(sid):
 #  后台提取 Worker（多会话版）
 # ============================================================
 def _extract_worker(sid, video_path, output_dir, threshold, enable_history, max_history, use_roi, fast_mode=True):
+    cap = None
+    history_pool = None
     try:
         cap = cv2.VideoCapture(video_path)
         ok, prev_frame = cap.read()
@@ -477,6 +480,15 @@ def _extract_worker(sid, video_path, output_dir, threshold, enable_history, max_
         count = 0
         saved = 0
         _extract_start_time = time.time()
+        _THROTTLE_INTERVAL = 0.008  # 每轮主循环让出 8ms CPU，降低峰值占用
+
+        def _should_cancel():
+            """快速检查取消标志"""
+            s = _get_session(sid)
+            if not s:
+                return True
+            with s['lock']:
+                return s['cancel_flag']
 
         fp = os.path.join(output_dir, f"slide_{saved:04d}.jpg")
         cv2.imencode('.jpg', prev_frame, [cv2.IMWRITE_JPEG_QUALITY, 95])[1].tofile(fp)
@@ -484,15 +496,12 @@ def _extract_worker(sid, video_path, output_dir, threshold, enable_history, max_
         _update_session(sid, saved_count=saved, message=f'已提取 {saved} 张')
 
         while True:
-            sess = _get_session(sid)
-            if not sess:
-                cap.release()
+            if _should_cancel():
+                _update_session(sid, status='cancelled', message=f'已取消，已保存 {saved} 张')
                 return
-            with sess['lock']:
-                if sess['cancel_flag']:
-                    _update_session(sid, status='cancelled', message=f'已取消，已保存 {saved} 张')
-                    cap.release()
-                    return
+
+            # — 节流：让出少量 CPU 给系统和其他线程 —
+            time.sleep(_THROTTLE_INTERVAL)
 
             grabbed = True
             for _ in range(frame_step):
@@ -502,6 +511,10 @@ def _extract_worker(sid, video_path, output_dir, threshold, enable_history, max_
                     break
             if not grabbed:
                 break
+
+            if _should_cancel():
+                _update_session(sid, status='cancelled', message=f'已取消，已保存 {saved} 张')
+                return
 
             ok, curr_frame = cap.retrieve()
             if not ok:
@@ -526,6 +539,9 @@ def _extract_worker(sid, video_path, output_dir, threshold, enable_history, max_
                 settled_gray = None
 
                 while True:
+                    if _should_cancel():
+                        break  # 跳出稳定帧检测，外层会处理取消
+                    time.sleep(_THROTTLE_INTERVAL)  # 子循环也节流
                     s_grabbed = True
                     for _ in range(check_step):
                         count += 1
@@ -547,6 +563,11 @@ def _extract_worker(sid, video_path, output_dir, threshold, enable_history, max_
                         settled_frame = tmp
                         settled_gray = tmp_gray
                         break
+
+                # 稳定帧检测后再检查一次取消
+                if _should_cancel():
+                    _update_session(sid, status='cancelled', message=f'已取消，已保存 {saved} 张')
+                    return
 
                 if settled_gray is not None:
                     final_diff = np.mean(cv2.absdiff(settled_gray, prev_gray))
@@ -572,7 +593,6 @@ def _extract_worker(sid, video_path, output_dir, threshold, enable_history, max_
                     else:
                         prev_gray = settled_gray
 
-        cap.release()
         elapsed_total = round(time.time() - _extract_start_time, 1)
         _update_session(sid, status='done', progress=100, eta_seconds=0, elapsed_seconds=elapsed_total,
                message=f'提取完成！共 {saved} 张幻灯片，耗时 {int(elapsed_total)}s')
@@ -591,6 +611,17 @@ def _extract_worker(sid, video_path, output_dir, threshold, enable_history, max_
             hint = '请截图此错误并前往 GitHub Issues 反馈。'
         _update_session(sid, status='error',
                         message=f'提取出错: {err_msg}\n💡 {hint}')
+    finally:
+        # ── 确保释放所有重量级资源 ──
+        if cap is not None:
+            try:
+                cap.release()
+            except Exception:
+                pass
+        cap = None
+        history_pool = None
+        # 立即触发垃圾回收，释放大量 numpy 数组占用的内存
+        gc.collect()
 
 
 # ============================================================

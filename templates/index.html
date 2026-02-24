@@ -846,7 +846,7 @@
         if (ts.isExtracting) {
             await api(`/api/session/${sid}/cancel`, { method: 'POST' });
         }
-        if (ts.pollTimer) clearInterval(ts.pollTimer);
+        if (ts.pollTimer) clearTimeout(ts.pollTimer);
         // 通知后端关闭会话
         await api(`/api/session/${sid}/close`, { method: 'POST' });
         // 移除 UI
@@ -993,14 +993,49 @@
     }
 
     async function cancelExtraction(sid) {
+        const ts = G.tabs[sid];
+        if (!ts) return;
+
+        // 1. 发送取消请求
         await api(`/api/session/${sid}/cancel`, { method: 'POST' });
         showToast('正在取消…', 'warning');
+
+        // 2. 停止现有轮询，自己处理确认+加载
+        stopPolling(sid);
+
+        // 3. 轮询等待后端确认取消（最多 ~10 秒）
+        for (let i = 0; i < 25; i++) {
+            await new Promise(r => setTimeout(r, 400));
+            try {
+                const s = await api(`/api/session/${sid}/progress`);
+                if (s.status === 'cancelled' || s.status === 'done' || s.status === 'error' || s.status === 'idle') {
+                    q(sid, 'js-progress-message').textContent = '⏹ ' + (s.message || '已取消');
+                    break;
+                }
+                if (s.progress != null) {
+                    q(sid, 'js-progress-bar').style.width = s.progress + '%';
+                    q(sid, 'js-progress-pct').textContent = s.progress + '%';
+                }
+                if (s.message) q(sid, 'js-progress-message').textContent = s.message;
+            } catch (e) {
+                console.warn('[Cancel] poll error:', e);
+            }
+        }
+
+        // 4. 更新 UI 状态
+        ts.isExtracting = false;
+        q(sid, 'js-btn-extract').classList.remove('hidden');
+        q(sid, 'js-btn-cancel').classList.add('hidden');
+        updateTabStatus(sid, 'cancelled');
+
+        // 5. 加载已提取的图片到画廊
+        await loadImages(sid);
     }
 
     function startPolling(sid) {
         const ts = G.tabs[sid];
         if (!ts) return;
-        if (ts.pollTimer) clearInterval(ts.pollTimer);
+        if (ts.pollTimer) clearTimeout(ts.pollTimer);
         let polling = false;
         let _pollInterval = 800; // 初始高频轮询
 
