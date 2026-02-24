@@ -1,5 +1,5 @@
 """
-幻影智提 (VidSlide) - PPT 幻灯片智能提取工具
+影幻智提 (VidSlide) - PPT 幻灯片智能提取工具
 ==============================================
 基于 Flask 的本地 Web 应用，提供可视化界面来提取、管理和打包 PPT 幻灯片。
 
@@ -10,7 +10,7 @@
     pip install flask opencv-python numpy pillow python-pptx
 
 作者: PWO-CHINA
-版本: v1.0.0
+版本: v0.1.0
 """
 
 import cv2
@@ -524,7 +524,7 @@ if __name__ == '__main__':
 
         print()
         print('=' * 55)
-        print('  幻影智提 (VidSlide) - PPT Slide Extractor')
+        print('  影幻智提 (VidSlide) - PPT Slide Extractor')
         print(f'  浏览器将自动打开: {url}')
         print(f'  临时文件目录: {BASE_DIR}')
         print('  关闭浏览器标签页后服务将在 30 秒内自动退出')
