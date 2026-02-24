@@ -359,6 +359,14 @@
                     </div>
                 </div>
             </div>
+            <!-- 快速模式 -->
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                    <input type="checkbox" id="fastMode" checked class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-400">
+                    ⚡ 快速模式
+                </label>
+                <p class="text-xs text-gray-400 leading-relaxed mt-1">将比较分辨率降至 480p 以加速检测（不影响输出图片质量）。超长视频建议开启，极端情况若漏检可关闭此选项重试。</p>
+            </div>
         </section>
 
         <!-- ── 步骤 3: 提取 ── -->
@@ -445,7 +453,7 @@
     <!-- ═══════ 底部说明 ═══════ -->
     <footer class="max-w-5xl mx-auto px-4 pb-8 text-center">
         <p class="text-xs text-gray-300">🔒 所有数据仅保存在本地。关闭浏览器页面后服务会在 30 秒内自动退出并清理临时文件。</p>
-        <p class="text-xs text-gray-300 mt-1">影幻智提 (VidSlide) v0.1.0 · Made by PWO-CHINA</p>
+        <p class="text-xs text-gray-300 mt-1">影幻智提 (VidSlide) v0.1.1 · Made by PWO-CHINA</p>
     </footer>
 
     <!-- ═══════ 回收站抽屉 ═══════ -->
@@ -619,6 +627,7 @@
                 enable_history: $('enableHistory').checked,
                 max_history: parseInt($('maxHistory').value),
                 use_roi: $('useRoi').checked,
+                fast_mode: $('fastMode').checked,
             }),
         });
 
