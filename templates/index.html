@@ -660,6 +660,27 @@
                 $('progressPct').textContent = s.progress + '%';
                 $('progressMessage').textContent = s.message || '';
 
+                // 显示剩余时间估算
+                if (s.eta_seconds != null && s.eta_seconds >= 0 && s.status === 'running') {
+                    const eta = Math.round(s.eta_seconds);
+                    const elapsed = Math.round(s.elapsed_seconds || 0);
+                    let etaStr;
+                    if (eta >= 60) {
+                        etaStr = Math.floor(eta / 60) + '分' + (eta % 60) + '秒';
+                    } else {
+                        etaStr = eta + '秒';
+                    }
+                    let elapsedStr;
+                    if (elapsed >= 60) {
+                        elapsedStr = Math.floor(elapsed / 60) + '分' + (elapsed % 60) + '秒';
+                    } else {
+                        elapsedStr = elapsed + '秒';
+                    }
+                    $('progressHint').textContent = '已用 ' + elapsedStr + '，预计还剩 ' + etaStr;
+                } else if (s.status === 'running') {
+                    $('progressHint').textContent = '正在估算剩余时间…';
+                }
+
                 if (s.status === 'done' || s.status === 'cancelled' || s.status === 'error') {
                     stopPolling();
                     App.isExtracting = false;

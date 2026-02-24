@@ -104,6 +104,8 @@ _state = {
     'saved_count': 0,
     'video_path': '',
     'cancel_flag': False,
+    'eta_seconds': -1,      # 预计剩余秒数，-1 表示尚未计算
+    'elapsed_seconds': 0,   # 已用时间（秒）
 }
 
 # 心跳机制：浏览器定期发送心跳，如果超时未收到则自动关闭服务
@@ -227,6 +229,7 @@ def start_extraction():
     _update(
         status='running', progress=0, message='正在初始化…',
         saved_count=0, video_path=video_path, cancel_flag=False,
+        eta_seconds=-1, elapsed_seconds=0,
     )
 
     threading.Thread(
@@ -266,6 +269,7 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
 
         count = 0
         saved = 0
+        _extract_start_time = time.time()   # ETA 计时起点
 
         # 保存第一帧
         fp = os.path.join(output_dir, f"slide_{saved:04d}.jpg")
@@ -282,7 +286,13 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
             count += frame_step
             cap.set(cv2.CAP_PROP_POS_FRAMES, count)
             ok, curr_frame = cap.read()
-            _update(progress=min(99, int(count / total_frames * 100)))
+            pct = min(99, int(count / total_frames * 100))
+            elapsed = time.time() - _extract_start_time
+            if pct > 2:  # 前 2% 数据不稳定，不计算 ETA
+                eta = elapsed / pct * (100 - pct)
+            else:
+                eta = -1
+            _update(progress=pct, eta_seconds=round(eta, 1), elapsed_seconds=round(elapsed, 1))
 
             if not ok:
                 break
@@ -345,7 +355,9 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
                         prev_gray = settled_gray
 
         cap.release()
-        _update(status='done', progress=100, message=f'提取完成！共 {saved} 张幻灯片')
+        elapsed_total = round(time.time() - _extract_start_time, 1)
+        _update(status='done', progress=100, eta_seconds=0, elapsed_seconds=elapsed_total,
+               message=f'提取完成！共 {saved} 张幻灯片，耗时 {int(elapsed_total)}s')
     except Exception as e:
         error_detail = traceback.format_exc()
         print(f"！！！发生严重错误！！！\n{error_detail}")
@@ -453,7 +465,8 @@ def cleanup():
     for d in [TEMP_CACHE, TEMP_PACKAGES]:
         if os.path.exists(d):
             shutil.rmtree(d)
-    _update(status='idle', progress=0, message='', saved_count=0, video_path='', cancel_flag=False)
+    _update(status='idle', progress=0, message='', saved_count=0, video_path='', cancel_flag=False,
+           eta_seconds=-1, elapsed_seconds=0)
     return jsonify(success=True)
 
 
