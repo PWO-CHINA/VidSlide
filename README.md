@@ -18,7 +18,7 @@
 
 延河课堂的录播视频需要借助浏览器插件下载到本地，推荐使用：
 
-- [**猫抓 (cat-catch)**](https://github.com/nickyc975/cat-catch) — 开源浏览器资源嗅探插件（Chrome / Edge / Firefox）
+- [**猫抓 (cat-catch)**](https://github.com/xifangczy/cat-catch) — 开源浏览器资源嗅探插件（Chrome / Edge / Firefox）
 - [**Video DownloadHelper**](https://www.downloadhelper.net/) — 老牌视频下载插件
 
 安装插件后，打开延河课堂的录播页面，插件会自动嗅探视频地址，点击下载即可获得 `.mp4` 文件。
@@ -55,6 +55,8 @@ python app.py
 | 可视化管理 | 拖拽排序、预览大图、删除/回收站 |
 | 多格式导出 | PDF / PPTX / ZIP |
 | 自动退出 | 关闭浏览器后 30 秒内自动退出并清理临时文件 |
+| ⚡ 快速模式 | 缩小比较分辨率至 480p 加速检测（不影响输出质量，可关闭） |
+| 实时进度 | 显示百分比、已用时间、预计剩余时间 |
 
 ## 自行打包 .exe
 
@@ -64,7 +66,7 @@ pip install -r requirements.txt
 # 运行打包脚本
 build.bat
 # 或手动执行
-pyinstaller --onefile --icon="logo.ico" --version-file="version.txt" --add-data "templates;templates" --name "VidSlide" app.py
+pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt" --add-data "templates;templates" --name "VidSlide" app.py
 ```
 
 ## 项目结构
@@ -84,6 +86,17 @@ VidSlide/
 ## 关于代码
 
 本项目绝大部分代码由 **GitHub Copilot (Claude Opus 4.6)** AI 生成，由 [PWO-CHINA](https://github.com/PWO-CHINA) 审核、测试和维护。
+
+## 更新日志
+
+### v0.1.1 (2026-02-24)
+- ⚡ **性能优化**：用 `grab()` 顺序跳帧代替 `set(POS_FRAMES)` 随机 seek，处理速度提升 3-10 倍
+- 📊 **进度估算**：进度条显示已用时间 + 预计剩余时间
+- 🔧 **快速模式**：可选将比较分辨率降至 480p 进一步加速（默认开启，不影响输出质量）
+- 🚫 **无控制台窗口**：双击 exe 后纯后台运行，不再弹出黑色命令行
+
+### v0.1.0 (2026-02-24)
+- 🎉 首个公开测试版
 
 ## 隐私
 
