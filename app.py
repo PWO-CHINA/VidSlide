@@ -10,7 +10,7 @@
     pip install flask opencv-python numpy pillow python-pptx
 
 作者: PWO-CHINA
-版本: v0.1.0
+版本: v0.1.1
 """
 
 import cv2
@@ -213,6 +213,7 @@ def start_extraction():
     enable_history = bool(data.get('enable_history', False))
     max_history = int(data.get('max_history', 5))
     use_roi = bool(data.get('use_roi', True))
+    fast_mode = bool(data.get('fast_mode', True))
 
     if not video_path:
         return jsonify(success=False, message='未提供视频路径')
@@ -234,7 +235,7 @@ def start_extraction():
 
     threading.Thread(
         target=_extract_worker,
-        args=(video_path, TEMP_CACHE, threshold, enable_history, max_history, use_roi),
+        args=(video_path, TEMP_CACHE, threshold, enable_history, max_history, use_roi, fast_mode),
         daemon=True,
     ).start()
 
@@ -244,7 +245,7 @@ def start_extraction():
 # ============================================================
 #  后台提取 Worker（带全局异常捕获）
 # ============================================================
-def _extract_worker(video_path, output_dir, threshold, enable_history, max_history, use_roi):
+def _extract_worker(video_path, output_dir, threshold, enable_history, max_history, use_roi, fast_mode=True):
     try:
         cap = cv2.VideoCapture(video_path)
         ok, prev_frame = cap.read()
@@ -264,28 +265,57 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
             y1, y2 = 0, h
             x1, x2 = 0, w
 
-        prev_gray = cv2.cvtColor(prev_frame[y1:y2, x1:x2], cv2.COLOR_BGR2GRAY)
+        # ── 快速模式：缩小 ROI 到 ~480px 宽度用于比较，大幅减少计算量 ──
+        roi_w = x2 - x1
+        COMPARE_WIDTH = 480
+        if fast_mode and roi_w > COMPARE_WIDTH:
+            _scale = COMPARE_WIDTH / roi_w
+        else:
+            _scale = 1.0
+
+        def _to_gray(frame):
+            """提取 ROI → (可选缩小) → 灰度，用于帧间比较"""
+            roi = frame[y1:y2, x1:x2]
+            if _scale < 1.0:
+                roi = cv2.resize(roi, None, fx=_scale, fy=_scale,
+                                 interpolation=cv2.INTER_AREA)
+            return cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+
+        prev_gray = _to_gray(prev_frame)
         history_pool = [prev_gray] if enable_history else None
 
         count = 0
         saved = 0
         _extract_start_time = time.time()   # ETA 计时起点
 
-        # 保存第一帧
+        # 保存第一帧（始终用原始分辨率保存）
         fp = os.path.join(output_dir, f"slide_{saved:04d}.jpg")
         cv2.imencode('.jpg', prev_frame, [cv2.IMWRITE_JPEG_QUALITY, 95])[1].tofile(fp)
         saved += 1
         _update(saved_count=saved, message=f'已提取 {saved} 张')
 
-        while ok:
+        # ── 主循环：用 grab() 跳帧代替 set(POS_FRAMES)，避免昂贵的随机 seek ──
+        while True:
             if _get_state()['cancel_flag']:
                 _update(status='cancelled', message=f'已取消，已保存 {saved} 张')
                 cap.release()
                 return
 
-            count += frame_step
-            cap.set(cv2.CAP_PROP_POS_FRAMES, count)
-            ok, curr_frame = cap.read()
+            # grab() 只解码帧头不解码像素，比 read() 快很多
+            grabbed = True
+            for _ in range(frame_step):
+                count += 1
+                if not cap.grab():
+                    grabbed = False
+                    break
+            if not grabbed:
+                break
+
+            # 到达目标帧才 retrieve() 解码像素
+            ok, curr_frame = cap.retrieve()
+            if not ok:
+                break
+
             pct = min(99, int(count / total_frames * 100))
             elapsed = time.time() - _extract_start_time
             if pct > 2:  # 前 2% 数据不稳定，不计算 ETA
@@ -294,28 +324,30 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
                 eta = -1
             _update(progress=pct, eta_seconds=round(eta, 1), elapsed_seconds=round(elapsed, 1))
 
-            if not ok:
-                break
-
-            curr_gray = cv2.cvtColor(curr_frame[y1:y2, x1:x2], cv2.COLOR_BGR2GRAY)
+            curr_gray = _to_gray(curr_frame)
             mean_diff = np.mean(cv2.absdiff(curr_gray, prev_gray))
 
             if mean_diff > threshold:
-                # ── 等待画面稳定（用独立计数器，避免影响外层进度计算） ──
+                # ── 等待画面稳定 ──
                 check_step = max(1, int(fps * 0.5))
                 stable = 0
                 last_gray = curr_gray
                 settled_frame = None
                 settled_gray = None
-                inner_count = count  # 独立计数器
 
                 while True:
-                    inner_count += check_step
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, inner_count)
-                    ret, tmp = cap.read()
+                    s_grabbed = True
+                    for _ in range(check_step):
+                        count += 1
+                        if not cap.grab():
+                            s_grabbed = False
+                            break
+                    if not s_grabbed:
+                        break
+                    ret, tmp = cap.retrieve()
                     if not ret:
                         break
-                    tmp_gray = cv2.cvtColor(tmp[y1:y2, x1:x2], cv2.COLOR_BGR2GRAY)
+                    tmp_gray = _to_gray(tmp)
                     if np.mean(cv2.absdiff(tmp_gray, last_gray)) < 1.0:
                         stable += 1
                     else:
@@ -325,9 +357,6 @@ def _extract_worker(video_path, output_dir, threshold, enable_history, max_histo
                         settled_frame = tmp
                         settled_gray = tmp_gray
                         break
-
-                # 将外层 count 同步到内层实际位置，避免重复处理已扫描的帧
-                count = inner_count
 
                 # ── 去重核验 ──
                 if settled_gray is not None:
