@@ -111,7 +111,7 @@ _state = {
 # 心跳机制：浏览器定期发送心跳，如果超时未收到则自动关闭服务
 _last_heartbeat = 0.0
 _heartbeat_received = False   # 是否收到过至少一次心跳
-HEARTBEAT_TIMEOUT = 30       # 秒：浏览器断开后多久关闭服务
+HEARTBEAT_TIMEOUT = 20       # 秒：浏览器断开后多久关闭服务
 
 
 def _update(**kw):

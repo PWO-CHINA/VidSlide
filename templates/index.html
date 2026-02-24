@@ -1128,10 +1128,12 @@
         }
     });
 
-    // pagehide：页面真正被关闭/导航走时才通知服务器
-    // （即使 beacon 失败，心跳超时 30 秒也会兜底）
+    // pagehide：刷新 / 导航 / 关闭 tab 都会触发
+    // 刷新时不能发 shutdown，否则后端直接退出，新页面连不上
+    // 只发心跳续命，刷新后新页面的 setInterval 会接管心跳
+    // 真正关闭 tab 后心跳停止 → 20s 超时自动退出
     window.addEventListener('pagehide', () => {
-        navigator.sendBeacon('/api/shutdown', '');
+        navigator.sendBeacon('/api/heartbeat', '');
     });
 
     // ============================================================
