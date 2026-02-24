@@ -34,7 +34,7 @@ if errorlevel 1 (
 echo [2/2] 正在打包为 .exe（这可能需要 1~3 分钟）...
 echo.
 
-pyinstaller --onefile ^
+pyinstaller --onefile --noconsole ^
     --icon="logo.ico" ^
     --version-file="version.txt" ^
     --add-data "templates;templates" ^

@@ -1,0 +1,2989 @@
+('D:\\the lab for html\\VidSlide\\build\\VidSlide\\PYZ-00.pyz',
+ [('PIL',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\__init__.py',
+   'PYMODULE'),
+  ('PIL.AvifImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\AvifImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.BlpImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\BlpImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.BmpImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\BmpImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.BufrStubImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\BufrStubImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.CurImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\CurImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.DcxImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\DcxImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.DdsImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\DdsImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.EpsImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\EpsImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.ExifTags',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ExifTags.py',
+   'PYMODULE'),
+  ('PIL.FitsImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\FitsImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.FliImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\FliImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.FpxImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\FpxImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.FtexImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\FtexImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.GbrImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\GbrImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.GifImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\GifImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.GimpGradientFile',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\GimpGradientFile.py',
+   'PYMODULE'),
+  ('PIL.GimpPaletteFile',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\GimpPaletteFile.py',
+   'PYMODULE'),
+  ('PIL.GribStubImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\GribStubImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.Hdf5StubImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\Hdf5StubImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.IcnsImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\IcnsImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.IcoImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\IcoImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.ImImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.Image',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\Image.py',
+   'PYMODULE'),
+  ('PIL.ImageChops',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageChops.py',
+   'PYMODULE'),
+  ('PIL.ImageCms',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageCms.py',
+   'PYMODULE'),
+  ('PIL.ImageColor',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageColor.py',
+   'PYMODULE'),
+  ('PIL.ImageFile',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageFile.py',
+   'PYMODULE'),
+  ('PIL.ImageFilter',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageFilter.py',
+   'PYMODULE'),
+  ('PIL.ImageFont',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageFont.py',
+   'PYMODULE'),
+  ('PIL.ImageMath',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageMath.py',
+   'PYMODULE'),
+  ('PIL.ImageMode',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageMode.py',
+   'PYMODULE'),
+  ('PIL.ImageOps',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageOps.py',
+   'PYMODULE'),
+  ('PIL.ImagePalette',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImagePalette.py',
+   'PYMODULE'),
+  ('PIL.ImageQt',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageQt.py',
+   'PYMODULE'),
+  ('PIL.ImageSequence',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageSequence.py',
+   'PYMODULE'),
+  ('PIL.ImageShow',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageShow.py',
+   'PYMODULE'),
+  ('PIL.ImageTk',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageTk.py',
+   'PYMODULE'),
+  ('PIL.ImageWin',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImageWin.py',
+   'PYMODULE'),
+  ('PIL.ImtImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\ImtImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.IptcImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\IptcImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.Jpeg2KImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\Jpeg2KImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.JpegImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\JpegImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.JpegPresets',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\JpegPresets.py',
+   'PYMODULE'),
+  ('PIL.McIdasImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\McIdasImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.MicImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\MicImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.MpegImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\MpegImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.MpoImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\MpoImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.MspImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\MspImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.PaletteFile',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\PaletteFile.py',
+   'PYMODULE'),
+  ('PIL.PalmImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\PalmImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.PcdImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\PcdImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.PcxImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\PcxImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.PdfImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\PdfImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.PdfParser',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\PdfParser.py',
+   'PYMODULE'),
+  ('PIL.PixarImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\PixarImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.PngImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\PngImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.PpmImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\PpmImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.PsdImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\PsdImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.QoiImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\QoiImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.SgiImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\SgiImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.SpiderImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\SpiderImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.SunImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\SunImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.TgaImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\TgaImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.TiffImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\TiffImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.TiffTags',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\TiffTags.py',
+   'PYMODULE'),
+  ('PIL.WebPImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\WebPImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.WmfImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\WmfImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.XVThumbImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\XVThumbImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.XbmImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\XbmImagePlugin.py',
+   'PYMODULE'),
+  ('PIL.XpmImagePlugin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\XpmImagePlugin.py',
+   'PYMODULE'),
+  ('PIL._binary',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\_binary.py',
+   'PYMODULE'),
+  ('PIL._deprecate',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\_deprecate.py',
+   'PYMODULE'),
+  ('PIL._typing',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\_typing.py',
+   'PYMODULE'),
+  ('PIL._util',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\_util.py',
+   'PYMODULE'),
+  ('PIL._version',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\_version.py',
+   'PYMODULE'),
+  ('PIL.features',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\PIL\\features.py',
+   'PYMODULE'),
+  ('__future__',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\__future__.py',
+   'PYMODULE'),
+  ('_aix_support',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\_aix_support.py',
+   'PYMODULE'),
+  ('_bootsubprocess',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\_bootsubprocess.py',
+   'PYMODULE'),
+  ('_compat_pickle',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\_compat_pickle.py',
+   'PYMODULE'),
+  ('_compression',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\_compression.py',
+   'PYMODULE'),
+  ('_py_abc',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\_py_abc.py',
+   'PYMODULE'),
+  ('_pydecimal',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\_pydecimal.py',
+   'PYMODULE'),
+  ('_strptime',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\_strptime.py',
+   'PYMODULE'),
+  ('_threading_local',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\_threading_local.py',
+   'PYMODULE'),
+  ('argparse',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\argparse.py',
+   'PYMODULE'),
+  ('ast',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\ast.py',
+   'PYMODULE'),
+  ('asyncio',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\__init__.py',
+   'PYMODULE'),
+  ('asyncio.base_events',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\base_events.py',
+   'PYMODULE'),
+  ('asyncio.base_futures',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\base_futures.py',
+   'PYMODULE'),
+  ('asyncio.base_subprocess',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\base_subprocess.py',
+   'PYMODULE'),
+  ('asyncio.base_tasks',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\base_tasks.py',
+   'PYMODULE'),
+  ('asyncio.constants',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\constants.py',
+   'PYMODULE'),
+  ('asyncio.coroutines',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\coroutines.py',
+   'PYMODULE'),
+  ('asyncio.events',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\events.py',
+   'PYMODULE'),
+  ('asyncio.exceptions',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\exceptions.py',
+   'PYMODULE'),
+  ('asyncio.format_helpers',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\format_helpers.py',
+   'PYMODULE'),
+  ('asyncio.futures',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\futures.py',
+   'PYMODULE'),
+  ('asyncio.locks',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\locks.py',
+   'PYMODULE'),
+  ('asyncio.log',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\log.py',
+   'PYMODULE'),
+  ('asyncio.mixins',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\mixins.py',
+   'PYMODULE'),
+  ('asyncio.proactor_events',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\proactor_events.py',
+   'PYMODULE'),
+  ('asyncio.protocols',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\protocols.py',
+   'PYMODULE'),
+  ('asyncio.queues',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\queues.py',
+   'PYMODULE'),
+  ('asyncio.runners',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\runners.py',
+   'PYMODULE'),
+  ('asyncio.selector_events',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\selector_events.py',
+   'PYMODULE'),
+  ('asyncio.sslproto',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\sslproto.py',
+   'PYMODULE'),
+  ('asyncio.staggered',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\staggered.py',
+   'PYMODULE'),
+  ('asyncio.streams',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\streams.py',
+   'PYMODULE'),
+  ('asyncio.subprocess',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\subprocess.py',
+   'PYMODULE'),
+  ('asyncio.taskgroups',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\taskgroups.py',
+   'PYMODULE'),
+  ('asyncio.tasks',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\tasks.py',
+   'PYMODULE'),
+  ('asyncio.threads',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\threads.py',
+   'PYMODULE'),
+  ('asyncio.timeouts',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\timeouts.py',
+   'PYMODULE'),
+  ('asyncio.transports',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\transports.py',
+   'PYMODULE'),
+  ('asyncio.trsock',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\trsock.py',
+   'PYMODULE'),
+  ('asyncio.unix_events',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\unix_events.py',
+   'PYMODULE'),
+  ('asyncio.windows_events',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\windows_events.py',
+   'PYMODULE'),
+  ('asyncio.windows_utils',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\asyncio\\windows_utils.py',
+   'PYMODULE'),
+  ('base64',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\base64.py',
+   'PYMODULE'),
+  ('bdb',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\bdb.py',
+   'PYMODULE'),
+  ('bisect',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\bisect.py',
+   'PYMODULE'),
+  ('blinker',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\blinker\\__init__.py',
+   'PYMODULE'),
+  ('blinker._utilities',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\blinker\\_utilities.py',
+   'PYMODULE'),
+  ('blinker.base',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\blinker\\base.py',
+   'PYMODULE'),
+  ('bz2',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\bz2.py',
+   'PYMODULE'),
+  ('calendar',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\calendar.py',
+   'PYMODULE'),
+  ('cgi',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\cgi.py',
+   'PYMODULE'),
+  ('click',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\click\\__init__.py',
+   'PYMODULE'),
+  ('click._compat',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\click\\_compat.py',
+   'PYMODULE'),
+  ('click._termui_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\click\\_termui_impl.py',
+   'PYMODULE'),
+  ('click._textwrap',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\click\\_textwrap.py',
+   'PYMODULE'),
+  ('click._utils',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\click\\_utils.py',
+   'PYMODULE'),
+  ('click._winconsole',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\click\\_winconsole.py',
+   'PYMODULE'),
+  ('click.core',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\click\\core.py',
+   'PYMODULE'),
+  ('click.decorators',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\click\\decorators.py',
+   'PYMODULE'),
+  ('click.exceptions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\click\\exceptions.py',
+   'PYMODULE'),
+  ('click.formatting',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\click\\formatting.py',
+   'PYMODULE'),
+  ('click.globals',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\click\\globals.py',
+   'PYMODULE'),
+  ('click.parser',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\click\\parser.py',
+   'PYMODULE'),
+  ('click.shell_completion',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\click\\shell_completion.py',
+   'PYMODULE'),
+  ('click.termui',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\click\\termui.py',
+   'PYMODULE'),
+  ('click.testing',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\click\\testing.py',
+   'PYMODULE'),
+  ('click.types',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\click\\types.py',
+   'PYMODULE'),
+  ('click.utils',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\click\\utils.py',
+   'PYMODULE'),
+  ('cmd',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\cmd.py',
+   'PYMODULE'),
+  ('code',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\code.py',
+   'PYMODULE'),
+  ('codeop',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\codeop.py',
+   'PYMODULE'),
+  ('colorama',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\colorama\\__init__.py',
+   'PYMODULE'),
+  ('colorama.ansi',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\colorama\\ansi.py',
+   'PYMODULE'),
+  ('colorama.ansitowin32',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\colorama\\ansitowin32.py',
+   'PYMODULE'),
+  ('colorama.initialise',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\colorama\\initialise.py',
+   'PYMODULE'),
+  ('colorama.win32',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\colorama\\win32.py',
+   'PYMODULE'),
+  ('colorama.winterm',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\colorama\\winterm.py',
+   'PYMODULE'),
+  ('colorsys',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\colorsys.py',
+   'PYMODULE'),
+  ('concurrent',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\concurrent\\__init__.py',
+   'PYMODULE'),
+  ('concurrent.futures',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\concurrent\\futures\\__init__.py',
+   'PYMODULE'),
+  ('concurrent.futures._base',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\concurrent\\futures\\_base.py',
+   'PYMODULE'),
+  ('concurrent.futures.process',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\concurrent\\futures\\process.py',
+   'PYMODULE'),
+  ('concurrent.futures.thread',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\concurrent\\futures\\thread.py',
+   'PYMODULE'),
+  ('contextlib',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\contextlib.py',
+   'PYMODULE'),
+  ('contextvars',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\contextvars.py',
+   'PYMODULE'),
+  ('copy',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\copy.py',
+   'PYMODULE'),
+  ('csv',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\csv.py',
+   'PYMODULE'),
+  ('ctypes',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\ctypes\\__init__.py',
+   'PYMODULE'),
+  ('ctypes._endian',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\ctypes\\_endian.py',
+   'PYMODULE'),
+  ('ctypes.wintypes',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\ctypes\\wintypes.py',
+   'PYMODULE'),
+  ('dataclasses',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\dataclasses.py',
+   'PYMODULE'),
+  ('datetime',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\datetime.py',
+   'PYMODULE'),
+  ('decimal',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\decimal.py',
+   'PYMODULE'),
+  ('difflib',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\difflib.py',
+   'PYMODULE'),
+  ('dis',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\dis.py',
+   'PYMODULE'),
+  ('doctest',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\doctest.py',
+   'PYMODULE'),
+  ('email',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\__init__.py',
+   'PYMODULE'),
+  ('email._encoded_words',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\_encoded_words.py',
+   'PYMODULE'),
+  ('email._header_value_parser',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\_header_value_parser.py',
+   'PYMODULE'),
+  ('email._parseaddr',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\_parseaddr.py',
+   'PYMODULE'),
+  ('email._policybase',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\_policybase.py',
+   'PYMODULE'),
+  ('email.base64mime',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\base64mime.py',
+   'PYMODULE'),
+  ('email.charset',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\charset.py',
+   'PYMODULE'),
+  ('email.contentmanager',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\contentmanager.py',
+   'PYMODULE'),
+  ('email.encoders',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\encoders.py',
+   'PYMODULE'),
+  ('email.errors',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\errors.py',
+   'PYMODULE'),
+  ('email.feedparser',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\feedparser.py',
+   'PYMODULE'),
+  ('email.generator',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\generator.py',
+   'PYMODULE'),
+  ('email.header',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\header.py',
+   'PYMODULE'),
+  ('email.headerregistry',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\headerregistry.py',
+   'PYMODULE'),
+  ('email.iterators',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\iterators.py',
+   'PYMODULE'),
+  ('email.message',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\message.py',
+   'PYMODULE'),
+  ('email.parser',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\parser.py',
+   'PYMODULE'),
+  ('email.policy',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\policy.py',
+   'PYMODULE'),
+  ('email.quoprimime',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\quoprimime.py',
+   'PYMODULE'),
+  ('email.utils',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\email\\utils.py',
+   'PYMODULE'),
+  ('fileinput',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\fileinput.py',
+   'PYMODULE'),
+  ('flask',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\__init__.py',
+   'PYMODULE'),
+  ('flask.app',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\flask\\app.py',
+   'PYMODULE'),
+  ('flask.blueprints',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\blueprints.py',
+   'PYMODULE'),
+  ('flask.cli',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\flask\\cli.py',
+   'PYMODULE'),
+  ('flask.config',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\flask\\config.py',
+   'PYMODULE'),
+  ('flask.ctx',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\flask\\ctx.py',
+   'PYMODULE'),
+  ('flask.debughelpers',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\debughelpers.py',
+   'PYMODULE'),
+  ('flask.globals',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\globals.py',
+   'PYMODULE'),
+  ('flask.helpers',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\helpers.py',
+   'PYMODULE'),
+  ('flask.json',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\json\\__init__.py',
+   'PYMODULE'),
+  ('flask.json.provider',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\json\\provider.py',
+   'PYMODULE'),
+  ('flask.json.tag',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\json\\tag.py',
+   'PYMODULE'),
+  ('flask.logging',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\logging.py',
+   'PYMODULE'),
+  ('flask.sansio', '-', 'PYMODULE'),
+  ('flask.sansio.app',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\sansio\\app.py',
+   'PYMODULE'),
+  ('flask.sansio.blueprints',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\sansio\\blueprints.py',
+   'PYMODULE'),
+  ('flask.sansio.scaffold',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\sansio\\scaffold.py',
+   'PYMODULE'),
+  ('flask.sessions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\sessions.py',
+   'PYMODULE'),
+  ('flask.signals',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\signals.py',
+   'PYMODULE'),
+  ('flask.templating',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\templating.py',
+   'PYMODULE'),
+  ('flask.testing',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\testing.py',
+   'PYMODULE'),
+  ('flask.typing',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\flask\\typing.py',
+   'PYMODULE'),
+  ('flask.wrappers',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\flask\\wrappers.py',
+   'PYMODULE'),
+  ('fnmatch',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\fnmatch.py',
+   'PYMODULE'),
+  ('fractions',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\fractions.py',
+   'PYMODULE'),
+  ('ftplib',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\ftplib.py',
+   'PYMODULE'),
+  ('getopt',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\getopt.py',
+   'PYMODULE'),
+  ('getpass',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\getpass.py',
+   'PYMODULE'),
+  ('gettext',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\gettext.py',
+   'PYMODULE'),
+  ('glob',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\glob.py',
+   'PYMODULE'),
+  ('gzip',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\gzip.py',
+   'PYMODULE'),
+  ('hashlib',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\hashlib.py',
+   'PYMODULE'),
+  ('hmac',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\hmac.py',
+   'PYMODULE'),
+  ('html',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\html\\__init__.py',
+   'PYMODULE'),
+  ('html.entities',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\html\\entities.py',
+   'PYMODULE'),
+  ('http',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\http\\__init__.py',
+   'PYMODULE'),
+  ('http.client',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\http\\client.py',
+   'PYMODULE'),
+  ('http.cookiejar',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\http\\cookiejar.py',
+   'PYMODULE'),
+  ('http.server',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\http\\server.py',
+   'PYMODULE'),
+  ('importlib',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\__init__.py',
+   'PYMODULE'),
+  ('importlib._abc',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\_abc.py',
+   'PYMODULE'),
+  ('importlib._bootstrap',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\_bootstrap.py',
+   'PYMODULE'),
+  ('importlib._bootstrap_external',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\_bootstrap_external.py',
+   'PYMODULE'),
+  ('importlib.abc',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\abc.py',
+   'PYMODULE'),
+  ('importlib.machinery',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\machinery.py',
+   'PYMODULE'),
+  ('importlib.metadata',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\metadata\\__init__.py',
+   'PYMODULE'),
+  ('importlib.metadata._adapters',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\metadata\\_adapters.py',
+   'PYMODULE'),
+  ('importlib.metadata._collections',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\metadata\\_collections.py',
+   'PYMODULE'),
+  ('importlib.metadata._functools',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\metadata\\_functools.py',
+   'PYMODULE'),
+  ('importlib.metadata._itertools',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\metadata\\_itertools.py',
+   'PYMODULE'),
+  ('importlib.metadata._meta',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\metadata\\_meta.py',
+   'PYMODULE'),
+  ('importlib.metadata._text',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\metadata\\_text.py',
+   'PYMODULE'),
+  ('importlib.readers',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\readers.py',
+   'PYMODULE'),
+  ('importlib.resources',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\resources\\__init__.py',
+   'PYMODULE'),
+  ('importlib.resources._adapters',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\resources\\_adapters.py',
+   'PYMODULE'),
+  ('importlib.resources._common',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\resources\\_common.py',
+   'PYMODULE'),
+  ('importlib.resources._itertools',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\resources\\_itertools.py',
+   'PYMODULE'),
+  ('importlib.resources._legacy',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\resources\\_legacy.py',
+   'PYMODULE'),
+  ('importlib.resources.abc',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\resources\\abc.py',
+   'PYMODULE'),
+  ('importlib.resources.readers',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\resources\\readers.py',
+   'PYMODULE'),
+  ('importlib.util',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\importlib\\util.py',
+   'PYMODULE'),
+  ('inspect',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\inspect.py',
+   'PYMODULE'),
+  ('ipaddress',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\ipaddress.py',
+   'PYMODULE'),
+  ('itsdangerous',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\itsdangerous\\__init__.py',
+   'PYMODULE'),
+  ('itsdangerous._json',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\itsdangerous\\_json.py',
+   'PYMODULE'),
+  ('itsdangerous.encoding',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\itsdangerous\\encoding.py',
+   'PYMODULE'),
+  ('itsdangerous.exc',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\itsdangerous\\exc.py',
+   'PYMODULE'),
+  ('itsdangerous.serializer',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\itsdangerous\\serializer.py',
+   'PYMODULE'),
+  ('itsdangerous.signer',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\itsdangerous\\signer.py',
+   'PYMODULE'),
+  ('itsdangerous.timed',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\itsdangerous\\timed.py',
+   'PYMODULE'),
+  ('itsdangerous.url_safe',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\itsdangerous\\url_safe.py',
+   'PYMODULE'),
+  ('jinja2',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\__init__.py',
+   'PYMODULE'),
+  ('jinja2._identifier',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\_identifier.py',
+   'PYMODULE'),
+  ('jinja2.async_utils',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\async_utils.py',
+   'PYMODULE'),
+  ('jinja2.bccache',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\bccache.py',
+   'PYMODULE'),
+  ('jinja2.compiler',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\compiler.py',
+   'PYMODULE'),
+  ('jinja2.constants',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\constants.py',
+   'PYMODULE'),
+  ('jinja2.debug',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\debug.py',
+   'PYMODULE'),
+  ('jinja2.defaults',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\defaults.py',
+   'PYMODULE'),
+  ('jinja2.environment',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\environment.py',
+   'PYMODULE'),
+  ('jinja2.exceptions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\exceptions.py',
+   'PYMODULE'),
+  ('jinja2.ext',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\ext.py',
+   'PYMODULE'),
+  ('jinja2.filters',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\filters.py',
+   'PYMODULE'),
+  ('jinja2.idtracking',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\idtracking.py',
+   'PYMODULE'),
+  ('jinja2.lexer',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\lexer.py',
+   'PYMODULE'),
+  ('jinja2.loaders',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\loaders.py',
+   'PYMODULE'),
+  ('jinja2.nodes',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\nodes.py',
+   'PYMODULE'),
+  ('jinja2.optimizer',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\optimizer.py',
+   'PYMODULE'),
+  ('jinja2.parser',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\parser.py',
+   'PYMODULE'),
+  ('jinja2.runtime',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\runtime.py',
+   'PYMODULE'),
+  ('jinja2.sandbox',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\sandbox.py',
+   'PYMODULE'),
+  ('jinja2.tests',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\tests.py',
+   'PYMODULE'),
+  ('jinja2.utils',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\utils.py',
+   'PYMODULE'),
+  ('jinja2.visitor',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\jinja2\\visitor.py',
+   'PYMODULE'),
+  ('json',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\json\\__init__.py',
+   'PYMODULE'),
+  ('json.decoder',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\json\\decoder.py',
+   'PYMODULE'),
+  ('json.encoder',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\json\\encoder.py',
+   'PYMODULE'),
+  ('json.scanner',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\json\\scanner.py',
+   'PYMODULE'),
+  ('logging',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\logging\\__init__.py',
+   'PYMODULE'),
+  ('lxml',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\__init__.py',
+   'PYMODULE'),
+  ('lxml.ElementInclude',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\ElementInclude.py',
+   'PYMODULE'),
+  ('lxml.cssselect',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\cssselect.py',
+   'PYMODULE'),
+  ('lxml.doctestcompare',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\doctestcompare.py',
+   'PYMODULE'),
+  ('lxml.html',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\__init__.py',
+   'PYMODULE'),
+  ('lxml.html.ElementSoup',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\ElementSoup.py',
+   'PYMODULE'),
+  ('lxml.html._diffcommand',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\_diffcommand.py',
+   'PYMODULE'),
+  ('lxml.html._html5builder',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\_html5builder.py',
+   'PYMODULE'),
+  ('lxml.html._setmixin',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\_setmixin.py',
+   'PYMODULE'),
+  ('lxml.html.builder',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\builder.py',
+   'PYMODULE'),
+  ('lxml.html.clean',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\clean.py',
+   'PYMODULE'),
+  ('lxml.html.defs',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\defs.py',
+   'PYMODULE'),
+  ('lxml.html.formfill',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\formfill.py',
+   'PYMODULE'),
+  ('lxml.html.html5parser',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\html5parser.py',
+   'PYMODULE'),
+  ('lxml.html.soupparser',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\soupparser.py',
+   'PYMODULE'),
+  ('lxml.html.usedoctest',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\html\\usedoctest.py',
+   'PYMODULE'),
+  ('lxml.includes',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\includes\\__init__.py',
+   'PYMODULE'),
+  ('lxml.includes.extlibs',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\includes\\extlibs\\__init__.py',
+   'PYMODULE'),
+  ('lxml.includes.libexslt',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\includes\\libexslt\\__init__.py',
+   'PYMODULE'),
+  ('lxml.includes.libxml',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\includes\\libxml\\__init__.py',
+   'PYMODULE'),
+  ('lxml.includes.libxslt',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\includes\\libxslt\\__init__.py',
+   'PYMODULE'),
+  ('lxml.isoschematron',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\isoschematron\\__init__.py',
+   'PYMODULE'),
+  ('lxml.pyclasslookup',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\pyclasslookup.py',
+   'PYMODULE'),
+  ('lxml.usedoctest',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\lxml\\usedoctest.py',
+   'PYMODULE'),
+  ('lzma',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\lzma.py',
+   'PYMODULE'),
+  ('markupsafe',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\markupsafe\\__init__.py',
+   'PYMODULE'),
+  ('markupsafe._native',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\markupsafe\\_native.py',
+   'PYMODULE'),
+  ('mimetypes',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\mimetypes.py',
+   'PYMODULE'),
+  ('multiprocessing',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\__init__.py',
+   'PYMODULE'),
+  ('multiprocessing.connection',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\connection.py',
+   'PYMODULE'),
+  ('multiprocessing.context',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\context.py',
+   'PYMODULE'),
+  ('multiprocessing.dummy',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\dummy\\__init__.py',
+   'PYMODULE'),
+  ('multiprocessing.dummy.connection',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\dummy\\connection.py',
+   'PYMODULE'),
+  ('multiprocessing.forkserver',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\forkserver.py',
+   'PYMODULE'),
+  ('multiprocessing.heap',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\heap.py',
+   'PYMODULE'),
+  ('multiprocessing.managers',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\managers.py',
+   'PYMODULE'),
+  ('multiprocessing.pool',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\pool.py',
+   'PYMODULE'),
+  ('multiprocessing.popen_fork',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\popen_fork.py',
+   'PYMODULE'),
+  ('multiprocessing.popen_forkserver',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\popen_forkserver.py',
+   'PYMODULE'),
+  ('multiprocessing.popen_spawn_posix',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\popen_spawn_posix.py',
+   'PYMODULE'),
+  ('multiprocessing.popen_spawn_win32',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\popen_spawn_win32.py',
+   'PYMODULE'),
+  ('multiprocessing.process',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\process.py',
+   'PYMODULE'),
+  ('multiprocessing.queues',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\queues.py',
+   'PYMODULE'),
+  ('multiprocessing.reduction',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\reduction.py',
+   'PYMODULE'),
+  ('multiprocessing.resource_sharer',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\resource_sharer.py',
+   'PYMODULE'),
+  ('multiprocessing.resource_tracker',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\resource_tracker.py',
+   'PYMODULE'),
+  ('multiprocessing.shared_memory',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\shared_memory.py',
+   'PYMODULE'),
+  ('multiprocessing.sharedctypes',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\sharedctypes.py',
+   'PYMODULE'),
+  ('multiprocessing.spawn',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\spawn.py',
+   'PYMODULE'),
+  ('multiprocessing.synchronize',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\synchronize.py',
+   'PYMODULE'),
+  ('multiprocessing.util',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\multiprocessing\\util.py',
+   'PYMODULE'),
+  ('netrc',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\netrc.py',
+   'PYMODULE'),
+  ('nturl2path',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\nturl2path.py',
+   'PYMODULE'),
+  ('numbers',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\numbers.py',
+   'PYMODULE'),
+  ('numpy',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\__init__.py',
+   'PYMODULE'),
+  ('numpy.__config__',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\__config__.py',
+   'PYMODULE'),
+  ('numpy._array_api_info',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_array_api_info.py',
+   'PYMODULE'),
+  ('numpy._core',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\__init__.py',
+   'PYMODULE'),
+  ('numpy._core._add_newdocs',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\_add_newdocs.py',
+   'PYMODULE'),
+  ('numpy._core._add_newdocs_scalars',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\_add_newdocs_scalars.py',
+   'PYMODULE'),
+  ('numpy._core._asarray',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\_asarray.py',
+   'PYMODULE'),
+  ('numpy._core._dtype',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\_dtype.py',
+   'PYMODULE'),
+  ('numpy._core._dtype_ctypes',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\_dtype_ctypes.py',
+   'PYMODULE'),
+  ('numpy._core._exceptions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\_exceptions.py',
+   'PYMODULE'),
+  ('numpy._core._internal',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\_internal.py',
+   'PYMODULE'),
+  ('numpy._core._methods',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\_methods.py',
+   'PYMODULE'),
+  ('numpy._core._string_helpers',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\_string_helpers.py',
+   'PYMODULE'),
+  ('numpy._core._type_aliases',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\_type_aliases.py',
+   'PYMODULE'),
+  ('numpy._core._ufunc_config',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\_ufunc_config.py',
+   'PYMODULE'),
+  ('numpy._core.arrayprint',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\arrayprint.py',
+   'PYMODULE'),
+  ('numpy._core.defchararray',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\defchararray.py',
+   'PYMODULE'),
+  ('numpy._core.einsumfunc',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\einsumfunc.py',
+   'PYMODULE'),
+  ('numpy._core.fromnumeric',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\fromnumeric.py',
+   'PYMODULE'),
+  ('numpy._core.function_base',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\function_base.py',
+   'PYMODULE'),
+  ('numpy._core.getlimits',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\getlimits.py',
+   'PYMODULE'),
+  ('numpy._core.memmap',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\memmap.py',
+   'PYMODULE'),
+  ('numpy._core.multiarray',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\multiarray.py',
+   'PYMODULE'),
+  ('numpy._core.numeric',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\numeric.py',
+   'PYMODULE'),
+  ('numpy._core.numerictypes',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\numerictypes.py',
+   'PYMODULE'),
+  ('numpy._core.overrides',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\overrides.py',
+   'PYMODULE'),
+  ('numpy._core.printoptions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\printoptions.py',
+   'PYMODULE'),
+  ('numpy._core.records',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\records.py',
+   'PYMODULE'),
+  ('numpy._core.shape_base',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\shape_base.py',
+   'PYMODULE'),
+  ('numpy._core.strings',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\strings.py',
+   'PYMODULE'),
+  ('numpy._core.umath',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_core\\umath.py',
+   'PYMODULE'),
+  ('numpy._distributor_init',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_distributor_init.py',
+   'PYMODULE'),
+  ('numpy._expired_attrs_2_0',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_expired_attrs_2_0.py',
+   'PYMODULE'),
+  ('numpy._globals',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_globals.py',
+   'PYMODULE'),
+  ('numpy._pytesttester',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_pytesttester.py',
+   'PYMODULE'),
+  ('numpy._typing',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_typing\\__init__.py',
+   'PYMODULE'),
+  ('numpy._typing._add_docstring',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_typing\\_add_docstring.py',
+   'PYMODULE'),
+  ('numpy._typing._array_like',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_typing\\_array_like.py',
+   'PYMODULE'),
+  ('numpy._typing._char_codes',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_typing\\_char_codes.py',
+   'PYMODULE'),
+  ('numpy._typing._dtype_like',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_typing\\_dtype_like.py',
+   'PYMODULE'),
+  ('numpy._typing._nbit',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_typing\\_nbit.py',
+   'PYMODULE'),
+  ('numpy._typing._nbit_base',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_typing\\_nbit_base.py',
+   'PYMODULE'),
+  ('numpy._typing._nested_sequence',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_typing\\_nested_sequence.py',
+   'PYMODULE'),
+  ('numpy._typing._scalars',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_typing\\_scalars.py',
+   'PYMODULE'),
+  ('numpy._typing._shape',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_typing\\_shape.py',
+   'PYMODULE'),
+  ('numpy._typing._ufunc',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_typing\\_ufunc.py',
+   'PYMODULE'),
+  ('numpy._utils',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_utils\\__init__.py',
+   'PYMODULE'),
+  ('numpy._utils._convertions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_utils\\_convertions.py',
+   'PYMODULE'),
+  ('numpy._utils._inspect',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\_utils\\_inspect.py',
+   'PYMODULE'),
+  ('numpy.char',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\char\\__init__.py',
+   'PYMODULE'),
+  ('numpy.core',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\core\\__init__.py',
+   'PYMODULE'),
+  ('numpy.core._utils',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\core\\_utils.py',
+   'PYMODULE'),
+  ('numpy.core.multiarray',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\core\\multiarray.py',
+   'PYMODULE'),
+  ('numpy.ctypeslib',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\ctypeslib\\__init__.py',
+   'PYMODULE'),
+  ('numpy.ctypeslib._ctypeslib',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\ctypeslib\\_ctypeslib.py',
+   'PYMODULE'),
+  ('numpy.dtypes',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\dtypes.py',
+   'PYMODULE'),
+  ('numpy.exceptions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\exceptions.py',
+   'PYMODULE'),
+  ('numpy.f2py',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\__init__.py',
+   'PYMODULE'),
+  ('numpy.f2py.__version__',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\__version__.py',
+   'PYMODULE'),
+  ('numpy.f2py._backends',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\_backends\\__init__.py',
+   'PYMODULE'),
+  ('numpy.f2py._backends._backend',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\_backends\\_backend.py',
+   'PYMODULE'),
+  ('numpy.f2py._backends._distutils',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\_backends\\_distutils.py',
+   'PYMODULE'),
+  ('numpy.f2py._backends._meson',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\_backends\\_meson.py',
+   'PYMODULE'),
+  ('numpy.f2py._isocbind',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\_isocbind.py',
+   'PYMODULE'),
+  ('numpy.f2py.auxfuncs',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\auxfuncs.py',
+   'PYMODULE'),
+  ('numpy.f2py.capi_maps',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\capi_maps.py',
+   'PYMODULE'),
+  ('numpy.f2py.cb_rules',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\cb_rules.py',
+   'PYMODULE'),
+  ('numpy.f2py.cfuncs',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\cfuncs.py',
+   'PYMODULE'),
+  ('numpy.f2py.common_rules',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\common_rules.py',
+   'PYMODULE'),
+  ('numpy.f2py.crackfortran',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\crackfortran.py',
+   'PYMODULE'),
+  ('numpy.f2py.diagnose',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\diagnose.py',
+   'PYMODULE'),
+  ('numpy.f2py.f2py2e',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\f2py2e.py',
+   'PYMODULE'),
+  ('numpy.f2py.f90mod_rules',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\f90mod_rules.py',
+   'PYMODULE'),
+  ('numpy.f2py.func2subr',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\func2subr.py',
+   'PYMODULE'),
+  ('numpy.f2py.rules',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\rules.py',
+   'PYMODULE'),
+  ('numpy.f2py.symbolic',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\symbolic.py',
+   'PYMODULE'),
+  ('numpy.f2py.use_rules',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\f2py\\use_rules.py',
+   'PYMODULE'),
+  ('numpy.fft',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\fft\\__init__.py',
+   'PYMODULE'),
+  ('numpy.fft._helper',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\fft\\_helper.py',
+   'PYMODULE'),
+  ('numpy.fft._pocketfft',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\fft\\_pocketfft.py',
+   'PYMODULE'),
+  ('numpy.lib',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\__init__.py',
+   'PYMODULE'),
+  ('numpy.lib._array_utils_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_array_utils_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._arraypad_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_arraypad_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._arraysetops_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_arraysetops_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._arrayterator_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_arrayterator_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._datasource',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_datasource.py',
+   'PYMODULE'),
+  ('numpy.lib._format_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_format_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._function_base_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_function_base_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._histograms_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_histograms_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._index_tricks_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_index_tricks_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._iotools',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_iotools.py',
+   'PYMODULE'),
+  ('numpy.lib._nanfunctions_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_nanfunctions_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._npyio_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_npyio_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._polynomial_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_polynomial_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._scimath_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_scimath_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._shape_base_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_shape_base_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._stride_tricks_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_stride_tricks_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._twodim_base_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_twodim_base_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._type_check_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_type_check_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._ufunclike_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_ufunclike_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._utils_impl',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_utils_impl.py',
+   'PYMODULE'),
+  ('numpy.lib._version',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\_version.py',
+   'PYMODULE'),
+  ('numpy.lib.array_utils',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\array_utils.py',
+   'PYMODULE'),
+  ('numpy.lib.format',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\format.py',
+   'PYMODULE'),
+  ('numpy.lib.introspect',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\introspect.py',
+   'PYMODULE'),
+  ('numpy.lib.mixins',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\mixins.py',
+   'PYMODULE'),
+  ('numpy.lib.npyio',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\npyio.py',
+   'PYMODULE'),
+  ('numpy.lib.recfunctions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\recfunctions.py',
+   'PYMODULE'),
+  ('numpy.lib.scimath',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\scimath.py',
+   'PYMODULE'),
+  ('numpy.lib.stride_tricks',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\lib\\stride_tricks.py',
+   'PYMODULE'),
+  ('numpy.linalg',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\linalg\\__init__.py',
+   'PYMODULE'),
+  ('numpy.linalg._linalg',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\linalg\\_linalg.py',
+   'PYMODULE'),
+  ('numpy.ma',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\ma\\__init__.py',
+   'PYMODULE'),
+  ('numpy.ma.core',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\ma\\core.py',
+   'PYMODULE'),
+  ('numpy.ma.extras',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\ma\\extras.py',
+   'PYMODULE'),
+  ('numpy.ma.mrecords',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\ma\\mrecords.py',
+   'PYMODULE'),
+  ('numpy.matlib',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\matlib.py',
+   'PYMODULE'),
+  ('numpy.matrixlib',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\matrixlib\\__init__.py',
+   'PYMODULE'),
+  ('numpy.matrixlib.defmatrix',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\matrixlib\\defmatrix.py',
+   'PYMODULE'),
+  ('numpy.polynomial',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\polynomial\\__init__.py',
+   'PYMODULE'),
+  ('numpy.polynomial._polybase',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\polynomial\\_polybase.py',
+   'PYMODULE'),
+  ('numpy.polynomial.chebyshev',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\polynomial\\chebyshev.py',
+   'PYMODULE'),
+  ('numpy.polynomial.hermite',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\polynomial\\hermite.py',
+   'PYMODULE'),
+  ('numpy.polynomial.hermite_e',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\polynomial\\hermite_e.py',
+   'PYMODULE'),
+  ('numpy.polynomial.laguerre',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\polynomial\\laguerre.py',
+   'PYMODULE'),
+  ('numpy.polynomial.legendre',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\polynomial\\legendre.py',
+   'PYMODULE'),
+  ('numpy.polynomial.polynomial',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\polynomial\\polynomial.py',
+   'PYMODULE'),
+  ('numpy.polynomial.polyutils',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\polynomial\\polyutils.py',
+   'PYMODULE'),
+  ('numpy.random',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\random\\__init__.py',
+   'PYMODULE'),
+  ('numpy.random._pickle',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\random\\_pickle.py',
+   'PYMODULE'),
+  ('numpy.rec',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\rec\\__init__.py',
+   'PYMODULE'),
+  ('numpy.strings',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\strings\\__init__.py',
+   'PYMODULE'),
+  ('numpy.testing',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\testing\\__init__.py',
+   'PYMODULE'),
+  ('numpy.testing._private',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\testing\\_private\\__init__.py',
+   'PYMODULE'),
+  ('numpy.testing._private.extbuild',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\testing\\_private\\extbuild.py',
+   'PYMODULE'),
+  ('numpy.testing._private.utils',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\testing\\_private\\utils.py',
+   'PYMODULE'),
+  ('numpy.testing.overrides',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\testing\\overrides.py',
+   'PYMODULE'),
+  ('numpy.typing',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\typing\\__init__.py',
+   'PYMODULE'),
+  ('numpy.version',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\numpy\\version.py',
+   'PYMODULE'),
+  ('opcode',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\opcode.py',
+   'PYMODULE'),
+  ('optparse',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\optparse.py',
+   'PYMODULE'),
+  ('pathlib',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\pathlib.py',
+   'PYMODULE'),
+  ('pdb',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\pdb.py',
+   'PYMODULE'),
+  ('pickle',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\pickle.py',
+   'PYMODULE'),
+  ('pkgutil',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\pkgutil.py',
+   'PYMODULE'),
+  ('platform',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\platform.py',
+   'PYMODULE'),
+  ('pprint',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\pprint.py',
+   'PYMODULE'),
+  ('pptx',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\__init__.py',
+   'PYMODULE'),
+  ('pptx.action',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\action.py',
+   'PYMODULE'),
+  ('pptx.api',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\api.py',
+   'PYMODULE'),
+  ('pptx.chart',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\__init__.py',
+   'PYMODULE'),
+  ('pptx.chart.axis',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\axis.py',
+   'PYMODULE'),
+  ('pptx.chart.category',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\category.py',
+   'PYMODULE'),
+  ('pptx.chart.chart',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\chart.py',
+   'PYMODULE'),
+  ('pptx.chart.data',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\data.py',
+   'PYMODULE'),
+  ('pptx.chart.datalabel',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\datalabel.py',
+   'PYMODULE'),
+  ('pptx.chart.legend',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\legend.py',
+   'PYMODULE'),
+  ('pptx.chart.marker',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\marker.py',
+   'PYMODULE'),
+  ('pptx.chart.plot',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\plot.py',
+   'PYMODULE'),
+  ('pptx.chart.point',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\point.py',
+   'PYMODULE'),
+  ('pptx.chart.series',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\series.py',
+   'PYMODULE'),
+  ('pptx.chart.xlsx',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\xlsx.py',
+   'PYMODULE'),
+  ('pptx.chart.xmlwriter',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\chart\\xmlwriter.py',
+   'PYMODULE'),
+  ('pptx.dml',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\dml\\__init__.py',
+   'PYMODULE'),
+  ('pptx.dml.chtfmt',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\dml\\chtfmt.py',
+   'PYMODULE'),
+  ('pptx.dml.color',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\dml\\color.py',
+   'PYMODULE'),
+  ('pptx.dml.effect',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\dml\\effect.py',
+   'PYMODULE'),
+  ('pptx.dml.fill',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\dml\\fill.py',
+   'PYMODULE'),
+  ('pptx.dml.line',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\dml\\line.py',
+   'PYMODULE'),
+  ('pptx.enum',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\enum\\__init__.py',
+   'PYMODULE'),
+  ('pptx.enum.action',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\enum\\action.py',
+   'PYMODULE'),
+  ('pptx.enum.base',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\enum\\base.py',
+   'PYMODULE'),
+  ('pptx.enum.chart',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\enum\\chart.py',
+   'PYMODULE'),
+  ('pptx.enum.dml',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\enum\\dml.py',
+   'PYMODULE'),
+  ('pptx.enum.lang',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\enum\\lang.py',
+   'PYMODULE'),
+  ('pptx.enum.shapes',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\enum\\shapes.py',
+   'PYMODULE'),
+  ('pptx.enum.text',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\enum\\text.py',
+   'PYMODULE'),
+  ('pptx.exc',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\exc.py',
+   'PYMODULE'),
+  ('pptx.media',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\media.py',
+   'PYMODULE'),
+  ('pptx.opc',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\opc\\__init__.py',
+   'PYMODULE'),
+  ('pptx.opc.constants',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\opc\\constants.py',
+   'PYMODULE'),
+  ('pptx.opc.oxml',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\opc\\oxml.py',
+   'PYMODULE'),
+  ('pptx.opc.package',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\opc\\package.py',
+   'PYMODULE'),
+  ('pptx.opc.packuri',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\opc\\packuri.py',
+   'PYMODULE'),
+  ('pptx.opc.serialized',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\opc\\serialized.py',
+   'PYMODULE'),
+  ('pptx.opc.shared',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\opc\\shared.py',
+   'PYMODULE'),
+  ('pptx.opc.spec',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\opc\\spec.py',
+   'PYMODULE'),
+  ('pptx.oxml',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\__init__.py',
+   'PYMODULE'),
+  ('pptx.oxml.action',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\action.py',
+   'PYMODULE'),
+  ('pptx.oxml.chart',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\chart\\__init__.py',
+   'PYMODULE'),
+  ('pptx.oxml.chart.axis',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\chart\\axis.py',
+   'PYMODULE'),
+  ('pptx.oxml.chart.chart',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\chart\\chart.py',
+   'PYMODULE'),
+  ('pptx.oxml.chart.datalabel',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\chart\\datalabel.py',
+   'PYMODULE'),
+  ('pptx.oxml.chart.legend',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\chart\\legend.py',
+   'PYMODULE'),
+  ('pptx.oxml.chart.marker',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\chart\\marker.py',
+   'PYMODULE'),
+  ('pptx.oxml.chart.plot',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\chart\\plot.py',
+   'PYMODULE'),
+  ('pptx.oxml.chart.series',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\chart\\series.py',
+   'PYMODULE'),
+  ('pptx.oxml.chart.shared',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\chart\\shared.py',
+   'PYMODULE'),
+  ('pptx.oxml.coreprops',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\coreprops.py',
+   'PYMODULE'),
+  ('pptx.oxml.dml',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\dml\\__init__.py',
+   'PYMODULE'),
+  ('pptx.oxml.dml.color',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\dml\\color.py',
+   'PYMODULE'),
+  ('pptx.oxml.dml.fill',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\dml\\fill.py',
+   'PYMODULE'),
+  ('pptx.oxml.dml.line',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\dml\\line.py',
+   'PYMODULE'),
+  ('pptx.oxml.ns',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\ns.py',
+   'PYMODULE'),
+  ('pptx.oxml.presentation',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\presentation.py',
+   'PYMODULE'),
+  ('pptx.oxml.shapes',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\shapes\\__init__.py',
+   'PYMODULE'),
+  ('pptx.oxml.shapes.autoshape',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\shapes\\autoshape.py',
+   'PYMODULE'),
+  ('pptx.oxml.shapes.connector',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\shapes\\connector.py',
+   'PYMODULE'),
+  ('pptx.oxml.shapes.graphfrm',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\shapes\\graphfrm.py',
+   'PYMODULE'),
+  ('pptx.oxml.shapes.groupshape',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\shapes\\groupshape.py',
+   'PYMODULE'),
+  ('pptx.oxml.shapes.picture',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\shapes\\picture.py',
+   'PYMODULE'),
+  ('pptx.oxml.shapes.shared',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\shapes\\shared.py',
+   'PYMODULE'),
+  ('pptx.oxml.simpletypes',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\simpletypes.py',
+   'PYMODULE'),
+  ('pptx.oxml.slide',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\slide.py',
+   'PYMODULE'),
+  ('pptx.oxml.table',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\table.py',
+   'PYMODULE'),
+  ('pptx.oxml.text',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\text.py',
+   'PYMODULE'),
+  ('pptx.oxml.theme',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\theme.py',
+   'PYMODULE'),
+  ('pptx.oxml.xmlchemy',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\oxml\\xmlchemy.py',
+   'PYMODULE'),
+  ('pptx.package',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\package.py',
+   'PYMODULE'),
+  ('pptx.parts',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\parts\\__init__.py',
+   'PYMODULE'),
+  ('pptx.parts.chart',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\parts\\chart.py',
+   'PYMODULE'),
+  ('pptx.parts.coreprops',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\parts\\coreprops.py',
+   'PYMODULE'),
+  ('pptx.parts.embeddedpackage',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\parts\\embeddedpackage.py',
+   'PYMODULE'),
+  ('pptx.parts.image',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\parts\\image.py',
+   'PYMODULE'),
+  ('pptx.parts.media',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\parts\\media.py',
+   'PYMODULE'),
+  ('pptx.parts.presentation',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\parts\\presentation.py',
+   'PYMODULE'),
+  ('pptx.parts.slide',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\parts\\slide.py',
+   'PYMODULE'),
+  ('pptx.presentation',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\presentation.py',
+   'PYMODULE'),
+  ('pptx.shapes',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\shapes\\__init__.py',
+   'PYMODULE'),
+  ('pptx.shapes.autoshape',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\shapes\\autoshape.py',
+   'PYMODULE'),
+  ('pptx.shapes.base',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\shapes\\base.py',
+   'PYMODULE'),
+  ('pptx.shapes.connector',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\shapes\\connector.py',
+   'PYMODULE'),
+  ('pptx.shapes.freeform',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\shapes\\freeform.py',
+   'PYMODULE'),
+  ('pptx.shapes.graphfrm',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\shapes\\graphfrm.py',
+   'PYMODULE'),
+  ('pptx.shapes.group',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\shapes\\group.py',
+   'PYMODULE'),
+  ('pptx.shapes.picture',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\shapes\\picture.py',
+   'PYMODULE'),
+  ('pptx.shapes.placeholder',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\shapes\\placeholder.py',
+   'PYMODULE'),
+  ('pptx.shapes.shapetree',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\shapes\\shapetree.py',
+   'PYMODULE'),
+  ('pptx.shared',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\shared.py',
+   'PYMODULE'),
+  ('pptx.slide',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\slide.py',
+   'PYMODULE'),
+  ('pptx.spec',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\spec.py',
+   'PYMODULE'),
+  ('pptx.table',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\table.py',
+   'PYMODULE'),
+  ('pptx.text',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\text\\__init__.py',
+   'PYMODULE'),
+  ('pptx.text.fonts',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\text\\fonts.py',
+   'PYMODULE'),
+  ('pptx.text.layout',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\text\\layout.py',
+   'PYMODULE'),
+  ('pptx.text.text',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\text\\text.py',
+   'PYMODULE'),
+  ('pptx.types',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\types.py',
+   'PYMODULE'),
+  ('pptx.util',
+   'D:\\the lab for html\\VidSlide\\venv\\Lib\\site-packages\\pptx\\util.py',
+   'PYMODULE'),
+  ('py_compile',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\py_compile.py',
+   'PYMODULE'),
+  ('pydoc',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\pydoc.py',
+   'PYMODULE'),
+  ('pydoc_data',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\pydoc_data\\__init__.py',
+   'PYMODULE'),
+  ('pydoc_data.topics',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\pydoc_data\\topics.py',
+   'PYMODULE'),
+  ('queue',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\queue.py',
+   'PYMODULE'),
+  ('quopri',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\quopri.py',
+   'PYMODULE'),
+  ('random',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\random.py',
+   'PYMODULE'),
+  ('rlcompleter',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\rlcompleter.py',
+   'PYMODULE'),
+  ('runpy',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\runpy.py',
+   'PYMODULE'),
+  ('secrets',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\secrets.py',
+   'PYMODULE'),
+  ('selectors',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\selectors.py',
+   'PYMODULE'),
+  ('shlex',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\shlex.py',
+   'PYMODULE'),
+  ('shutil',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\shutil.py',
+   'PYMODULE'),
+  ('signal',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\signal.py',
+   'PYMODULE'),
+  ('socket',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\socket.py',
+   'PYMODULE'),
+  ('socketserver',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\socketserver.py',
+   'PYMODULE'),
+  ('ssl',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\ssl.py',
+   'PYMODULE'),
+  ('statistics',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\statistics.py',
+   'PYMODULE'),
+  ('string',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\string.py',
+   'PYMODULE'),
+  ('stringprep',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\stringprep.py',
+   'PYMODULE'),
+  ('subprocess',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\subprocess.py',
+   'PYMODULE'),
+  ('sysconfig',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\sysconfig.py',
+   'PYMODULE'),
+  ('tarfile',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tarfile.py',
+   'PYMODULE'),
+  ('tempfile',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tempfile.py',
+   'PYMODULE'),
+  ('textwrap',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\textwrap.py',
+   'PYMODULE'),
+  ('threading',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\threading.py',
+   'PYMODULE'),
+  ('tkinter',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tkinter\\__init__.py',
+   'PYMODULE'),
+  ('tkinter.commondialog',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tkinter\\commondialog.py',
+   'PYMODULE'),
+  ('tkinter.constants',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tkinter\\constants.py',
+   'PYMODULE'),
+  ('tkinter.dialog',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tkinter\\dialog.py',
+   'PYMODULE'),
+  ('tkinter.filedialog',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tkinter\\filedialog.py',
+   'PYMODULE'),
+  ('tkinter.messagebox',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tkinter\\messagebox.py',
+   'PYMODULE'),
+  ('tkinter.simpledialog',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tkinter\\simpledialog.py',
+   'PYMODULE'),
+  ('token',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\token.py',
+   'PYMODULE'),
+  ('tokenize',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tokenize.py',
+   'PYMODULE'),
+  ('tracemalloc',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tracemalloc.py',
+   'PYMODULE'),
+  ('tty',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\tty.py',
+   'PYMODULE'),
+  ('typing',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\typing.py',
+   'PYMODULE'),
+  ('typing_extensions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\typing_extensions.py',
+   'PYMODULE'),
+  ('unittest',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\unittest\\__init__.py',
+   'PYMODULE'),
+  ('unittest._log',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\unittest\\_log.py',
+   'PYMODULE'),
+  ('unittest.async_case',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\unittest\\async_case.py',
+   'PYMODULE'),
+  ('unittest.case',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\unittest\\case.py',
+   'PYMODULE'),
+  ('unittest.loader',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\unittest\\loader.py',
+   'PYMODULE'),
+  ('unittest.main',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\unittest\\main.py',
+   'PYMODULE'),
+  ('unittest.result',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\unittest\\result.py',
+   'PYMODULE'),
+  ('unittest.runner',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\unittest\\runner.py',
+   'PYMODULE'),
+  ('unittest.signals',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\unittest\\signals.py',
+   'PYMODULE'),
+  ('unittest.suite',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\unittest\\suite.py',
+   'PYMODULE'),
+  ('unittest.util',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\unittest\\util.py',
+   'PYMODULE'),
+  ('urllib',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\urllib\\__init__.py',
+   'PYMODULE'),
+  ('urllib.error',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\urllib\\error.py',
+   'PYMODULE'),
+  ('urllib.parse',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\urllib\\parse.py',
+   'PYMODULE'),
+  ('urllib.request',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\urllib\\request.py',
+   'PYMODULE'),
+  ('urllib.response',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\urllib\\response.py',
+   'PYMODULE'),
+  ('uuid',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\uuid.py',
+   'PYMODULE'),
+  ('webbrowser',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\webbrowser.py',
+   'PYMODULE'),
+  ('werkzeug',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\__init__.py',
+   'PYMODULE'),
+  ('werkzeug._internal',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\_internal.py',
+   'PYMODULE'),
+  ('werkzeug._reloader',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\_reloader.py',
+   'PYMODULE'),
+  ('werkzeug.datastructures',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\datastructures\\__init__.py',
+   'PYMODULE'),
+  ('werkzeug.datastructures.accept',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\datastructures\\accept.py',
+   'PYMODULE'),
+  ('werkzeug.datastructures.auth',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\datastructures\\auth.py',
+   'PYMODULE'),
+  ('werkzeug.datastructures.cache_control',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\datastructures\\cache_control.py',
+   'PYMODULE'),
+  ('werkzeug.datastructures.csp',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\datastructures\\csp.py',
+   'PYMODULE'),
+  ('werkzeug.datastructures.etag',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\datastructures\\etag.py',
+   'PYMODULE'),
+  ('werkzeug.datastructures.file_storage',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\datastructures\\file_storage.py',
+   'PYMODULE'),
+  ('werkzeug.datastructures.headers',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\datastructures\\headers.py',
+   'PYMODULE'),
+  ('werkzeug.datastructures.mixins',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\datastructures\\mixins.py',
+   'PYMODULE'),
+  ('werkzeug.datastructures.range',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\datastructures\\range.py',
+   'PYMODULE'),
+  ('werkzeug.datastructures.structures',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\datastructures\\structures.py',
+   'PYMODULE'),
+  ('werkzeug.debug',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\debug\\__init__.py',
+   'PYMODULE'),
+  ('werkzeug.debug.console',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\debug\\console.py',
+   'PYMODULE'),
+  ('werkzeug.debug.repr',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\debug\\repr.py',
+   'PYMODULE'),
+  ('werkzeug.debug.tbtools',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\debug\\tbtools.py',
+   'PYMODULE'),
+  ('werkzeug.exceptions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\exceptions.py',
+   'PYMODULE'),
+  ('werkzeug.formparser',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\formparser.py',
+   'PYMODULE'),
+  ('werkzeug.http',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\http.py',
+   'PYMODULE'),
+  ('werkzeug.local',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\local.py',
+   'PYMODULE'),
+  ('werkzeug.middleware',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\middleware\\__init__.py',
+   'PYMODULE'),
+  ('werkzeug.middleware.shared_data',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\middleware\\shared_data.py',
+   'PYMODULE'),
+  ('werkzeug.routing',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\routing\\__init__.py',
+   'PYMODULE'),
+  ('werkzeug.routing.converters',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\routing\\converters.py',
+   'PYMODULE'),
+  ('werkzeug.routing.exceptions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\routing\\exceptions.py',
+   'PYMODULE'),
+  ('werkzeug.routing.map',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\routing\\map.py',
+   'PYMODULE'),
+  ('werkzeug.routing.matcher',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\routing\\matcher.py',
+   'PYMODULE'),
+  ('werkzeug.routing.rules',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\routing\\rules.py',
+   'PYMODULE'),
+  ('werkzeug.sansio',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\sansio\\__init__.py',
+   'PYMODULE'),
+  ('werkzeug.sansio.http',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\sansio\\http.py',
+   'PYMODULE'),
+  ('werkzeug.sansio.multipart',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\sansio\\multipart.py',
+   'PYMODULE'),
+  ('werkzeug.sansio.request',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\sansio\\request.py',
+   'PYMODULE'),
+  ('werkzeug.sansio.response',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\sansio\\response.py',
+   'PYMODULE'),
+  ('werkzeug.sansio.utils',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\sansio\\utils.py',
+   'PYMODULE'),
+  ('werkzeug.security',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\security.py',
+   'PYMODULE'),
+  ('werkzeug.serving',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\serving.py',
+   'PYMODULE'),
+  ('werkzeug.test',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\test.py',
+   'PYMODULE'),
+  ('werkzeug.urls',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\urls.py',
+   'PYMODULE'),
+  ('werkzeug.user_agent',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\user_agent.py',
+   'PYMODULE'),
+  ('werkzeug.utils',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\utils.py',
+   'PYMODULE'),
+  ('werkzeug.wrappers',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\wrappers\\__init__.py',
+   'PYMODULE'),
+  ('werkzeug.wrappers.request',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\wrappers\\request.py',
+   'PYMODULE'),
+  ('werkzeug.wrappers.response',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\wrappers\\response.py',
+   'PYMODULE'),
+  ('werkzeug.wsgi',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\werkzeug\\wsgi.py',
+   'PYMODULE'),
+  ('xlsxwriter',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\__init__.py',
+   'PYMODULE'),
+  ('xlsxwriter.app',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\app.py',
+   'PYMODULE'),
+  ('xlsxwriter.chart',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chart.py',
+   'PYMODULE'),
+  ('xlsxwriter.chart_area',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chart_area.py',
+   'PYMODULE'),
+  ('xlsxwriter.chart_bar',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chart_bar.py',
+   'PYMODULE'),
+  ('xlsxwriter.chart_column',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chart_column.py',
+   'PYMODULE'),
+  ('xlsxwriter.chart_doughnut',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chart_doughnut.py',
+   'PYMODULE'),
+  ('xlsxwriter.chart_line',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chart_line.py',
+   'PYMODULE'),
+  ('xlsxwriter.chart_pie',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chart_pie.py',
+   'PYMODULE'),
+  ('xlsxwriter.chart_radar',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chart_radar.py',
+   'PYMODULE'),
+  ('xlsxwriter.chart_scatter',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chart_scatter.py',
+   'PYMODULE'),
+  ('xlsxwriter.chart_stock',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chart_stock.py',
+   'PYMODULE'),
+  ('xlsxwriter.chart_title',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chart_title.py',
+   'PYMODULE'),
+  ('xlsxwriter.chartsheet',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\chartsheet.py',
+   'PYMODULE'),
+  ('xlsxwriter.color',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\color.py',
+   'PYMODULE'),
+  ('xlsxwriter.comments',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\comments.py',
+   'PYMODULE'),
+  ('xlsxwriter.contenttypes',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\contenttypes.py',
+   'PYMODULE'),
+  ('xlsxwriter.core',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\core.py',
+   'PYMODULE'),
+  ('xlsxwriter.custom',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\custom.py',
+   'PYMODULE'),
+  ('xlsxwriter.drawing',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\drawing.py',
+   'PYMODULE'),
+  ('xlsxwriter.exceptions',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\exceptions.py',
+   'PYMODULE'),
+  ('xlsxwriter.feature_property_bag',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\feature_property_bag.py',
+   'PYMODULE'),
+  ('xlsxwriter.format',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\format.py',
+   'PYMODULE'),
+  ('xlsxwriter.image',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\image.py',
+   'PYMODULE'),
+  ('xlsxwriter.metadata',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\metadata.py',
+   'PYMODULE'),
+  ('xlsxwriter.packager',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\packager.py',
+   'PYMODULE'),
+  ('xlsxwriter.relationships',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\relationships.py',
+   'PYMODULE'),
+  ('xlsxwriter.rich_value',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\rich_value.py',
+   'PYMODULE'),
+  ('xlsxwriter.rich_value_rel',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\rich_value_rel.py',
+   'PYMODULE'),
+  ('xlsxwriter.rich_value_structure',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\rich_value_structure.py',
+   'PYMODULE'),
+  ('xlsxwriter.rich_value_types',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\rich_value_types.py',
+   'PYMODULE'),
+  ('xlsxwriter.shape',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\shape.py',
+   'PYMODULE'),
+  ('xlsxwriter.sharedstrings',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\sharedstrings.py',
+   'PYMODULE'),
+  ('xlsxwriter.styles',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\styles.py',
+   'PYMODULE'),
+  ('xlsxwriter.table',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\table.py',
+   'PYMODULE'),
+  ('xlsxwriter.theme',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\theme.py',
+   'PYMODULE'),
+  ('xlsxwriter.url',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\url.py',
+   'PYMODULE'),
+  ('xlsxwriter.utility',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\utility.py',
+   'PYMODULE'),
+  ('xlsxwriter.vml',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\vml.py',
+   'PYMODULE'),
+  ('xlsxwriter.workbook',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\workbook.py',
+   'PYMODULE'),
+  ('xlsxwriter.worksheet',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\worksheet.py',
+   'PYMODULE'),
+  ('xlsxwriter.xmlwriter',
+   'D:\\the lab for '
+   'html\\VidSlide\\venv\\Lib\\site-packages\\xlsxwriter\\xmlwriter.py',
+   'PYMODULE'),
+  ('xml',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\__init__.py',
+   'PYMODULE'),
+  ('xml.etree',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\etree\\__init__.py',
+   'PYMODULE'),
+  ('xml.etree.ElementInclude',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\etree\\ElementInclude.py',
+   'PYMODULE'),
+  ('xml.etree.ElementPath',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\etree\\ElementPath.py',
+   'PYMODULE'),
+  ('xml.etree.ElementTree',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\etree\\ElementTree.py',
+   'PYMODULE'),
+  ('xml.etree.cElementTree',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\etree\\cElementTree.py',
+   'PYMODULE'),
+  ('xml.parsers',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\parsers\\__init__.py',
+   'PYMODULE'),
+  ('xml.parsers.expat',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\parsers\\expat.py',
+   'PYMODULE'),
+  ('xml.sax',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\sax\\__init__.py',
+   'PYMODULE'),
+  ('xml.sax._exceptions',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\sax\\_exceptions.py',
+   'PYMODULE'),
+  ('xml.sax.expatreader',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\sax\\expatreader.py',
+   'PYMODULE'),
+  ('xml.sax.handler',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\sax\\handler.py',
+   'PYMODULE'),
+  ('xml.sax.saxutils',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\sax\\saxutils.py',
+   'PYMODULE'),
+  ('xml.sax.xmlreader',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xml\\sax\\xmlreader.py',
+   'PYMODULE'),
+  ('xmlrpc',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xmlrpc\\__init__.py',
+   'PYMODULE'),
+  ('xmlrpc.client',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\xmlrpc\\client.py',
+   'PYMODULE'),
+  ('zipfile',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\zipfile.py',
+   'PYMODULE'),
+  ('zipimport',
+   'C:\\Program '
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\\Lib\\zipimport.py',
+   'PYMODULE')])

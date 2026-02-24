@@ -29,6 +29,14 @@ from pathlib import Path
 from flask import Flask, request, jsonify, send_file, send_from_directory, render_template
 from PIL import Image
 
+# ============================================================
+#  无控制台模式兼容：PyInstaller --noconsole 时 stdout/stderr 为 None
+# ============================================================
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, 'w', encoding='utf-8')
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, 'w', encoding='utf-8')
+
 try:
     from pptx import Presentation
     from pptx.util import Inches
@@ -540,4 +548,17 @@ if __name__ == '__main__':
     except Exception as e:
         error_detail = traceback.format_exc()
         print(f"！！！发生严重错误！！！\n{error_detail}")
-        input("请截图以上错误信息发给开发者，按回车键退出...")
+        # 无控制台模式下用 MessageBox 弹窗显示错误；有控制台则 input() 阻塞
+        if sys.stdin is None or not sys.stdout.isatty():
+            try:
+                import ctypes
+                ctypes.windll.user32.MessageBoxW(
+                    0,
+                    f"影幻智提启动失败，请截图此对话框发给开发者：\n\n{error_detail}",
+                    "影幻智提 (VidSlide) - 严重错误",
+                    0x10  # MB_ICONERROR
+                )
+            except Exception:
+                pass
+        else:
+            input("请截图以上错误信息发给开发者，按回车键退出...")
