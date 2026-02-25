@@ -61,13 +61,14 @@ python -m nuitka ^
     --windows-console-mode=disable ^
     --windows-icon-from-ico=logo.ico ^
     --include-data-dir=templates=templates ^
+    --include-data-dir=static=static ^
     --enable-plugin=tk-inter ^
     --assume-yes-for-downloads ^
     --output-dir=dist ^
     --output-filename=VidSlide.exe ^
     --remove-output ^
     --product-name="VidSlide" ^
-    --product-version="0.2.1" ^
+    --product-version="0.3.2" ^
     --file-description="VidSlide PPT Extractor" ^
     --copyright="Copyright 2026 PWO-CHINA" ^
     app.py

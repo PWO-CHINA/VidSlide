@@ -1,5 +1,5 @@
 /**
- * 影幻智提 (VidSlide) v0.3.1 - 前端主逻辑
+ * 影幻智提 (VidSlide) v0.3.2 - 前端主逻辑
  * ==========================================
  * 通信方式：SSE（Server-Sent Events）服务器推送
  * 打包导出：异步后台处理 + SSE 进度推送
@@ -15,7 +15,7 @@ function _loadPrefs() {
 }
 function _savePrefs(patch) {
     const p = { ..._loadPrefs(), ...patch };
-    try { localStorage.setItem(_PREF_KEY, JSON.stringify(p)); } catch {}
+    try { localStorage.setItem(_PREF_KEY, JSON.stringify(p)); } catch { }
 }
 function _applyPrefsToPane(pane) {
     const p = _loadPrefs();
@@ -76,6 +76,7 @@ class TabState {
         this.sortable = null;
         this.hasWork = false;
         this.downloadLinks = [];
+        this.sseErrorCount = 0; // 用于防御 SSE 死循环
     }
 
     /** 建立 SSE 连接 */
@@ -83,8 +84,10 @@ class TabState {
         if (this.eventSource) {
             this.eventSource.close();
         }
+        this.sseErrorCount = 0;
         this.eventSource = new EventSource(`/api/session/${this.sid}/events`);
         this.eventSource.onmessage = (e) => {
+            this.sseErrorCount = 0; // 成功收到消息，重置计数
             try {
                 const data = JSON.parse(e.data);
                 handleSSEEvent(this.sid, data);
@@ -93,7 +96,12 @@ class TabState {
             }
         };
         this.eventSource.onerror = () => {
-            console.warn(`[SSE] 会话 ${this.sid} 连接中断，将自动重连…`);
+            this.sseErrorCount++;
+            console.warn(`[SSE] 会话 ${this.sid} 连接中断，将尝试重连 (${this.sseErrorCount}/3)…`);
+            if (this.sseErrorCount >= 3) {
+                console.error(`[SSE] 会话 ${this.sid} 重连彻底失败，主动放弃连接。`);
+                this.disconnectSSE();
+            }
         };
     }
 
@@ -119,6 +127,11 @@ function handleSSEEvent(sid, data) {
             break;
         case 'packaging':
             handlePackagingEvent(sid, data);
+            break;
+        case 'close':
+            // 后台主动要求断开连接（如会话已被关闭），避免重连导致无限 404
+            console.log(`[SSE] 后端主动请求关闭 ${sid} 的连接。`);
+            if (G.tabs[sid]) G.tabs[sid].disconnectSSE();
             break;
     }
 }
@@ -386,6 +399,61 @@ async function addNewTab() {
 }
 // 暴露到全局
 window.addNewTab = addNewTab;
+
+/**
+ * 恢复后端已存在的会话到前端（用于浏览器标签页关闭后重新打开的场景）
+ * @param {Object} sessInfo - 后端返回的会话摘要信息
+ */
+function adoptExistingSession(sessInfo) {
+    const sid = sessInfo.id;
+    if (G.tabs[sid]) return; // 已经在前端了
+
+    const ts = new TabState(sid);
+    ts.videoPath = sessInfo.video_path || '';
+    ts.hasWork = sessInfo.saved_count > 0;
+    ts.isExtracting = sessInfo.status === 'running';
+    ts.isPackaging = sessInfo.pkg_status === 'running';
+    G.tabs[sid] = ts;
+
+    // 确定标签页标题
+    let title = '恢复的任务';
+    if (sessInfo.video_name) {
+        title = sessInfo.video_name;
+    } else if (sessInfo.video_path) {
+        title = sessInfo.video_path.split(/[\\/]/).pop() || '恢复的任务';
+    }
+    createTabUI(sid, title);
+
+    // 恢复 UI 状态
+    if (ts.videoPath) {
+        q(sid, 'js-video-path-input').value = ts.videoPath;
+        q(sid, 'js-video-path-display').textContent = ts.videoPath;
+        q(sid, 'js-video-info').classList.remove('hidden');
+        q(sid, 'js-btn-extract').disabled = false;
+    }
+    if (ts.isExtracting) {
+        q(sid, 'js-btn-extract').classList.add('hidden');
+        q(sid, 'js-btn-cancel').classList.remove('hidden');
+        q(sid, 'js-progress-section').classList.remove('hidden');
+        if (sessInfo.progress != null) {
+            q(sid, 'js-progress-bar').style.width = sessInfo.progress + '%';
+            q(sid, 'js-progress-pct').textContent = sessInfo.progress + '%';
+        }
+        if (sessInfo.message) {
+            q(sid, 'js-progress-message').textContent = sessInfo.message;
+        }
+        updateTabStatus(sid, 'running');
+    } else if (sessInfo.status === 'done' && sessInfo.saved_count > 0) {
+        updateTabStatus(sid, 'done');
+        // 加载已提取的图片
+        loadImages(sid);
+    }
+
+    // 建立 SSE 连接（SSE init 事件会自动恢复剩余状态）
+    ts.connectSSE();
+
+    console.log(`[初始化] 恢复会话: ${sid} (状态: ${sessInfo.status}, 图片: ${sessInfo.saved_count})`);
+}
 
 function createTabUI(sid, title) {
     const tab = document.createElement('div');
@@ -1152,7 +1220,14 @@ function _startAutoReconnect() {
 
 async function sendHeartbeat() {
     try {
-        const resp = await fetch('/api/heartbeat', { method: 'POST', signal: AbortSignal.timeout(5000) });
+        // 在心跳中携带当前活跃的会话 ID，让后端知道哪些会话仍被前端使用
+        const activeSessions = Object.keys(G.tabs);
+        const resp = await fetch('/api/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ active_sessions: activeSessions }),
+            signal: AbortSignal.timeout(5000),
+        });
         if (resp.ok) {
             _heartbeatFailCount = 0;
             _serverAlive = true;
@@ -1190,7 +1265,7 @@ async function shutdownServer() {
     }
     showToast('正在关闭服务…', 'info');
     G._serverShutdown = true;
-    try { await fetch('/api/shutdown', { method: 'POST' }); } catch {}
+    try { await fetch('/api/shutdown', { method: 'POST' }); } catch { }
     setTimeout(() => {
         document.body.innerHTML = `
             <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#f8fafc;">
@@ -1215,19 +1290,62 @@ window.addEventListener('beforeunload', (e) => {
         e.returnValue = '有未导出的图片，确定要离开吗？';
         return e.returnValue;
     }
+    // 只关闭空闲的会话，保留有任务运行中或有成果的会话（孤儿清理会处理它们）
+    for (const [sid, ts] of Object.entries(G.tabs)) {
+        if (!ts.isExtracting && !ts.isPackaging && ts.images.length === 0) {
+            navigator.sendBeacon(`/api/session/${sid}/close`, '');
+        }
+    }
 });
 
 window.addEventListener('pagehide', () => {
     navigator.sendBeacon('/api/heartbeat', '');
+    // 只关闭空闲会话，保留运行中/有成果的会话以便重新打开时恢复
+    for (const [sid, ts] of Object.entries(G.tabs)) {
+        if (!ts.isExtracting && !ts.isPackaging && ts.images.length === 0) {
+            navigator.sendBeacon(`/api/session/${sid}/close`, '');
+        }
+    }
 });
 
 // ============================================================
 //  初始化：自动创建第一个标签页
 // ============================================================
 (async function init() {
+    // 第一步：清理后端孤儿会话（空闲且无 SSE 连接的残留会话）
+    try {
+        const cleanResult = await api('/api/sessions/cleanup-stale', { method: 'POST' });
+        if (cleanResult.success) {
+            G.maxSessions = cleanResult.max_sessions || 3;
+            if (cleanResult.cleaned > 0) {
+                console.log(`[初始化] 已清理 ${cleanResult.cleaned} 个孤儿会话`);
+            }
+        }
+    } catch (e) {
+        console.warn('[初始化] 清理孤儿会话失败:', e);
+    }
+
+    // 第二步：获取当前会话列表，恢复有价值的残留会话
     const sessData = await api('/api/sessions');
     if (sessData.success) {
         G.maxSessions = sessData.max_sessions || 3;
+        const existingSessions = sessData.sessions || [];
+        for (const sessInfo of existingSessions) {
+            // 恢复有价值的会话（正在运行或有提取成果的）
+            if (sessInfo.status === 'running' || sessInfo.saved_count > 0 || sessInfo.pkg_status === 'running') {
+                adoptExistingSession(sessInfo);
+            }
+        }
+        if (existingSessions.length > 0 && Object.keys(G.tabs).length > 0) {
+            // 有恢复的会话，切换到第一个
+            switchTab(Object.keys(G.tabs)[0]);
+            updateTabAddBtn();
+            showToast(`已恢复 ${Object.keys(G.tabs).length} 个标签页`, 'success', 3000);
+        }
     }
-    await addNewTab();
+
+    // 第三步：如果没有恢复任何会话，创建第一个标签页
+    if (Object.keys(G.tabs).length === 0) {
+        await addNewTab();
+    }
 })();

@@ -3,11 +3,15 @@
 > 给接手的 AI（和人类开发者）的非公开技术笔记。
 > 记录了代码中不明显的设计决策、踩过的坑和注意事项。
 
+> **给接手 AI 的第一句话**：请先阅读 DEVNOTES.md 了解项目架构和历史问题。
+> 项目根目录下 `.\venv` 是现有虚拟环境，`requirements.txt` 是依赖清单。
+> 所有改动都已提交推送，可通过 `git log` 追溯设计演变。
+
 ## 项目概况
 
 - **定位**：从延河课堂桌面录屏视频中提取 PPT 幻灯片的单机工具
 - **架构**：Python Flask 后端 + 原生 HTML/JS 前端（无框架），单进程多线程
-- **当前版本**：v0.3.1
+- **当前版本**：v0.3.2
 - **GitHub**：https://github.com/PWO-CHINA/VidSlide
 - **Python**：3.11（Microsoft Store 版），虚拟环境在 `./venv`
 
@@ -105,9 +109,9 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 ```
 输出：`dist/VidSlide.exe`，约 72 MB
 
-### Nuitka（理论更优但有 bug）
+### Nuitka（理论更优但有 bug，基本放弃）
 中文 Windows 用户名 + gcc msvcrt 变体 = `std::filesystem` 编译失败。解决方案：
-- 安装 VS2022 C++ 桌面开发工具，用 `--msvc=latest`
+- 安装 VS2022 C++ 桌面开发工具，用 `--msvc=latest`（目前用户无法下载，其电脑各个盘内的空间都不足）
 - 或等 Nuitka 修复该 bug
 
 ## 版本号更新清单
@@ -129,6 +133,15 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 - `python-pptx` — PPTX 导出
 - `psutil` — 系统资源监控 + 进程优先级
 
+## v0.3.2 修复的逻辑漏洞
+
+| 漏洞 | 修复方案 | 代码位置 |
+|------|---------|---------|
+| `/api/select-video` 多标签页弹窗冲突 | `_video_select_lock = threading.Lock()`，非阻塞 acquire，占用时立即返回提示 | `app.py` `select_video()` |
+| SSE `onerror` 死循环（Zombie 连接） | 前端 `sseErrorCount` 计数，连续 3 次出错后主动 `close()` 放弃重连 | `main.js` `connectSSE()` |
+| `_extraction_worker` 异常静默崩溃 | 外层 `try/except Exception` 兜底，捕获后向前端推送 `error` 状态事件 | `app.py` `_extraction_worker()` |
+| 孤儿会话占用标签页名额 | `_cleanup_orphan_sessions()` 定期清理无 SSE 连接的残留会话，`ORPHAN_SESSION_TIMEOUT=60s` | `app.py` `_heartbeat_watcher()` |
+
 ## 给 AI 的提示
 
 - 代码注释比较充分，直接读源码即可理解大部分逻辑
@@ -136,3 +149,4 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 - 前端是纯 JS（无框架），DOM 操作较多，`main.js` 的 `G` 对象是全局状态
 - 所有提取逻辑在后台线程执行（`_extraction_worker`），通过 SSE 队列推送进度
 - 改完代码后用 `python app.py` 启动测试，浏览器会自动打开
+

@@ -1,10 +1,10 @@
 """
-影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.3.1)
+影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.3.2)
 =====================================================
 基于 Flask 的本地 Web 应用，提供可视化界面来提取、管理和打包 PPT 幻灯片。
 支持同时对多个视频进行提取（最多 3 个并行标签页）。
 
-v0.3.1 新特性：
+v0.3.2 新特性：
     - SSE (Server-Sent Events) 服务器推送，替代高频轮询
     - 异步后台打包导出，前端实时显示打包进度
     - GPU 硬件加速视频解码（自动检测）
@@ -19,7 +19,7 @@ v0.3.1 新特性：
     pip install flask opencv-python numpy pillow python-pptx psutil
 
 作者: PWO-CHINA
-版本: v0.3.1
+版本: v0.3.2
 """
 
 import cv2
@@ -88,7 +88,33 @@ else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 SESSIONS_ROOT = os.path.join(BASE_DIR, '.vidslide_sessions')
-MAX_SESSIONS = 3
+
+# ── 根据机器配置动态计算最大标签页数量 ──
+def _compute_max_sessions():
+    """根据 CPU 核数和可用内存动态计算最大并行标签页数量"""
+    base = 3  # 默认值
+    try:
+        if HAS_PSUTIL:
+            cpu_count = psutil.cpu_count(logical=True) or 4
+            mem = psutil.virtual_memory()
+            mem_gb = mem.total / (1024 ** 3)
+            # 根据 CPU 核数：每 4 核 +1（基于 2 核起步）
+            cpu_budget = max(1, cpu_count // 4 + 1)
+            # 根据内存：每 4GB +1（基于 4GB 起步）
+            mem_budget = max(1, int(mem_gb // 4))
+            # 取两者较小值，但最少 2，最多 8
+            base = max(2, min(8, cpu_budget, mem_budget))
+            print(f'[配置] CPU {cpu_count} 核, 内存 {mem_gb:.1f} GB → 最大标签页 {base}')
+        else:
+            base = 3
+    except Exception:
+        base = 3
+    return base
+
+MAX_SESSIONS = _compute_max_sessions()
+
+# 孤儿会话超时时间（秒）：会话无活跃 SSE 连接超过此时间后被视为孤儿
+ORPHAN_SESSION_TIMEOUT = 60
 
 app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 
@@ -384,6 +410,7 @@ def _create_session():
     session = {
         'id': sid,
         'created_at': time.time(),
+        'last_active': time.time(),  # 用于孤儿检测
         # ── 提取状态 ──
         'status': 'idle',
         'progress': 0,
@@ -525,8 +552,68 @@ def list_sessions():
     return jsonify(success=True, sessions=_get_all_sessions_summary(), max_sessions=MAX_SESSIONS)
 
 
+def _cleanup_orphan_sessions():
+    """清理孤儿会话：无活跃 SSE 连接的会话。
+    当浏览器标签页被关闭时，SSE 连接会断开，event_queues 会被清空。
+    此函数在创建新会话前和前端初始化时调用，确保不会因为残留的孤儿会话
+    而错误地阻止用户新建标签页。
+
+    清理策略：
+    - 空闲会话（无任务、无成果）：立即清理
+    - 有成果但无 SSE 超时的会话：超时后清理
+    - 正在运行任务但无 SSE 超时的会话：先取消任务再清理
+    """
+    now = time.time()
+    with _sessions_lock:
+        sids = list(_sessions.keys())
+    orphans = []
+    for sid in sids:
+        sess = _get_session(sid)
+        if not sess:
+            continue
+        with sess['lock']:
+            has_sse = len(sess.get('event_queues', [])) > 0
+            is_running = sess['status'] == 'running'
+            is_packaging = sess.get('pkg_status') == 'running'
+            has_results = sess.get('saved_count', 0) > 0
+            age = now - sess.get('last_active', sess['created_at'])
+
+        # 有活跃 SSE 连接 → 不是孤儿
+        if has_sse:
+            continue
+
+        # 无 SSE 连接的情况：
+        if is_running or is_packaging:
+            # 正在运行，但没有前端连接且超时 → 取消任务并清理
+            if age > ORPHAN_SESSION_TIMEOUT:
+                with sess['lock']:
+                    sess['cancel_flag'] = True
+                orphans.append(sid)
+        else:
+            # 非运行状态：空闲或已完成
+            if not has_results or age > ORPHAN_SESSION_TIMEOUT:
+                orphans.append(sid)
+
+    for sid in orphans:
+        print(f'[会话清理] 清理孤儿会话: {sid}')
+        _delete_session(sid)
+    return len(orphans)
+
+
+@app.route('/api/sessions/cleanup-stale', methods=['POST'])
+def cleanup_stale_sessions():
+    """前端初始化时调用，清理所有孤儿会话（无活跃前端的残留会话）"""
+    cleaned = _cleanup_orphan_sessions()
+    with _sessions_lock:
+        current_count = len(_sessions)
+    return jsonify(success=True, cleaned=cleaned, remaining=current_count, max_sessions=MAX_SESSIONS)
+
+
 @app.route('/api/session/create', methods=['POST'])
 def create_session():
+    # 创建前先尝试清理孤儿会话
+    _cleanup_orphan_sessions()
+
     with _sessions_lock:
         current_count = len(_sessions)
     if current_count >= MAX_SESSIONS:
@@ -547,9 +634,22 @@ def close_session(sid):
     if not sess:
         return jsonify(success=False, message='会话不存在')
     with sess['lock']:
-        if sess['status'] == 'running':
+        is_running = sess['status'] == 'running'
+        is_packaging = sess.get('pkg_status') == 'running'
+        if is_running:
             sess['cancel_flag'] = True
-    time.sleep(0.3)
+    # 如果有任务正在执行，不立即删除（让任务自然结束后由孤儿清理回收）
+    # 只断开 SSE 连接，让后台孤儿清理线程在任务完成后处理
+    if is_running or is_packaging:
+        with sess['lock']:
+            for eq in sess.get('event_queues', []):
+                try:
+                    eq.put_nowait({'type': 'close'})
+                except queue.Full:
+                    pass
+            sess['event_queues'].clear()
+        return jsonify(success=True, deferred=True)
+    # 无活跃任务则直接删除
     _delete_session(sid)
     return jsonify(success=True)
 
@@ -567,6 +667,7 @@ def session_events(sid):
 
     with sess['lock']:
         sess['event_queues'].append(event_q)
+        sess['last_active'] = time.time()  # SSE 连接时更新活跃时间
 
     def _cleanup():
         try:
@@ -588,6 +689,12 @@ def session_events(sid):
                     event = event_q.get(timeout=15)
                     if event.get('type') == 'close':
                         break
+                    # 每次推送事件时更新会话活跃时间
+                    try:
+                        with sess['lock']:
+                            sess['last_active'] = time.time()
+                    except Exception:
+                        pass
                     yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
                 except queue.Empty:
                     # 心跳保持连接
@@ -609,8 +716,12 @@ def session_events(sid):
 # ============================================================
 #  路由 — 选择视频
 # ============================================================
+_video_select_lock = threading.Lock()
+
 @app.route('/api/select-video', methods=['POST'])
 def select_video():
+    if not _video_select_lock.acquire(blocking=False):
+        return jsonify(success=False, message='其他标签页正在选择文件，请先完成或关闭弹窗')
     try:
         try:
             import ctypes
@@ -660,6 +771,8 @@ def select_video():
     except Exception as e:
         print(f'[ERROR] select_video 异常: {e}')
         return jsonify(success=False, message=str(e))
+    finally:
+        _video_select_lock.release()
 
 
 # ============================================================
@@ -759,58 +872,72 @@ def start_extraction(sid):
 def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu=True, speed_mode='eco'):
     """中间层：将 extractor 的回调桥接到会话管理 + SSE 事件"""
 
-    def on_progress(saved_count, progress_pct, message, eta_seconds, elapsed_seconds):
-        _update_session(sid,
-            saved_count=saved_count,
-            progress=progress_pct,
-            message=message,
-            eta_seconds=eta_seconds,
-            elapsed_seconds=elapsed_seconds,
+    try:
+        def on_progress(saved_count, progress_pct, message, eta_seconds, elapsed_seconds):
+            _update_session(sid,
+                saved_count=saved_count,
+                progress=progress_pct,
+                message=message,
+                eta_seconds=eta_seconds,
+                elapsed_seconds=elapsed_seconds,
+            )
+            _push_event(sid, {
+                'type': 'extraction',
+                'status': 'running',
+                'saved_count': saved_count,
+                'progress': progress_pct,
+                'message': message,
+                'eta_seconds': eta_seconds,
+                'elapsed_seconds': elapsed_seconds,
+            })
+
+        def should_cancel():
+            s = _get_session(sid)
+            if not s:
+                return True
+            with s['lock']:
+                return s['cancel_flag']
+
+        status, message, saved_count = extract_slides(
+            video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode,
+            use_gpu=use_gpu, speed_mode=speed_mode,
+            on_progress=on_progress, should_cancel=should_cancel,
         )
+
+        if status == 'done':
+            sess = _get_session(sid)
+            elapsed = 0
+            if sess:
+                with sess['lock']:
+                    elapsed = sess.get('elapsed_seconds', 0)
+            _update_session(sid,
+                status='done', progress=100, eta_seconds=0,
+                elapsed_seconds=elapsed, saved_count=saved_count, message=message)
+        elif status == 'cancelled':
+            _update_session(sid, status='cancelled', message=message, saved_count=saved_count)
+        else:
+            _update_session(sid, status='error', message=message, saved_count=saved_count)
+
         _push_event(sid, {
             'type': 'extraction',
-            'status': 'running',
+            'status': status,
             'saved_count': saved_count,
-            'progress': progress_pct,
+            'progress': 100 if status == 'done' else 0,
             'message': message,
-            'eta_seconds': eta_seconds,
-            'elapsed_seconds': elapsed_seconds,
         })
-
-    def should_cancel():
-        s = _get_session(sid)
-        if not s:
-            return True
-        with s['lock']:
-            return s['cancel_flag']
-
-    status, message, saved_count = extract_slides(
-        video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode,
-        use_gpu=use_gpu, speed_mode=speed_mode,
-        on_progress=on_progress, should_cancel=should_cancel,
-    )
-
-    if status == 'done':
-        sess = _get_session(sid)
-        elapsed = 0
-        if sess:
-            with sess['lock']:
-                elapsed = sess.get('elapsed_seconds', 0)
-        _update_session(sid,
-            status='done', progress=100, eta_seconds=0,
-            elapsed_seconds=elapsed, saved_count=saved_count, message=message)
-    elif status == 'cancelled':
-        _update_session(sid, status='cancelled', message=message, saved_count=saved_count)
-    else:
-        _update_session(sid, status='error', message=message, saved_count=saved_count)
-
-    _push_event(sid, {
-        'type': 'extraction',
-        'status': status,
-        'saved_count': saved_count,
-        'progress': 100 if status == 'done' else 0,
-        'message': message,
-    })
+    except Exception as e:
+        # 兜底：捕获所有未知异常，防止线程静默崩溃前端死等
+        import traceback as _tb
+        err_msg = str(e) or '未知错误'
+        print(f'[后台提取致命错误] SID={sid} \n{_tb.format_exc()}', flush=True)
+        _update_session(sid, status='error', message=f'系统异常: {err_msg}', cancel_flag=True)
+        _push_event(sid, {
+            'type': 'extraction',
+            'status': 'error',
+            'saved_count': 0,
+            'progress': 0,
+            'message': f'发生致命系统异常: {err_msg}'
+        })
 
 
 # ============================================================
@@ -1079,6 +1206,17 @@ def heartbeat():
     global _last_heartbeat, _heartbeat_received
     _last_heartbeat = time.time()
     _heartbeat_received = True
+    # 更新请求中携带的会话的活跃时间
+    try:
+        data = request.get_json(silent=True) or {}
+        sids = data.get('active_sessions', [])
+        for sid in sids:
+            sess = _get_session(sid)
+            if sess:
+                with sess['lock']:
+                    sess['last_active'] = time.time()
+    except Exception:
+        pass
     return jsonify(ok=True)
 
 
@@ -1133,6 +1271,11 @@ def _has_active_work():
 def _heartbeat_watcher():
     while True:
         time.sleep(5)
+        # 定期清理孤儿会话（无论心跳是否收到）
+        try:
+            _cleanup_orphan_sessions()
+        except Exception:
+            pass
         if not _heartbeat_received:
             continue
         elapsed = time.time() - _last_heartbeat
@@ -1198,7 +1341,7 @@ if __name__ == '__main__':
 
         print()
         print('=' * 60)
-        print('  影幻智提 (VidSlide) v0.3.1 - 性能狂飙版')
+        print('  影幻智提 (VidSlide) v0.3.2 - 性能狂飙版')
         print(f'  浏览器将自动打开: {url}')
         print(f'  临时文件目录: {SESSIONS_ROOT}')
         print(f'  最大并行标签页: {MAX_SESSIONS}')
