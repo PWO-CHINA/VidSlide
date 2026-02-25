@@ -68,7 +68,7 @@ python -m nuitka ^
     --output-filename=VidSlide.exe ^
     --remove-output ^
     --product-name="VidSlide" ^
-    --product-version="0.3.2" ^
+    --product-version="0.4.0" ^
     --file-description="VidSlide PPT Extractor" ^
     --copyright="Copyright 2026 PWO-CHINA" ^
     app.py

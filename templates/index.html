@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>影幻智提 (VidSlide) v0.3.2 - 性能狂飙版</title>
+    <title>影幻智提 (VidSlide) v0.4.0 - 体验优化版</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -19,8 +20,17 @@
         }
     </script>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script>
+        // 在页面渲染前立即应用主题，避免闪烁
+        (function(){
+            const t = localStorage.getItem('vidslide_theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
 </head>
-<body class="bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 min-h-screen pb-8">
+<body class="min-h-screen pb-8">
 
     <!-- Toast 容器 -->
     <div id="toasts" class="fixed top-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none" style="max-width:360px"></div>
@@ -46,57 +56,62 @@
         </div>
     </div>
 
-    <!-- ═══════ Header ═══════ -->
-    <header class="bg-gradient-to-r from-brand-700 via-brand-600 to-blue-500 text-white shadow-xl">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight flex items-center gap-2">
-                    <span class="text-3xl">📊</span> 影幻智提 (VidSlide)
-                    <span class="text-xs font-normal bg-white/15 px-2 py-0.5 rounded-full ml-2">v0.3.2 性能狂飙</span>
-                </h1>
-                <p class="text-brand-200 text-sm mt-1">从录播视频中一键提取 PPT · SSE 推送 · GPU 加速 · 异步打包</p>
+    <!-- ═══════ Header (Sticky) ═══════ -->
+    <header class="sticky-header bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-white shadow-lg border-b border-slate-600/30 dark:border-slate-700">
+        <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+                <img src="/static/logo.png" alt="VidSlide" class="logo-icon w-10 h-10 flex-shrink-0">
+                <div class="min-w-0">
+                    <h1 class="text-xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
+                        影幻智提 (VidSlide)
+                        <span class="text-xs font-normal bg-white/15 px-2 py-0.5 rounded-full">v0.4.0</span>
+                    </h1>
+                    <p class="text-slate-400 dark:text-slate-400 text-xs mt-0.5 truncate">从录播视频中一键提取 PPT</p>
+                </div>
             </div>
-            <div class="flex gap-2">
-                <button onclick="cleanupAll()" class="btn-ghost" title="清空所有标签页缓存">
-                    🗑️ 全部清空
+            <nav class="flex gap-2 items-center flex-shrink-0">
+                <button onclick="toggleTheme()" class="theme-toggle" title="切换深色/浅色模式">
+                    <span class="icon" id="themeIcon">🌙</span>
                 </button>
-                <button onclick="shutdownServer()" class="btn-ghost-danger" title="关闭服务并清理临时文件">
-                    ⏻ 关闭工具
+                <button onclick="cleanupAll()" class="btn-ghost text-xs" title="清空所有标签页缓存">
+                    🗑️ 清空
                 </button>
+                <button onclick="shutdownServer()" class="btn-ghost-danger text-xs" title="关闭服务并清理临时文件">
+                    ⏻ 关闭
+                </button>
+            </nav>
+        </div>
+        <!-- ═══════ 资源监控条（页眉内） ═══════ -->
+        <div class="resource-bar" id="resourceBar">
+            <div class="resource-item">
+                <span class="res-label">CPU</span>
+                <div class="res-bar-mini"><div id="resCpuBar" class="res-bar-mini-fill bg-blue-400" style="width:0%"></div></div>
+                <span class="res-value" id="resCpuText">--%</span>
+            </div>
+            <div class="resource-item">
+                <span class="res-label">内存</span>
+                <div class="res-bar-mini"><div id="resMemBar" class="res-bar-mini-fill bg-emerald-400" style="width:0%"></div></div>
+                <span class="res-value" id="resMemText">--%</span>
+            </div>
+            <div class="resource-item">
+                <span class="res-label">磁盘剩余</span>
+                <span class="res-value" id="resDiskText">-- GB</span>
+            </div>
+            <div class="resource-item" id="resGpuSection" style="display:none">
+                <span class="res-label">GPU</span>
+                <div class="res-bar-mini"><div id="resGpuBar" class="res-bar-mini-fill bg-purple-400" style="width:0%"></div></div>
+                <span class="res-value" id="resGpuText">--%</span>
+            </div>
+            <div class="resource-item" style="border-left:1px solid rgba(255,255,255,.15);padding-left:12px">
+                <span class="res-label">活跃任务</span>
+                <span class="res-value" id="resTaskText">0</span>
+            </div>
+            <div class="resource-item">
+                <span class="res-label">标签页</span>
+                <span class="res-value" id="resTabText">0/3</span>
             </div>
         </div>
     </header>
-
-    <!-- ═══════ 资源监控条 ═══════ -->
-    <div class="resource-bar" id="resourceBar">
-        <div class="resource-item">
-            <span class="res-label">CPU</span>
-            <div class="res-bar-mini"><div id="resCpuBar" class="res-bar-mini-fill bg-blue-400" style="width:0%"></div></div>
-            <span class="res-value" id="resCpuText">--%</span>
-        </div>
-        <div class="resource-item">
-            <span class="res-label">内存</span>
-            <div class="res-bar-mini"><div id="resMemBar" class="res-bar-mini-fill bg-emerald-400" style="width:0%"></div></div>
-            <span class="res-value" id="resMemText">--%</span>
-        </div>
-        <div class="resource-item">
-            <span class="res-label">磁盘剩余</span>
-            <span class="res-value" id="resDiskText">-- GB</span>
-        </div>
-        <div class="resource-item" id="resGpuSection" style="display:none">
-            <span class="res-label">GPU</span>
-            <div class="res-bar-mini"><div id="resGpuBar" class="res-bar-mini-fill bg-purple-400" style="width:0%"></div></div>
-            <span class="res-value" id="resGpuText">--%</span>
-        </div>
-        <div class="resource-item" style="border-left:1px solid #d1d5db;padding-left:12px">
-            <span class="res-label">活跃任务</span>
-            <span class="res-value" id="resTaskText">0</span>
-        </div>
-        <div class="resource-item">
-            <span class="res-label">标签页</span>
-            <span class="res-value" id="resTabText">0/3</span>
-        </div>
-    </div>
     <div class="resource-warning-banner" id="resourceWarning"></div>
 
     <!-- ═══════ 主区域 ═══════ -->
@@ -120,9 +135,33 @@
     </main>
 
     <!-- ═══════ 底部 ═══════ -->
-    <footer class="max-w-5xl mx-auto px-4 pb-8 text-center">
-        <p class="text-xs text-gray-300">🔒 所有数据仅保存在本地。浏览器断联 5 分钟后服务自动退出（有任务时延长等待）。</p>
-        <p class="text-xs text-gray-300 mt-1">影幻智提 (VidSlide) v0.3.2 性能狂飙版 · Made by PWO-CHINA</p>
+    <footer class="max-w-5xl mx-auto px-4 pb-8 mt-12">
+        <div class="border-t border-slate-200 dark:border-slate-700 pt-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+                <div class="flex items-center gap-3">
+                    <img src="/static/logo.png" alt="VidSlide" class="logo-icon w-8 h-8">
+                    <div class="text-left">
+                        <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">影幻智提 (VidSlide)</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-500">开源 PPT 提取工具</p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <a href="https://github.com/PWO-CHINA/VidSlide" target="_blank" rel="noopener" class="footer-link" title="在 GitHub 上给我们 Star ⭐">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        <span>GitHub</span>
+                    </a>
+                    <a href="https://gitee.com/pwo101/VidSlide" target="_blank" rel="noopener" class="footer-link" title="在 Gitee 上给我们 Star ⭐">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.984 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.016 0zm6.09 5.333c.328 0 .593.266.592.593v1.482a.594.594 0 0 1-.593.592H9.777c-.982 0-1.778.796-1.778 1.778v5.63c0 .327.266.592.593.592h5.63c.982 0 1.778-.796 1.778-1.778v-.296a.593.593 0 0 0-.592-.593h-4.037a.594.594 0 0 1-.592-.593v-1.482a.593.593 0 0 1 .593-.592h6.815c.327 0 .593.265.593.592v3.408a4 4 0 0 1-4 4H5.926a.593.593 0 0 1-.593-.593V9.778a4.444 4.444 0 0 1 4.445-4.444h8.296Z"/></svg>
+                        <span>Gitee</span>
+                    </a>
+                </div>
+            </div>
+            <div class="text-center space-y-1">
+                <p class="text-xs text-slate-500 dark:text-slate-500">🔒 所有数据仅保存在本地 · 浏览器断联 5 分钟后服务自动退出</p>
+                <p class="text-xs text-slate-400 dark:text-slate-600">v0.4.0 体验优化版 · Made with ❤️ by <a href="https://github.com/PWO-CHINA" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition">PWO-CHINA</a></p>
+                <p class="text-xs text-slate-400 dark:text-slate-600 mt-2">⭐ 如果这个工具帮到了你，请在 <a href="https://github.com/PWO-CHINA/VidSlide" target="_blank" class="text-slate-600 dark:text-slate-400 hover:underline font-medium">GitHub</a> 或 <a href="https://gitee.com/pwo101/VidSlide" target="_blank" class="text-slate-600 dark:text-slate-400 hover:underline font-medium">Gitee</a> 上给我们一个 Star！</p>
+            </div>
+        </div>
     </footer>
 
     <!-- ═══════ 回收站抽屉 ═══════ -->
@@ -147,7 +186,7 @@
     <!-- ═══════ 图片预览弹窗 ═══════ -->
     <div id="previewModal" class="fixed inset-0 z-50 hidden flex items-center justify-center modal-backdrop" onclick="if(event.target===this)hidePreview()">
         <button onclick="hidePreview()" class="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white text-xl flex items-center justify-center transition">✕</button>
-        <button onclick="deleteInPreview()" id="btnDeletePreview" class="absolute bottom-6 right-5 z-[60] px-4 py-2 rounded-full bg-red-500/70 hover:bg-red-600/90 text-white text-sm font-medium flex items-center gap-1.5 transition shadow-lg backdrop-blur" title="删除当前图片 (Delete)">🗑️ 删除 (Del)</button>
+        <button onclick="deleteInPreview()" id="btnDeletePreview" class="preview-del-btn absolute bottom-6 right-5 z-[60] px-4 py-2 rounded-full bg-red-500/70 hover:bg-red-600/90 text-white text-sm font-medium flex items-center gap-1.5 transition-all shadow-lg backdrop-blur" title="删除当前图片 (Delete)">🗑️ 删除 (Del)</button>
         <button onclick="prevPreview()" id="btnPrevPreview" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/25 text-white text-2xl flex items-center justify-center transition">◀</button>
         <button onclick="nextPreview()" id="btnNextPreview" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/25 text-white text-2xl flex items-center justify-center transition">▶</button>
         <img id="previewImage" class="max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl object-contain select-none" draggable="false">
@@ -160,14 +199,14 @@
             <!-- 步骤 1: 选择视频 -->
             <section class="card">
                 <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
-                    <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-bold">1</span>
+                    <span class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 flex items-center justify-center text-sm font-bold">1</span>
                     选择视频文件
                 </h2>
                 <div class="flex flex-col sm:flex-row gap-3 items-stretch">
                     <button class="btn-primary shrink-0 js-btn-select-video">📁 浏览选择视频文件</button>
                     <div class="relative flex-1">
                         <input type="text" class="js-video-path-input w-full h-full px-4 py-3 text-sm rounded-2xl border-2 border-gray-200 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition bg-gray-50 placeholder-gray-400" placeholder='粘贴路径，支持引号包裹，如 "D:\video\lecture.mp4"'>
-                        <button class="js-btn-confirm-path absolute right-2 top-1/2 -translate-y-1/2 text-xs text-white bg-brand-500 hover:bg-brand-600 font-medium px-3 py-1.5 rounded-lg transition shadow-sm">确认 ↵</button>
+                        <button class="js-btn-confirm-path absolute right-2 top-1/2 -translate-y-1/2 text-xs text-white bg-slate-600 hover:bg-slate-700 font-medium px-3 py-1.5 rounded-lg transition shadow-sm">确认 ↵</button>
                     </div>
                 </div>
                 <div class="js-video-info hidden mt-3 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl">
@@ -181,7 +220,7 @@
             <!-- 步骤 2: 参数设置 -->
             <section class="card">
                 <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
-                    <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-bold">2</span>
+                    <span class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 flex items-center justify-center text-sm font-bold">2</span>
                     提取参数
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -203,11 +242,11 @@
                     </div>
                     <div class="space-y-2">
                         <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
-                            <input type="checkbox" class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-400 js-enable-history">
+                            <input type="checkbox" checked class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-400 js-enable-history">
                             历史记忆池
                         </label>
                         <p class="text-xs text-gray-400 leading-relaxed">防止 A→B→A 跳页导致重复提取</p>
-                        <div class="js-max-history-group items-center gap-2 text-sm text-gray-600" style="display:none">
+                        <div class="js-max-history-group items-center gap-2 text-sm text-gray-600" style="display:flex">
                             <span>容量:</span>
                             <input type="number" value="5" min="2" max="20" class="w-16 px-2 py-1 text-sm rounded-lg border border-gray-200 text-center js-max-history">
                             <span class="text-xs text-gray-400">张</span>
@@ -247,18 +286,19 @@
             <!-- 步骤 3: 提取 -->
             <section class="card">
                 <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
-                    <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-bold">3</span>
+                    <span class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 flex items-center justify-center text-sm font-bold">3</span>
                     提取幻灯片
                 </h2>
                 <div class="flex items-center gap-3">
                     <button class="btn-primary js-btn-extract" disabled>▶️ 开始提取幻灯片</button>
+                    <button class="btn-resume hidden js-btn-resume">🔄 继续提取（断点续传）</button>
                     <button class="btn-danger hidden js-btn-cancel">⏹️ 取消提取</button>
                     <span class="text-sm text-gray-500 js-extract-status"></span>
                 </div>
                 <div class="js-progress-section hidden mt-5 space-y-3">
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600 font-medium js-progress-message">正在初始化…</span>
-                        <span class="font-bold text-brand-600 text-lg tabular-nums js-progress-pct">0%</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200 text-lg tabular-nums js-progress-pct">0%</span>
                     </div>
                     <div class="progress-track">
                         <div class="progress-fill js-progress-bar" style="width:0%"></div>
@@ -271,7 +311,7 @@
             <section class="card hidden js-gallery-section">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                     <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-bold">4</span>
+                        <span class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 flex items-center justify-center text-sm font-bold">4</span>
                         图片管理
                         <span class="text-sm font-normal text-gray-400 ml-2 js-image-count"></span>
                     </h2>
@@ -293,7 +333,7 @@
             <!-- 步骤 5: 打包导出 -->
             <section class="card hidden js-export-section">
                 <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
-                    <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-bold">5</span>
+                    <span class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 flex items-center justify-center text-sm font-bold">5</span>
                     打包导出
                 </h2>
                 <p class="text-sm text-gray-500 mb-5">将当前排好序的图片打包下载</p>
@@ -323,7 +363,7 @@
                             <span class="pkg-spinner"></span>
                             <span class="js-pkg-progress-message">正在打包…</span>
                         </span>
-                        <span class="font-bold text-brand-600 text-sm tabular-nums js-pkg-progress-pct">0%</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200 text-sm tabular-nums js-pkg-progress-pct">0%</span>
                     </div>
                     <div class="progress-track" style="height:10px">
                         <div class="progress-fill js-pkg-progress-bar" style="width:0%;height:100%"></div>

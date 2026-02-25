@@ -11,8 +11,9 @@
 
 - **定位**：从延河课堂桌面录屏视频中提取 PPT 幻灯片的单机工具
 - **架构**：Python Flask 后端 + 原生 HTML/JS 前端（无框架），单进程多线程
-- **当前版本**：v0.3.2
+- **当前版本**：v0.4.0
 - **GitHub**：https://github.com/PWO-CHINA/VidSlide
+- **Gitee 镜像**：https://gitee.com/pwo101/VidSlide（国内下载更快）
 - **Python**：3.11（Microsoft Store 版），虚拟环境在 `./venv`
 
 ## 核心文件职责
@@ -122,6 +123,9 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 3. `extractor.py` 头部注释的版本号
 4. `build_nuitka.bat` 中的 `--product-version`
 5. Git tag：`git tag v0.x.x && git push origin v0.x.x`
+6. GitHub / Gitee Release：通过 API 或网页创建 Release，**exe 文件需在网页端手动上传附件**（GitHub API 和 Gitee API 均不支持通过当前工具链上传二进制文件；`gh` CLI 可以但需要 `gh auth login` 交互认证）
+
+> **分工约定**：AI 负责创建 tag、Release 及版本说明；exe 附件由人类在 GitHub/Gitee 网页端上传。
 
 ## 依赖说明
 
@@ -149,4 +153,66 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 - 前端是纯 JS（无框架），DOM 操作较多，`main.js` 的 `G` 对象是全局状态
 - 所有提取逻辑在后台线程执行（`_extraction_worker`），通过 SSE 队列推送进度
 - 改完代码后用 `python app.py` 启动测试，浏览器会自动打开
+
+## v0.4.0 新增设计决策
+
+### 7. 资源监控条合并进页眉
+
+**背景**：资源监控条原本是独立的 `<div>`，位于 header 下方，被 header 的 `.scrolled` box-shadow 遮挡，视觉不协调。
+
+**方案**：将 `.resource-bar` 移入 `<header>` 内部，使用 `rgba(0,0,0,.15)` 半透明背景融入页眉渐变色，`border-top` 用 `rgba(255,255,255,.08)` 微弱分隔。文字颜色改为白色半透明以匹配页眉色调。
+
+**注意**：`body` 的 `padding-top` 从 64px 增加到 96px 以适应更高的 header。
+
+### 8. Logo 深色模式处理
+
+**背景**：原方案 `filter: invert(1) brightness(1.1)` 全反色，导致 Logo 在深色模式下颜色完全失真。
+
+**方案**：改为 `filter: brightness(0.85) saturate(0.9)`，仅柔和降亮，保留原始色调。
+
+### 9. 断连智能刷新
+
+**背景**：原「立即刷新」按钮直接 `location.reload()`，后端未运行时会跳到浏览器的「拒绝连接」死页面，用户体验极差。
+
+**方案**：
+- 「检测并刷新」按钮先 `fetch('/api/heartbeat')` 探测后端
+- 有响应 → `location.reload()` 正常刷新
+- 无响应 → 在弹窗内提示「后端服务未运行，请手动重启」
+- 自动重连最多 30 次（2.5 分钟），超时后停止并更新状态文案
+- 后端断开时 `api()` 函数不再弹 toast（`_serverAlive` 标志位控制）
+
+### 10. Flask 开发服务器警告
+
+**背景**：`flask run` 会输出 `WARNING: This is a development server. Do not use it in a production deployment.`，对本地桌面工具无意义但看着不干净。
+
+**为什么不用 waitress**：VidSlide 依赖 SSE（`text/event-stream` 流式响应），waitress 会缓冲整个 response 再发送，直接破坏 SSE 功能。Flask 内置服务器对本地单用户场景完全够用。
+
+**方案**：`logging.getLogger('werkzeug').setLevel(logging.ERROR)` 抑制 WARNING 级别日志，只保留自定义启动横幅。
+
+### 11. 跨浏览器标签页通信（BroadcastChannel）
+
+**背景**：用户可能在多个浏览器标签页中打开 VidSlide。关闭服务时只有当前标签页显示「已关闭」，其他标签页会因心跳失败显示「后端断开」，体验不一致。
+
+**方案**：
+- 使用 `BroadcastChannel('vidslide')` 实现同源标签页间通信
+- 关闭服务时广播 `{ type: 'shutdown' }` 消息，所有标签页同步显示关闭页面
+- 新标签页打开时广播 `{ type: 'tab_active' }`，已有标签页回复 `{ type: 'tab_exists' }`
+- 检测到重复标签页时显示提示页面，提供「强制打开」和「关闭此标签页」选项
+- 「不再提示」选项存入 `localStorage('vidslide_no_dup_warn')`
+- 「强制打开」使用 `sessionStorage('vidslide_force_open')` 一次性标记跳过检测（用完即删）
+
+**代码位置**：`main.js` 顶部 `_bc` 变量 + `init()` 函数第零步
+
+### 12. 关闭后自动关闭浏览器标签页
+
+**背景**：关闭服务后页面停留在「已关闭」状态，几秒后心跳失败又弹出断连遮罩。
+
+**方案**：
+- `_showShutdownPage()` 先清除所有定时器（心跳、资源监控），防止后续触发断连检测
+- 显示 5 秒倒计时后尝试 `window.close()`
+- 浏览器安全限制：`window.close()` 只能关闭由 `window.open()` 打开的页面，`webbrowser.open` 打开的不算
+- 降级方案：倒计时结束后提示「浏览器不允许自动关闭此页面，请手动关闭」
+- `showDisconnectOverlay()` 增加 `G._serverShutdown` 检查，用户主动关闭后不再触发断连遮罩
+
+**代码位置**：`main.js` `_showShutdownPage()` + `shutdownServer()`
 

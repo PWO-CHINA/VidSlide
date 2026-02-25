@@ -5,7 +5,7 @@
 支持 GPU 硬件加速解码（自动检测）和进程优先级调整。
 
 作者: PWO-CHINA
-版本: v0.3.2
+版本: v0.4.0
 """
 
 import cv2
@@ -67,7 +67,8 @@ def _open_video_capture(video_path, use_gpu=True):
 def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
                    max_history=5, use_roi=True, fast_mode=True, use_gpu=True,
                    speed_mode='eco',
-                   on_progress=None, should_cancel=None):
+                   on_progress=None, should_cancel=None,
+                   start_frame=0, saved_offset=0):
     """
     从视频中提取幻灯片截图。
 
@@ -81,15 +82,17 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
         fast_mode:       是否使用快速模式（降低比较分辨率）
         use_gpu:         是否使用 GPU 硬件加速解码
         speed_mode:      运行模式 'eco'(后台静默) | 'fast'(全速狂飙) | 'turbo'(极速狂暴)
-        on_progress:     进度回调 (saved_count, progress_pct, message, eta_seconds, elapsed_seconds)
+        on_progress:     进度回调 (saved_count, progress_pct, message, eta_seconds, elapsed_seconds[, current_frame])
         should_cancel:   取消检查回调 () -> bool
+        start_frame:     断点续传：从第几帧开始（0=从头）
+        saved_offset:    断点续传：已有图片数量（文件命名偏移）
 
     Returns:
         (status, message, saved_count) 元组
         status: 'done' | 'cancelled' | 'error'
     """
     if on_progress is None:
-        on_progress = lambda *args: None
+        on_progress = lambda *args, **kwargs: None
     if should_cancel is None:
         should_cancel = lambda: False
 
@@ -115,14 +118,23 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
 
         # ── 使用 GPU 硬件加速打开视频 ──
         cap = _open_video_capture(video_path, use_gpu=use_gpu)
-        ok, prev_frame = cap.read()
-        if not ok:
-            return ('error', '无法读取视频文件', 0)
 
         total_frames = max(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), 1)
         fps = cap.get(cv2.CAP_PROP_FPS) or 30
         # Turbo: 2秒跳距（减少一半比较次数），其他: 1秒
         frame_step = max(1, int(fps * (2 if _is_turbo else 1)))
+
+        # ── 断点续传：跳到上次中断的位置 ──
+        is_resuming = (start_frame > 0)
+        if is_resuming:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+            print(f'[断点续传] 从第 {start_frame} 帧恢复，已有 {saved_offset} 张图片')
+
+        ok, prev_frame = cap.read()
+        if not ok:
+            return ('error', '无法读取视频文件', 0)
+
+        count = start_frame if is_resuming else 0
 
         h, w = prev_frame.shape[:2]
         if use_roi:
@@ -150,18 +162,21 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
         prev_gray = _to_gray(prev_frame)
         history_pool = [prev_gray] if enable_history else None
 
-        count = 0
         _extract_start_time = time.time()
 
-        # ── 保存第一帧 ──
-        fp = os.path.join(output_dir, f"slide_{saved:04d}.jpg")
-        cv2.imencode('.jpg', prev_frame, [cv2.IMWRITE_JPEG_QUALITY, 95])[1].tofile(fp)
-        saved += 1
-        on_progress(saved, 0, f'已提取 {saved} 张', -1, 0)
+        # ── 保存第一帧（续传时跳过，因为断点帧只用于比较基准） ──
+        if not is_resuming:
+            fp = os.path.join(output_dir, f"slide_{saved_offset + saved:04d}.jpg")
+            cv2.imencode('.jpg', prev_frame, [cv2.IMWRITE_JPEG_QUALITY, 95])[1].tofile(fp)
+            saved += 1
+            on_progress(saved, 0, f'已提取 {saved_offset + saved} 张', -1, 0, count)
+        else:
+            on_progress(saved, int(count / total_frames * 100),
+                        f'从断点恢复，继续提取…', -1, 0, count)
 
         while True:
             if should_cancel():
-                return ('cancelled', f'已取消，已保存 {saved} 张', saved)
+                return ('cancelled', f'已取消，已保存 {saved_offset + saved} 张', saved)
 
             # ── 节流：让出少量 CPU 给系统和其他线程 ──
             time.sleep(_THROTTLE_INTERVAL)
@@ -180,7 +195,7 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
                 gc.collect()
 
             if should_cancel():
-                return ('cancelled', f'已取消，已保存 {saved} 张', saved)
+                return ('cancelled', f'已取消，已保存 {saved_offset + saved} 张', saved)
 
             ok, curr_frame = cap.retrieve()
             if not ok:
@@ -192,7 +207,7 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
                 eta = elapsed / pct * (100 - pct)
             else:
                 eta = -1
-            on_progress(saved, pct, f'已提取 {saved} 张', round(eta, 1), round(elapsed, 1))
+            on_progress(saved, pct, f'已提取 {saved_offset + saved} 张', round(eta, 1), round(elapsed, 1), count)
 
             curr_gray = _to_gray(curr_frame)
             mean_diff = np.mean(cv2.absdiff(curr_gray, prev_gray))
@@ -235,7 +250,7 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
 
                 # 稳定帧检测后再检查一次取消
                 if should_cancel():
-                    return ('cancelled', f'已取消，已保存 {saved} 张', saved)
+                    return ('cancelled', f'已取消，已保存 {saved_offset + saved} 张', saved)
 
                 if settled_gray is not None:
                     final_diff = np.mean(cv2.absdiff(settled_gray, prev_gray))
@@ -249,11 +264,11 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
                         dup = True
 
                     if not dup and final_diff > threshold:
-                        fp = os.path.join(output_dir, f"slide_{saved:04d}.jpg")
+                        fp = os.path.join(output_dir, f"slide_{saved_offset + saved:04d}.jpg")
                         cv2.imencode('.jpg', settled_frame, [cv2.IMWRITE_JPEG_QUALITY, 95])[1].tofile(fp)
                         saved += 1
-                        on_progress(saved, pct, f'已提取 {saved} 张',
-                                    round(eta, 1), round(elapsed, 1))
+                        on_progress(saved, pct, f'已提取 {saved_offset + saved} 张',
+                                    round(eta, 1), round(elapsed, 1), count)
                         prev_gray = settled_gray
                         if enable_history:
                             history_pool.append(settled_gray)
@@ -263,8 +278,9 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
                         prev_gray = settled_gray
 
         elapsed_total = round(time.time() - _extract_start_time, 1)
+        total_saved = saved_offset + saved
         return ('done',
-                f'提取完成！共 {saved} 张幻灯片，耗时 {int(elapsed_total)}s',
+                f'提取完成！共 {total_saved} 张幻灯片，耗时 {int(elapsed_total)}s',
                 saved)
 
     except Exception as e:

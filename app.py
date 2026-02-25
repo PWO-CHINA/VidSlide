@@ -1,10 +1,10 @@
 """
-影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.3.2)
+影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.4.0)
 =====================================================
 基于 Flask 的本地 Web 应用，提供可视化界面来提取、管理和打包 PPT 幻灯片。
 支持同时对多个视频进行提取（最多 3 个并行标签页）。
 
-v0.3.2 新特性：
+v0.4.0 新特性：
     - SSE (Server-Sent Events) 服务器推送，替代高频轮询
     - 异步后台打包导出，前端实时显示打包进度
     - GPU 硬件加速视频解码（自动检测）
@@ -19,7 +19,7 @@ v0.3.2 新特性：
     pip install flask opencv-python numpy pillow python-pptx psutil
 
 作者: PWO-CHINA
-版本: v0.3.2
+版本: v0.4.0
 """
 
 import cv2
@@ -460,6 +460,128 @@ def _update_session(sid, **kw):
         sess.update(kw)
 
 
+# ── 会话元数据持久化（用于断线恢复 & 断点续传）──
+_META_SAVE_KEYS = (
+    'video_path', 'video_name', 'threshold', 'enable_history', 'max_history',
+    'use_roi', 'fast_mode', 'use_gpu', 'speed_mode',
+    'status', 'saved_count', 'progress', 'elapsed_seconds',
+    'last_frame_index', 'total_frames', 'created_at',
+)
+
+
+def _save_session_meta(sid):
+    """将会话关键信息写入磁盘 session.json，用于重启后恢复"""
+    sess = _get_session(sid)
+    if not sess:
+        return
+    meta = {}
+    with sess['lock']:
+        for k in _META_SAVE_KEYS:
+            if k in sess:
+                meta[k] = sess[k]
+    meta['updated_at'] = time.time()
+    meta_file = os.path.join(SESSIONS_ROOT, sid, 'session.json')
+    try:
+        with open(meta_file, 'w', encoding='utf-8') as f:
+            json.dump(meta, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f'[元数据] 保存失败 {sid}: {e}')
+
+
+def _load_session_meta(sess_dir):
+    """从磁盘读取 session.json 元数据"""
+    meta_file = os.path.join(sess_dir, 'session.json')
+    if not os.path.exists(meta_file):
+        return {}
+    try:
+        with open(meta_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _recover_sessions_from_disk():
+    """启动时扫描磁盘，恢复有提取成果或中断的会话到内存"""
+    if not os.path.exists(SESSIONS_ROOT):
+        return 0
+    recovered = 0
+    for name in os.listdir(SESSIONS_ROOT):
+        sess_dir = os.path.join(SESSIONS_ROOT, name)
+        if not os.path.isdir(sess_dir):
+            continue
+        cache_dir = os.path.join(sess_dir, 'cache')
+        pkg_dir = os.path.join(sess_dir, 'packages')
+
+        # 统计磁盘上的实际图片数
+        image_count = 0
+        if os.path.exists(cache_dir):
+            image_count = len([f for f in os.listdir(cache_dir)
+                               if f.lower().endswith(('.jpg', '.jpeg', '.png'))])
+
+        meta = _load_session_meta(sess_dir)
+
+        # 无图片且无有效元数据 → 清理
+        if image_count == 0 and not meta.get('video_path'):
+            shutil.rmtree(sess_dir, ignore_errors=True)
+            continue
+
+        # 确定恢复后的状态
+        old_status = meta.get('status', '')
+        has_video = bool(meta.get('video_path'))
+        can_resume = old_status in ('running', 'cancelled') and has_video and meta.get('last_frame_index', 0) > 0
+        if can_resume:
+            restore_status = 'interrupted' if old_status == 'running' else 'cancelled'
+            restore_msg = f'提取被{"中断" if old_status == "running" else "取消"}（已保存 {image_count} 张），可继续'
+        elif image_count > 0:
+            restore_status = 'done'
+            restore_msg = f'已从磁盘恢复（{image_count} 张图片）'
+        else:
+            # 有元数据但无图片且非 running → 无价值
+            shutil.rmtree(sess_dir, ignore_errors=True)
+            continue
+
+        os.makedirs(pkg_dir, exist_ok=True)
+        sid = name
+        session = {
+            'id': sid,
+            'created_at': meta.get('created_at', time.time()),
+            'last_active': time.time(),
+            'status': restore_status,
+            'progress': 100 if restore_status == 'done' else meta.get('progress', 0),
+            'message': restore_msg,
+            'saved_count': image_count,
+            'video_path': meta.get('video_path', ''),
+            'video_name': meta.get('video_name', ''),
+            'cancel_flag': False,
+            'eta_seconds': -1,
+            'elapsed_seconds': meta.get('elapsed_seconds', 0),
+            'pkg_status': 'idle',
+            'pkg_progress': 0,
+            'pkg_message': '',
+            'pkg_filename': '',
+            'pkg_format': '',
+            'cache_dir': cache_dir,
+            'pkg_dir': pkg_dir,
+            'lock': threading.Lock(),
+            'event_queues': [],
+            # 断点续传所需的额外字段
+            'last_frame_index': meta.get('last_frame_index', 0),
+            'total_frames': meta.get('total_frames', 0),
+            'threshold': meta.get('threshold', 5.0),
+            'enable_history': meta.get('enable_history', False),
+            'max_history': meta.get('max_history', 5),
+            'use_roi': meta.get('use_roi', True),
+            'fast_mode': meta.get('fast_mode', True),
+            'use_gpu': meta.get('use_gpu', True),
+            'speed_mode': meta.get('speed_mode', 'eco'),
+        }
+        with _sessions_lock:
+            _sessions[sid] = session
+        recovered += 1
+        print(f'[启动恢复] 会话 {sid}: {image_count} 张图片, 状态: {restore_status}')
+    return recovered
+
+
 def _delete_session(sid):
     with _sessions_lock:
         sess = _sessions.pop(sid, None)
@@ -484,7 +606,7 @@ def _get_all_sessions_summary():
     for sid in sids:
         state = _get_session_state(sid)
         if state:
-            result.append({
+            summary = {
                 'id': state['id'],
                 'status': state['status'],
                 'progress': state['progress'],
@@ -496,7 +618,12 @@ def _get_all_sessions_summary():
                 'elapsed_seconds': state['elapsed_seconds'],
                 'pkg_status': state.get('pkg_status', 'idle'),
                 'pkg_progress': state.get('pkg_progress', 0),
-            })
+            }
+            # 断点续传信息
+            if state['status'] == 'interrupted':
+                summary['last_frame_index'] = state.get('last_frame_index', 0)
+                summary['total_frames'] = state.get('total_frames', 0)
+            result.append(summary)
     return result
 
 
@@ -590,8 +717,12 @@ def _cleanup_orphan_sessions():
                     sess['cancel_flag'] = True
                 orphans.append(sid)
         else:
-            # 非运行状态：空闲或已完成
-            if not has_results or age > ORPHAN_SESSION_TIMEOUT:
+            # interrupted 或有成果的会话给更长的宽限期（5 分钟），等待前端重连
+            is_interrupted = sess.get('status') == 'interrupted'
+            grace_timeout = 300 if (is_interrupted or has_results) else 0
+            if not has_results and not is_interrupted:
+                orphans.append(sid)
+            elif age > grace_timeout:
                 orphans.append(sid)
 
     for sid in orphans:
@@ -855,6 +986,7 @@ def start_extraction(sid):
         status='running', progress=0, message='正在初始化…',
         saved_count=0, video_path=video_path, video_name=video_name,
         cancel_flag=False, eta_seconds=-1, elapsed_seconds=0,
+        total_frames=_total, last_frame_index=0,
     )
 
     threading.Thread(
@@ -866,30 +998,83 @@ def start_extraction(sid):
     return jsonify(success=True)
 
 
-# ============================================================
-#  后台提取 Worker（调用 extractor 模块 + SSE 推送）
-# ============================================================
-def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu=True, speed_mode='eco'):
+@app.route('/api/session/<sid>/resume', methods=['POST'])
+def resume_extraction(sid):
+    """断点续传：从上次中断的位置继续提取"""
+    sess = _get_session(sid)
+    if not sess:
+        return jsonify(success=False, message='会话不存在')
+
+    with sess['lock']:
+        if sess['status'] not in ('interrupted', 'cancelled'):
+            return jsonify(success=False, message=f'当前状态不支持续传（{sess["status"]}）')
+        video_path = sess.get('video_path', '')
+        last_frame = sess.get('last_frame_index', 0)
+        saved_count = sess.get('saved_count', 0)
+
+    if not video_path:
+        return jsonify(success=False, message='无法恢复：缺少视频路径信息')
+    if not os.path.exists(video_path):
+        return jsonify(success=False, message=f'视频文件不存在: {video_path}',
+                       hint='原视频文件可能已被移动或删除，无法继续提取。')
+
+    # 读取提取参数（优先从 session 内存，回退到元数据文件）
+    meta = _load_session_meta(os.path.join(SESSIONS_ROOT, sid))
+    threshold = sess.get('threshold', meta.get('threshold', 5.0))
+    enable_history = sess.get('enable_history', meta.get('enable_history', False))
+    max_history = sess.get('max_history', meta.get('max_history', 5))
+    use_roi = sess.get('use_roi', meta.get('use_roi', True))
+    fast_mode = sess.get('fast_mode', meta.get('fast_mode', True))
+    use_gpu = sess.get('use_gpu', meta.get('use_gpu', True))
+    speed_mode = sess.get('speed_mode', meta.get('speed_mode', 'eco'))
+
+    cache_dir = sess['cache_dir']
+    video_name = Path(video_path).stem or '未命名视频'
+
+    _update_session(sid,
+        status='running', progress=0, message='正在从断点恢复…',
+        video_path=video_path, video_name=video_name,
+        cancel_flag=False, eta_seconds=-1, elapsed_seconds=0,
+    )
+
+    threading.Thread(
+        target=_extraction_worker,
+        args=(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu, speed_mode),
+        kwargs={'start_frame': last_frame, 'saved_offset': saved_count},
+        daemon=True,
+    ).start()
+
+    return jsonify(success=True, resumed_from_frame=last_frame, existing_images=saved_count)
+def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu=True, speed_mode='eco', start_frame=0, saved_offset=0):
     """中间层：将 extractor 的回调桥接到会话管理 + SSE 事件"""
 
+    _last_meta_save = [time.time()]  # 用列表以便闭包修改
+
     try:
-        def on_progress(saved_count, progress_pct, message, eta_seconds, elapsed_seconds):
+        def on_progress(saved_count, progress_pct, message, eta_seconds, elapsed_seconds, current_frame=0):
+            actual_saved = saved_offset + saved_count
             _update_session(sid,
-                saved_count=saved_count,
+                saved_count=actual_saved,
                 progress=progress_pct,
                 message=message,
                 eta_seconds=eta_seconds,
                 elapsed_seconds=elapsed_seconds,
+                last_frame_index=current_frame,
             )
             _push_event(sid, {
                 'type': 'extraction',
                 'status': 'running',
-                'saved_count': saved_count,
+                'saved_count': actual_saved,
                 'progress': progress_pct,
                 'message': message,
                 'eta_seconds': eta_seconds,
                 'elapsed_seconds': elapsed_seconds,
             })
+            # 每 5 秒保存一次元数据到磁盘（断点续传用）
+            now = time.time()
+            if now - _last_meta_save[0] >= 5:
+                _last_meta_save[0] = now
+                _save_session_meta(sid)
 
         def should_cancel():
             s = _get_session(sid)
@@ -898,12 +1083,23 @@ def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, ma
             with s['lock']:
                 return s['cancel_flag']
 
+        # 保存提取参数到 session（用于断点续传恢复）
+        _update_session(sid,
+            threshold=threshold, enable_history=enable_history,
+            max_history=max_history, use_roi=use_roi, fast_mode=fast_mode,
+            use_gpu=use_gpu, speed_mode=speed_mode,
+        )
+        # 提取开始时立即保存元数据
+        _save_session_meta(sid)
+
         status, message, saved_count = extract_slides(
             video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode,
             use_gpu=use_gpu, speed_mode=speed_mode,
             on_progress=on_progress, should_cancel=should_cancel,
+            start_frame=start_frame, saved_offset=saved_offset,
         )
 
+        actual_saved = saved_offset + saved_count
         if status == 'done':
             sess = _get_session(sid)
             elapsed = 0
@@ -912,16 +1108,19 @@ def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, ma
                     elapsed = sess.get('elapsed_seconds', 0)
             _update_session(sid,
                 status='done', progress=100, eta_seconds=0,
-                elapsed_seconds=elapsed, saved_count=saved_count, message=message)
+                elapsed_seconds=elapsed, saved_count=actual_saved, message=message)
         elif status == 'cancelled':
-            _update_session(sid, status='cancelled', message=message, saved_count=saved_count)
+            _update_session(sid, status='cancelled', message=message, saved_count=actual_saved)
         else:
-            _update_session(sid, status='error', message=message, saved_count=saved_count)
+            _update_session(sid, status='error', message=message, saved_count=actual_saved)
+
+        # 提取结束后保存最终元数据
+        _save_session_meta(sid)
 
         _push_event(sid, {
             'type': 'extraction',
             'status': status,
-            'saved_count': saved_count,
+            'saved_count': actual_saved,
             'progress': 100 if status == 'done' else 0,
             'message': message,
         })
@@ -931,6 +1130,7 @@ def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, ma
         err_msg = str(e) or '未知错误'
         print(f'[后台提取致命错误] SID={sid} \n{_tb.format_exc()}', flush=True)
         _update_session(sid, status='error', message=f'系统异常: {err_msg}', cancel_flag=True)
+        _save_session_meta(sid)
         _push_event(sid, {
             'type': 'extraction',
             'status': 'error',
@@ -1330,6 +1530,10 @@ def _write_port_file(port):
 if __name__ == '__main__':
     try:
         os.makedirs(SESSIONS_ROOT, exist_ok=True)
+
+        # 启动时恢复磁盘上的会话（断线恢复 & 断点续传）
+        recovered = _recover_sessions_from_disk()
+
         port = _find_free_port(5873)
         _write_port_file(port)
         url = f'http://127.0.0.1:{port}'
@@ -1341,18 +1545,26 @@ if __name__ == '__main__':
 
         print()
         print('=' * 60)
-        print('  影幻智提 (VidSlide) v0.3.2 - 性能狂飙版')
+        print('  影幻智提 (VidSlide) v0.4.0 - 体验优化版')
         print(f'  浏览器将自动打开: {url}')
         print(f'  临时文件目录: {SESSIONS_ROOT}')
         print(f'  最大并行标签页: {MAX_SESSIONS}')
-        print('  ✨ 新特性: SSE 推送 · GPU 加速 · 异步打包')
+        print('  ✨ 新特性: SSE 推送 · GPU 加速 · 异步打包 · 断点续传')
         print('  浏览器断联 5 分钟后服务自动退出（有任务时延长等待）')
+        if recovered > 0:
+            print(f'  📂 已从磁盘恢复 {recovered} 个会话')
         print('  也可以按 Ctrl+C 手动停止')
         print('=' * 60)
         print()
 
         import atexit
         atexit.register(lambda: _do_cleanup(force=False))
+
+        # 抑制 Flask/werkzeug 的 "development server" 警告
+        # 对于本地桌面工具，内置服务器完全够用，该警告无意义
+        import logging
+        log = logging.getLogger('werkzeug')
+        log.setLevel(logging.ERROR)
 
         app.run(host='127.0.0.1', port=port, debug=False, threaded=True)
 

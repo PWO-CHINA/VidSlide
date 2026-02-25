@@ -1,10 +1,69 @@
 /**
- * 影幻智提 (VidSlide) v0.3.2 - 前端主逻辑
+ * 影幻智提 (VidSlide) v0.4.0 - 前端主逻辑
  * ==========================================
  * 通信方式：SSE（Server-Sent Events）服务器推送
  * 打包导出：异步后台处理 + SSE 进度推送
  * 画廊渲染：DocumentFragment 批量插入
  */
+
+// ============================================================
+//  跨浏览器标签页通信（BroadcastChannel）
+// ============================================================
+const _bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('vidslide') : null;
+if (_bc) {
+    _bc.onmessage = (e) => {
+        if (e.data?.type === 'shutdown') {
+            // 其他标签页发起了关闭服务
+            G._serverShutdown = true;
+            for (const sid of Object.keys(G.tabs)) {
+                G.tabs[sid].disconnectSSE();
+            }
+            _showShutdownPage();
+        }
+        if (e.data?.type === 'tab_active') {
+            // 另一个标签页刚打开，通知它我们已经存在
+            _bc.postMessage({ type: 'tab_exists' });
+        }
+        if (e.data?.type === 'tab_exists') {
+            _otherTabExists = true;
+        }
+    };
+}
+let _otherTabExists = false;
+
+// ============================================================
+//  深色模式切换
+// ============================================================
+function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.classList.toggle('dark');
+    localStorage.setItem('vidslide_theme', isDark ? 'dark' : 'light');
+    updateThemeIcon();
+}
+function updateThemeIcon() {
+    const icon = document.getElementById('themeIcon');
+    if (!icon) return;
+    const isDark = document.documentElement.classList.contains('dark');
+    icon.textContent = isDark ? '☀️' : '🌙';
+}
+window.toggleTheme = toggleTheme;
+// 初始化图标
+document.addEventListener('DOMContentLoaded', updateThemeIcon);
+
+// ============================================================
+//  Sticky Header 滚动效果
+// ============================================================
+let lastScrollY = 0;
+const header = document.querySelector('.sticky-header');
+window.addEventListener('scroll', () => {
+    const currentScrollY = window.scrollY;
+    if (currentScrollY > 10) {
+        header?.classList.add('scrolled');
+    } else {
+        header?.classList.remove('scrolled');
+    }
+    lastScrollY = currentScrollY;
+}, { passive: true });
 
 // ============================================================
 //  配置记忆（localStorage）
@@ -185,6 +244,7 @@ function handleExtractionEvent(sid, data) {
         ts.isExtracting = false;
         q(sid, 'js-btn-extract').classList.remove('hidden');
         q(sid, 'js-btn-cancel').classList.add('hidden');
+        q(sid, 'js-btn-resume').classList.add('hidden');
         q(sid, 'js-progress-bar').style.width = '100%';
         q(sid, 'js-progress-pct').textContent = '100%';
         updateTabStatus(sid, data.status);
@@ -197,6 +257,10 @@ function handleExtractionEvent(sid, data) {
             q(sid, 'js-progress-message').textContent = '⏹ ' + data.message;
             showToast(data.message, 'warning');
             loadImages(sid);
+            // 有已提取的图片时显示「继续提取」按钮
+            if (data.saved_count > 0) {
+                q(sid, 'js-btn-resume').classList.remove('hidden');
+            }
         } else {
             q(sid, 'js-progress-message').textContent = '❌ ' + data.message;
             showErrorModal('提取出错', data.message,
@@ -302,7 +366,11 @@ async function api(path, opts = {}) {
             showToast('请求超时，请重试', 'error');
             return { success: false, message: '请求超时' };
         }
-        showToast('网络错误: ' + e.message, 'error');
+        // 后端已断开时不再弹 toast（断连遮罩已显示）
+        if (!_serverAlive) {
+            return { success: false, message: '后端服务未连接' };
+        }
+        showToast('无法连接到后端服务', 'error');
         if (e instanceof TypeError && e.message.includes('fetch')) {
             sendHeartbeat();
         }
@@ -318,7 +386,8 @@ function showToast(msg, type = 'info', duration = 3500) {
     const colors = { info: 'bg-blue-500', success: 'bg-emerald-500', error: 'bg-red-500', warning: 'bg-amber-500' };
     const icons = { info: 'ℹ️', success: '✅', error: '❌', warning: '⚠️' };
     const el = document.createElement('div');
-    el.className = `${colors[type] || colors.info} text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium pointer-events-auto flex items-center gap-2 toast-enter`;
+    el.className = `${colors[type] || colors.info} text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium pointer-events-auto flex items-center gap-2 toast-enter backdrop-blur-sm`;
+    el.style.background = type === 'info' ? 'rgba(59,130,246,.9)' : type === 'success' ? 'rgba(16,185,129,.9)' : type === 'error' ? 'rgba(239,68,68,.9)' : 'rgba(245,158,11,.9)';
     el.innerHTML = `<span>${icons[type] || ''}</span><span>${msg}</span>`;
     document.getElementById('toasts').appendChild(el);
     setTimeout(() => {
@@ -443,6 +512,28 @@ function adoptExistingSession(sessInfo) {
             q(sid, 'js-progress-message').textContent = sessInfo.message;
         }
         updateTabStatus(sid, 'running');
+    } else if (sessInfo.status === 'interrupted') {
+        // 中断状态：加载已有图片，显示「继续提取」按钮
+        updateTabStatus(sid, 'interrupted');
+        loadImages(sid);
+        q(sid, 'js-btn-resume').classList.remove('hidden');
+        q(sid, 'js-progress-section').classList.remove('hidden');
+        const pct = sessInfo.progress || 0;
+        q(sid, 'js-progress-bar').style.width = pct + '%';
+        q(sid, 'js-progress-pct').textContent = pct + '%';
+        q(sid, 'js-progress-message').textContent = sessInfo.message || '提取被中断，可继续';
+        q(sid, 'js-progress-hint').textContent = `已提取 ${sessInfo.saved_count} 张，进度 ${pct}%`;
+    } else if (sessInfo.status === 'cancelled' && sessInfo.saved_count > 0) {
+        // 取消状态且有图片：加载画廊 + 显示续传按钮
+        updateTabStatus(sid, 'cancelled');
+        loadImages(sid);
+        q(sid, 'js-btn-resume').classList.remove('hidden');
+        q(sid, 'js-progress-section').classList.remove('hidden');
+        const pct = sessInfo.progress || 0;
+        q(sid, 'js-progress-bar').style.width = pct + '%';
+        q(sid, 'js-progress-pct').textContent = pct + '%';
+        q(sid, 'js-progress-message').textContent = sessInfo.message || '提取已取消，可继续';
+        q(sid, 'js-progress-hint').textContent = `已提取 ${sessInfo.saved_count} 张，进度 ${pct}%`;
     } else if (sessInfo.status === 'done' && sessInfo.saved_count > 0) {
         updateTabStatus(sid, 'done');
         // 加载已提取的图片
@@ -492,6 +583,7 @@ function bindPaneEvents(sid, pane) {
         pane.querySelector('.js-max-history-group').style.display = histCb.checked ? 'flex' : 'none';
     });
     pane.querySelector('.js-btn-extract').addEventListener('click', () => startExtraction(sid));
+    pane.querySelector('.js-btn-resume').addEventListener('click', () => resumeExtraction(sid));
     pane.querySelector('.js-btn-cancel').addEventListener('click', () => cancelExtraction(sid));
     pane.querySelector('.js-btn-pdf').addEventListener('click', () => packageImages(sid, 'pdf'));
     pane.querySelector('.js-btn-pptx').addEventListener('click', () => packageImages(sid, 'pptx'));
@@ -655,6 +747,7 @@ async function startExtraction(sid) {
     ts.downloadLinks = [];
 
     q(sid, 'js-btn-extract').classList.add('hidden');
+    q(sid, 'js-btn-resume').classList.add('hidden');
     q(sid, 'js-btn-cancel').classList.remove('hidden');
     q(sid, 'js-progress-section').classList.remove('hidden');
     q(sid, 'js-gallery-section').classList.add('hidden');
@@ -666,6 +759,34 @@ async function startExtraction(sid) {
     updateTabStatus(sid, 'running');
     // 进度更新由 SSE 事件驱动，无需轮询
 }
+
+/**
+ * 断点续传：从上次中断的位置继续提取
+ */
+async function resumeExtraction(sid) {
+    const ts = G.tabs[sid];
+    if (!ts) return;
+    if (ts.isExtracting) return;
+
+    const data = await api(`/api/session/${sid}/resume`, { method: 'POST' });
+    if (!data.success) { showToast(data.message, 'error'); return; }
+
+    ts.isExtracting = true;
+    ts.downloadLinks = [];
+
+    q(sid, 'js-btn-extract').classList.add('hidden');
+    q(sid, 'js-btn-resume').classList.add('hidden');
+    q(sid, 'js-btn-cancel').classList.remove('hidden');
+    q(sid, 'js-progress-section').classList.remove('hidden');
+    q(sid, 'js-progress-message').textContent = '正在从断点恢复…';
+    q(sid, 'js-progress-hint').textContent = `已有 ${data.existing_images || 0} 张，从第 ${data.resumed_from_frame || 0} 帧继续`;
+    const dlSec = q(sid, 'js-download-section');
+    if (dlSec) { dlSec.innerHTML = ''; dlSec.classList.add('hidden'); }
+
+    updateTabStatus(sid, 'running');
+    showToast('正在从断点继续提取…', 'success');
+}
+window.resumeExtraction = resumeExtraction;
 
 async function cancelExtraction(sid) {
     const ts = G.tabs[sid];
@@ -756,7 +877,8 @@ function initSortable(sid) {
     if (ts.sortable) ts.sortable.destroy();
     const gallery = q(sid, 'js-gallery');
     ts.sortable = Sortable.create(gallery, {
-        animation: 200,
+        animation: 250,
+        easing: 'cubic-bezier(.34,1.56,.64,1)',
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
         dragClass: 'sortable-drag',
@@ -971,6 +1093,14 @@ function deleteInPreview() {
     const ts = G.tabs[sid];
     if (!ts || idx >= ts.images.length) return;
 
+    // 按钮视觉反馈
+    const delBtn = document.getElementById('btnDeletePreview');
+    if (delBtn) {
+        delBtn.classList.remove('flash');
+        void delBtn.offsetWidth; // 强制 reflow 以重新触发动画
+        delBtn.classList.add('flash');
+    }
+
     // 执行删除
     const fn = ts.images.splice(idx, 1)[0];
     ts.deletedStack.push({ filename: fn, originalIndex: idx });
@@ -1168,6 +1298,7 @@ const HEARTBEAT_FAIL_THRESHOLD = 5;
 let _reconnectTimer = null;
 
 function showDisconnectOverlay() {
+    if (G._serverShutdown) return; // 用户主动关闭服务，不显示断连遮罩
     if (document.getElementById('disconnectOverlay')) return;
     _serverAlive = false;
     const overlay = document.createElement('div');
@@ -1178,16 +1309,17 @@ function showDisconnectOverlay() {
             <div style="font-size:56px;margin-bottom:16px;">⚠️</div>
             <h1 style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:12px;">后端服务已断开</h1>
             <p style="color:#475569;line-height:1.7;font-size:15px;margin-bottom:20px;">
-                服务进程已意外退出或被关闭。<br>正在自动尝试重新连接…
+                服务进程已退出或被关闭。<br>正在自动尝试重新连接…
             </p>
             <div id="reconnectStatus" style="background:#f1f5f9;border-radius:10px;padding:16px 20px;text-align:center;margin-bottom:20px;">
                 <p style="color:#334155;font-size:14px;font-weight:600;margin-bottom:4px;">🔄 自动重连中…</p>
                 <p id="reconnectCountdown" style="color:#64748b;font-size:13px;">每 5 秒尝试一次</p>
             </div>
             <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-                <button onclick="location.reload()" style="padding:10px 20px;background:#6366f1;color:white;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;">🔄 立即刷新</button>
+                <button id="btnSmartRefresh" onclick="smartRefresh()" style="padding:10px 20px;background:#6366f1;color:white;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;">🔄 检测并刷新</button>
                 <a href="https://github.com/PWO-CHINA/VidSlide/issues/new?title=${encodeURIComponent('[Bug] 后端服务意外断开')}&body=${encodeURIComponent('## 问题描述\\n后端服务意外断开连接。\\n\\n## 环境信息\\n- 时间: ' + new Date().toLocaleString() + '\\n\\n## 复现步骤\\n1. \\n2. \\n3. ')}" target="_blank" style="padding:10px 20px;background:#e2e8f0;color:#334155;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;">🐛 提交 Issue</a>
             </div>
+            <p id="smartRefreshHint" style="color:#94a3b8;font-size:12px;margin-top:12px;display:none;"></p>
         </div>`;
     document.body.appendChild(overlay);
 
@@ -1195,9 +1327,34 @@ function showDisconnectOverlay() {
     _startAutoReconnect();
 }
 
+/**
+ * 智能刷新：先 ping 后端，有响应才 reload，否则提示用户手动重启
+ */
+async function smartRefresh() {
+    const btn = document.getElementById('btnSmartRefresh');
+    const hint = document.getElementById('smartRefreshHint');
+    if (btn) { btn.disabled = true; btn.textContent = '🔄 正在检测后端…'; }
+    if (hint) { hint.style.display = 'block'; hint.textContent = '正在尝试连接后端服务…'; }
+    try {
+        const resp = await fetch('/api/heartbeat', { method: 'POST', signal: AbortSignal.timeout(3000) });
+        if (resp.ok) {
+            if (hint) hint.textContent = '后端已恢复，正在刷新页面…';
+            location.reload();
+            return;
+        }
+    } catch { /* 后端不可用 */ }
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 检测并刷新'; }
+    if (hint) {
+        hint.style.display = 'block';
+        hint.innerHTML = '后端服务未运行。请重新双击 <b>VidSlide.exe</b> 或在终端运行 <code>python app.py</code> 启动后端，然后再点击此按钮。';
+    }
+}
+window.smartRefresh = smartRefresh;
+
 function _startAutoReconnect() {
     if (_reconnectTimer) return;
     let attempt = 0;
+    const MAX_RECONNECT = 30; // 最多尝试 30 次（约 2.5 分钟）
     _reconnectTimer = setInterval(async () => {
         attempt++;
         const el = document.getElementById('reconnectCountdown');
@@ -1211,9 +1368,21 @@ function _startAutoReconnect() {
                 _serverAlive = true;
                 // 服务恢复，刷新页面以重建状态
                 location.reload();
+                return;
             }
         } catch {
             // 仍然不可用，继续重试
+        }
+        if (attempt >= MAX_RECONNECT) {
+            clearInterval(_reconnectTimer);
+            _reconnectTimer = null;
+            const statusEl = document.getElementById('reconnectStatus');
+            if (statusEl) {
+                statusEl.innerHTML = `
+                    <p style="color:#991b1b;font-size:14px;font-weight:600;margin-bottom:4px;">❌ 自动重连失败</p>
+                    <p style="color:#64748b;font-size:13px;">已尝试 ${MAX_RECONNECT} 次，后端服务可能已关闭。<br>请手动重启后端后点击「检测并刷新」。</p>
+                `;
+            }
         }
     }, 5000);
 }
@@ -1254,6 +1423,39 @@ document.addEventListener('visibilitychange', () => {
 // ============================================================
 //  关闭服务
 // ============================================================
+function _showShutdownPage() {
+    // 清除所有定时器（心跳、资源监控等）
+    const highId = setTimeout(() => {}, 0);
+    for (let i = 0; i < highId; i++) clearInterval(i);
+
+    const COUNTDOWN = 5;
+    document.body.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#f8fafc;">
+            <div style="text-align:center;max-width:400px;padding:40px;">
+                <div style="font-size:64px;margin-bottom:20px;">👋</div>
+                <h1 style="font-size:24px;font-weight:bold;color:#1e293b;margin-bottom:12px;">工具已关闭</h1>
+                <p style="color:#64748b;line-height:1.6;">服务已安全退出，临时文件已清理。</p>
+                <p id="autoCloseHint" style="color:#94a3b8;font-size:13px;margin-top:16px;">此页面将在 <span id="closeCountdown">${COUNTDOWN}</span> 秒后自动关闭…</p>
+            </div>
+        </div>`;
+
+    let remaining = COUNTDOWN;
+    const timer = setInterval(() => {
+        remaining--;
+        const el = document.getElementById('closeCountdown');
+        if (el) el.textContent = remaining;
+        if (remaining <= 0) {
+            clearInterval(timer);
+            // 尝试关闭标签页；如果浏览器阻止（非脚本打开的页面），则提示手动关闭
+            try { window.close(); } catch {}
+            setTimeout(() => {
+                const hint = document.getElementById('autoCloseHint');
+                if (hint) hint.textContent = '浏览器不允许自动关闭此页面，请手动关闭。';
+            }, 300);
+        }
+    }, 1000);
+}
+
 async function shutdownServer() {
     const hasWork = Object.values(G.tabs).some(ts => ts.images.length > 0 && ts.downloadLinks.length === 0);
     let msg = '确定要关闭工具吗？\n\n关闭后：\n• 服务将停止运行\n• 所有标签页的临时缓存会自动清理';
@@ -1265,17 +1467,10 @@ async function shutdownServer() {
     }
     showToast('正在关闭服务…', 'info');
     G._serverShutdown = true;
+    // 通知其他浏览器标签页
+    if (_bc) _bc.postMessage({ type: 'shutdown' });
     try { await fetch('/api/shutdown', { method: 'POST' }); } catch { }
-    setTimeout(() => {
-        document.body.innerHTML = `
-            <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#f8fafc;">
-                <div style="text-align:center;max-width:400px;padding:40px;">
-                    <div style="font-size:64px;margin-bottom:20px;">👋</div>
-                    <h1 style="font-size:24px;font-weight:bold;color:#1e293b;margin-bottom:12px;">工具已关闭</h1>
-                    <p style="color:#64748b;line-height:1.6;">服务已安全退出，临时文件已清理。<br>可以关闭此页面了。</p>
-                </div>
-            </div>`;
-    }, 600);
+    setTimeout(() => _showShutdownPage(), 600);
 }
 window.shutdownServer = shutdownServer;
 
@@ -1312,6 +1507,49 @@ window.addEventListener('pagehide', () => {
 //  初始化：自动创建第一个标签页
 // ============================================================
 (async function init() {
+    // 第零步：检测是否已有其他浏览器标签页打开了本工具
+    const _noDupWarn = (() => { try { return localStorage.getItem('vidslide_no_dup_warn') === '1'; } catch { return false; } })();
+    const _forceOpen = (() => { try { const v = sessionStorage.getItem('vidslide_force_open'); sessionStorage.removeItem('vidslide_force_open'); return v === '1'; } catch { return false; } })();
+    if (_bc && !_noDupWarn && !_forceOpen) {
+        _bc.postMessage({ type: 'tab_active' });
+        await new Promise(r => setTimeout(r, 300));
+        if (_otherTabExists) {
+            document.body.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#f8fafc;">
+                    <div style="text-align:center;max-width:480px;padding:40px;">
+                        <div style="font-size:56px;margin-bottom:16px;">🔁</div>
+                        <h1 style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:12px;">已在其他标签页中打开</h1>
+                        <p style="color:#475569;line-height:1.7;font-size:15px;margin-bottom:24px;">
+                            检测到另一个浏览器标签页已经在运行影幻智提。<br>同时打开多个标签页可能导致会话冲突。
+                        </p>
+                        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                            <button id="btnForceOpen" style="padding:10px 20px;background:#6366f1;color:white;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;">🔄 强制在此标签页打开</button>
+                            <button id="btnCloseDup" style="padding:10px 20px;background:#e2e8f0;color:#334155;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;">✕ 关闭此标签页</button>
+                        </div>
+                        <label style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px;color:#94a3b8;font-size:12px;cursor:pointer;">
+                            <input type="checkbox" id="cbNoDupWarn" style="accent-color:#6366f1;"> 不再提示
+                        </label>
+                    </div>
+                </div>`;
+            document.getElementById('btnForceOpen').addEventListener('click', () => {
+                try { sessionStorage.setItem('vidslide_force_open', '1'); } catch {}
+                location.reload();
+            });
+            document.getElementById('btnCloseDup').addEventListener('click', () => {
+                if (document.getElementById('cbNoDupWarn').checked) {
+                    try { localStorage.setItem('vidslide_no_dup_warn', '1'); } catch {}
+                }
+                try { window.close(); } catch {}
+                document.getElementById('btnCloseDup').textContent = '请手动关闭此标签页';
+            });
+            return; // 停止初始化
+        }
+    }
+    // 如果是强制打开的，提示用户
+    if (_forceOpen) {
+        showToast('已强制打开，注意其他标签页可能仍在运行', 'warning', 5000);
+    }
+
     // 第一步：清理后端孤儿会话（空闲且无 SSE 连接的残留会话）
     try {
         const cleanResult = await api('/api/sessions/cleanup-stale', { method: 'POST' });
@@ -1331,8 +1569,8 @@ window.addEventListener('pagehide', () => {
         G.maxSessions = sessData.max_sessions || 3;
         const existingSessions = sessData.sessions || [];
         for (const sessInfo of existingSessions) {
-            // 恢复有价值的会话（正在运行或有提取成果的）
-            if (sessInfo.status === 'running' || sessInfo.saved_count > 0 || sessInfo.pkg_status === 'running') {
+            // 恢复有价值的会话（正在运行、中断、或有提取成果的）
+            if (sessInfo.status === 'running' || sessInfo.status === 'interrupted' || sessInfo.saved_count > 0 || sessInfo.pkg_status === 'running') {
                 adoptExistingSession(sessInfo);
             }
         }
