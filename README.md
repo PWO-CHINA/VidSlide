@@ -81,7 +81,7 @@ python app.py
 | 🗂️ **多标签页并行** | 同时处理最多 3 个视频，每个标签页独立运行（v0.2.0 新增） |
 | 📊 **系统资源监控** | 实时显示 CPU / 内存 / GPU / 磁盘使用率及活跃任务数（v0.2.0 新增） |
 | 🛡️ **安全防护机制** | 资源超限警告、独立缓存隔离、全局一键清理（v0.2.0 新增） |
-| 🎮 **GPU 硬件加速** | 支持 GPU 视频解码加速，可随时切换 CPU/GPU 模式（v0.3.0 新增） |
+| 🎮 **GPU 硬件加速** | 支持 GPU 视频解码加速（独显/核显均可），可随时切换 CPU/GPU 模式（v0.3.0 新增） |
 | 📡 **SSE 实时推送** | 服务器推送替代轮询，进度更新更及时更省资源（v0.3.0 新增） |
 | 🔄 **断连自动恢复** | 后端意外断开时自动重连，刷新页面即可恢复（v0.3.0 新增） |
 
@@ -107,7 +107,7 @@ pip install pyinstaller
 # 运行 PyInstaller 打包脚本
 build.bat
 # 或手动执行
-pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt" --add-data "templates;templates" --name "VidSlide" app.py
+pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt" --add-data "templates;templates" --add-data "static;static" --hidden-import extractor --hidden-import exporter --name "VidSlide" app.py
 ```
 
 ## 项目结构
@@ -141,7 +141,7 @@ VidSlide/
 - ⚡ **异步后台打包**：PDF/PPTX/ZIP 打包在后台线程异步执行，前端通过 SSE 实时显示打包进度
 - 🎮 **GPU 硬件加速**：视频解码自动检测并使用 GPU 加速，提取速度大幅提升
 - 🔀 **GPU/CPU 切换开关**：参数面板新增硬件加速开关，遇到兼容性问题可随时切回 CPU 模式
-- 📊 **GPU 实时监控**：资源监控栏新增 GPU 使用率、显存占用、温度显示（需要 NVIDIA 显卡）
+- 📊 **GPU 实时监控**：资源监控栏新增 GPU 使用率、显存占用显示（支持 NVIDIA 独显 + Intel/AMD 核显，通过 Windows PDH 通配符计数器自动追踪）
 - 🗑️ **大图预览内删除**：预览模式新增删除按钮，删除后自动跳转下一张，无需退出预览
 - ❤️ **心跳超时优化**：超时从 20 秒提升至 5 分钟，新增 `visibilitychange` 事件防止浏览器后台节流导致误判退出
 - 🛡️ **智能退出保护**：有活跃任务或未导出成果时，即使心跳超时也不会退出

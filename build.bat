@@ -38,6 +38,9 @@ pyinstaller --onefile --noconsole ^
     --icon="logo.ico" ^
     --version-file="version.txt" ^
     --add-data "templates;templates" ^
+    --add-data "static;static" ^
+    --hidden-import extractor ^
+    --hidden-import exporter ^
     --name "VidSlide" ^
     app.py
 

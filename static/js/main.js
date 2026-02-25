@@ -999,7 +999,21 @@ async function refreshResourceBar() {
         if (data.gpu_available) {
             gpuSection.style.display = '';
             const gpuUtil = data.gpu_util || 0;
-            document.getElementById('resGpuText').textContent = gpuUtil + '% (' + data.gpu_mem_used + '/' + data.gpu_mem_total + ' MB, ' + data.gpu_temperature + '°C)';
+            let gpuInfo = gpuUtil + '%';
+            if (data.gpu_mem_used > 0 || data.gpu_mem_total > 0) {
+                gpuInfo += ' (';
+                if (data.gpu_mem_used > 0 && data.gpu_mem_total > 0) {
+                    gpuInfo += data.gpu_mem_used + '/' + data.gpu_mem_total + ' MB';
+                } else if (data.gpu_mem_used > 0) {
+                    gpuInfo += data.gpu_mem_used + ' MB';
+                } else {
+                    gpuInfo += data.gpu_mem_total + ' MB';
+                }
+                if (data.gpu_temperature > 0) gpuInfo += ', ' + data.gpu_temperature + '°C';
+                gpuInfo += ')';
+            }
+            document.getElementById('resGpuText').textContent = gpuInfo;
+            document.getElementById('resGpuText').title = data.gpu_name || 'GPU';
             document.getElementById('resGpuBar').style.width = gpuUtil + '%';
             document.getElementById('resGpuBar').style.background = gpuUtil > 90 ? '#ef4444' : gpuUtil > 70 ? '#f59e0b' : '#a78bfa';
             document.getElementById('resGpuText').classList.toggle('res-warn', gpuUtil > 90);
@@ -1122,6 +1136,7 @@ async function shutdownServer() {
         G.tabs[sid].disconnectSSE();
     }
     showToast('正在关闭服务…', 'info');
+    G._serverShutdown = true;
     try { await fetch('/api/shutdown', { method: 'POST' }); } catch {}
     setTimeout(() => {
         document.body.innerHTML = `
@@ -1140,6 +1155,7 @@ window.shutdownServer = shutdownServer;
 //  页面离开保护
 // ============================================================
 window.addEventListener('beforeunload', (e) => {
+    if (G._serverShutdown) return;
     const hasWork = Object.values(G.tabs).some(ts => ts.hasWork && ts.images.length > 0);
     if (hasWork) {
         e.preventDefault();

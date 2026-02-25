@@ -145,45 +145,227 @@ _cpu_sampler_thread = threading.Thread(target=_cpu_sampler_loop, daemon=True)
 _cpu_sampler_thread.start()
 
 
-# ── 后台 GPU 采样（通过 nvidia-smi）──
+# ── 后台 GPU 采样（nvidia-smi 优先，Windows PDH 计数器兜底）──
 import subprocess as _subprocess
 _gpu_cache = {'available': False, 'name': '', 'util': 0, 'mem_used': 0, 'mem_total': 0, 'temperature': 0}
+_CF = 0x08000000 if os.name == 'nt' else 0   # CREATE_NO_WINDOW
+
+
+def _detect_gpu_name_and_vram():
+    """通过 WMI 检测 GPU 名称和显存总量（适用于所有 GPU）"""
+    try:
+        r = _subprocess.run(
+            ['wmic', 'path', 'win32_VideoController', 'get', 'name,AdapterRAM', '/format:csv'],
+            capture_output=True, text=True, timeout=10, creationflags=_CF)
+        for line in r.stdout.strip().split('\n'):
+            parts = [p.strip() for p in line.split(',')]
+            if len(parts) >= 3 and parts[2] not in ('Name', '') and 'Virtual' not in parts[2]:
+                name = parts[2]
+                ram_mb = int(parts[1]) // (1024 * 1024) if parts[1].isdigit() else 0
+                return name, ram_mb
+    except Exception:
+        pass
+    return '', 0
+
+
+def _discover_pdh_counters():
+    """检测是否有 GPU PDH 计数器可用（快速探测）"""
+    try:
+        r = _subprocess.run(['typeperf', '-qx', 'GPU Engine'],
+                            capture_output=True, text=True, timeout=10, creationflags=_CF)
+        if 'Utilization Percentage' in r.stdout:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+# 持久化的通配符计数器文件路径
+_pdh_counter_file = None
+
+
+def _init_pdh_counter_file():
+    """创建包含通配符计数器的临时文件，typeperf 会自动展开匹配所有当前进程"""
+    global _pdh_counter_file
+    import tempfile
+    # 通配符方式：自动匹配所有进程/引擎实例，无需静态发现
+    wildcard_counters = [
+        r'\GPU Engine(*)\Utilization Percentage',
+        r'\GPU Adapter Memory(*)\Dedicated Usage',
+        r'\GPU Adapter Memory(*)\Shared Usage',
+    ]
+    tf = tempfile.NamedTemporaryFile(
+        mode='w', suffix='.txt', delete=False,
+        encoding='utf-8', prefix='vidslide_gpu_')
+    for c in wildcard_counters:
+        tf.write(c + '\n')
+    tf.close()
+    _pdh_counter_file = tf.name
+    import atexit
+    atexit.register(lambda: _safe_unlink(_pdh_counter_file))
+    return _pdh_counter_file
+
+
+def _safe_unlink(path):
+    try:
+        os.unlink(path)
+    except Exception:
+        pass
+
+
+def _sample_pdh_counters():
+    """通过 typeperf -cf 通配符文件 采样 GPU 使用率和显存
+    通配符每次采样自动匹配所有当前运行的进程/引擎实例。
+    利用率算法：按物理引擎（luid+phys+eng_N）分组 SUM 各进程占用，再取所有引擎的 MAX。
+    这与 Windows 任务管理器的计算方式一致。
+    """
+    import re
+    util = 0
+    mem_used_mb = 0
+
+    if not _pdh_counter_file:
+        return util, mem_used_mb
+
+    try:
+        r = _subprocess.run(
+            ['typeperf', '-cf', _pdh_counter_file, '-sc', '1'],
+            capture_output=True, text=True, timeout=30, creationflags=_CF)
+        out_lines = r.stdout.strip().split('\n')
+        if len(out_lines) < 2:
+            return util, mem_used_mb
+
+        # 解析表头，确定每列的类型
+        header_cols = [c.strip('"') for c in out_lines[0].split('","')]
+        data_line = None
+        for line in out_lines[1:]:
+            if line.startswith('"') and not line.startswith('"(PDH'):
+                data_line = line
+                break
+        if not data_line:
+            return util, mem_used_mb
+
+        data_vals = [v.strip('" ') for v in data_line.split('","')]
+
+        engine_sum = {}   # "luid_..._phys_N_eng_N" -> sum of utilization
+        max_dedicated = 0.0
+        max_shared = 0.0
+
+        for i in range(1, len(header_cols)):
+            cname = header_cols[i] if i < len(header_cols) else ''
+            try:
+                fv = float(data_vals[i]) if i < len(data_vals) else 0.0
+            except (ValueError, TypeError):
+                continue
+
+            if 'GPU Engine' in cname:
+                # 提取物理引擎 ID（不含 PID，含 luid+phys+eng_N）
+                m = re.search(r'luid_\w+_phys_\d+_eng_\d+', cname)
+                eng_key = m.group(0) if m else str(i)
+                engine_sum[eng_key] = engine_sum.get(eng_key, 0.0) + fv
+            elif 'Dedicated Usage' in cname:
+                if fv > max_dedicated:
+                    max_dedicated = fv
+            elif 'Shared Usage' in cname:
+                if fv > max_shared:
+                    max_shared = fv
+
+        # 取所有物理引擎中最高的利用率（与任务管理器一致）
+        util = min(100, round(max(engine_sum.values()))) if engine_sum else 0
+        # 核显 Dedicated≈0，用 Shared；独显 Dedicated>0，用 Dedicated
+        best_mem = max_dedicated if max_dedicated > 0 else max_shared
+        mem_used_mb = round(best_mem / (1024 * 1024))
+    except Exception:
+        pass
+    return util, mem_used_mb
+
 
 
 def _gpu_sampler_loop():
-    """每 3 秒采样一次 GPU 状态，缓存到 _gpu_cache"""
+    """GPU 后台采样主循环，优先 nvidia-smi，不可用时回退 Windows PDH"""
+    import traceback as _tb
+    try:
+        _gpu_sampler_loop_inner()
+    except Exception:
+        print(f'[GPU监控] 线程异常退出:\n{_tb.format_exc()}', flush=True)
+
+
+def _gpu_sampler_loop_inner():
+    # ── 第一优先：nvidia-smi（NVIDIA 独显）──
+    use_nvidia = False
     try:
         test = _subprocess.run(
             ['nvidia-smi', '--query-gpu=name', '--format=csv,noheader,nounits'],
-            capture_output=True, text=True, timeout=5, creationflags=0x08000000 if os.name == 'nt' else 0)
-        if test.returncode != 0:
-            print('[GPU监控] nvidia-smi 不可用，GPU 监控已禁用')
-            return
-        _gpu_cache['name'] = test.stdout.strip().split('\n')[0]
-        _gpu_cache['available'] = True
-        print(f'[GPU监控] 检测到 GPU: {_gpu_cache["name"]}')
+            capture_output=True, text=True, timeout=5, creationflags=_CF)
+        if test.returncode == 0 and test.stdout.strip():
+            _gpu_cache['name'] = test.stdout.strip().split('\n')[0]
+            _gpu_cache['available'] = True
+            use_nvidia = True
+            print(f'[GPU监控] 检测到 NVIDIA GPU: {_gpu_cache["name"]}（使用 nvidia-smi）', flush=True)
+    except FileNotFoundError:
+        pass
     except Exception as e:
-        print(f'[GPU监控] nvidia-smi 不可用 ({e})，GPU 监控已禁用')
+        print(f'[GPU监控] nvidia-smi 检测失败: {e}', flush=True)
+
+    if use_nvidia:
+        while True:
+            try:
+                r = _subprocess.run(
+                    ['nvidia-smi',
+                     '--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu',
+                     '--format=csv,noheader,nounits'],
+                    capture_output=True, text=True, timeout=5, creationflags=_CF)
+                if r.returncode == 0:
+                    parts = r.stdout.strip().split('\n')[0].split(', ')
+                    if len(parts) >= 4:
+                        _gpu_cache['util'] = int(parts[0].strip())
+                        _gpu_cache['mem_used'] = int(parts[1].strip())
+                        _gpu_cache['mem_total'] = int(parts[2].strip())
+                        _gpu_cache['temperature'] = int(parts[3].strip())
+            except Exception:
+                pass
+            time.sleep(3)
+        return  # 不会执行到这里
+
+    # ── 第二优先：Windows PDH 计数器（Intel / AMD / 集成显卡）──
+    if os.name != 'nt':
+        print('[GPU监控] 非 Windows 系统且无 nvidia-smi，GPU 监控已禁用', flush=True)
         return
+
+    gpu_name, gpu_vram = _detect_gpu_name_and_vram()
+    if not gpu_name:
+        print('[GPU监控] 未检测到 GPU，GPU 监控已禁用', flush=True)
+        return
+
+    has_pdh = _discover_pdh_counters()
+    if not has_pdh:
+        print(f'[GPU监控] 检测到 {gpu_name}，但无法读取 GPU 性能计数器', flush=True)
+        _gpu_cache['name'] = gpu_name
+        _gpu_cache['mem_total'] = gpu_vram
+        _gpu_cache['available'] = True
+        return
+
+    # 初始化通配符计数器文件（自动匹配所有当前及新增进程的 GPU 引擎）
+    cf_path = _init_pdh_counter_file()
+
+    _gpu_cache['name'] = gpu_name
+    _gpu_cache['mem_total'] = gpu_vram
+    _gpu_cache['available'] = True
+    print(f'[GPU监控] 检测到 {gpu_name}（{gpu_vram} MB），使用 Windows PDH 通配符计数器', flush=True)
+    print(f'[GPU监控] 计数器文件: {cf_path}', flush=True)
+    print(f'[GPU监控] 采用通配符模式，自动追踪所有进程的 GPU 引擎使用率', flush=True)
 
     while True:
         try:
-            r = _subprocess.run(
-                ['nvidia-smi',
-                 '--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu',
-                 '--format=csv,noheader,nounits'],
-                capture_output=True, text=True, timeout=5,
-                creationflags=0x08000000 if os.name == 'nt' else 0)
-            if r.returncode == 0:
-                parts = r.stdout.strip().split('\n')[0].split(', ')
-                if len(parts) >= 4:
-                    _gpu_cache['util'] = int(parts[0].strip())
-                    _gpu_cache['mem_used'] = int(parts[1].strip())
-                    _gpu_cache['mem_total'] = int(parts[2].strip())
-                    _gpu_cache['temperature'] = int(parts[3].strip())
+            util, mem_used = _sample_pdh_counters()
+            _gpu_cache['util'] = util
+            _gpu_cache['mem_used'] = mem_used
+            # 核显共享内存可能超过 WMI 报告的 dedicated VRAM，动态校正上限
+            if mem_used > _gpu_cache['mem_total']:
+                _gpu_cache['mem_total'] = mem_used
         except Exception:
             pass
-        time.sleep(3)
+        time.sleep(5)  # PDH 采样较慢，间隔稍长
+
 
 _gpu_sampler_thread = threading.Thread(target=_gpu_sampler_loop, daemon=True)
 _gpu_sampler_thread.start()
