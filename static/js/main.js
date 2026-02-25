@@ -1,10 +1,56 @@
 /**
- * 影幻智提 (VidSlide) v0.3.0 - 前端主逻辑
+ * 影幻智提 (VidSlide) v0.3.1 - 前端主逻辑
  * ==========================================
  * 通信方式：SSE（Server-Sent Events）服务器推送
  * 打包导出：异步后台处理 + SSE 进度推送
  * 画廊渲染：DocumentFragment 批量插入
  */
+
+// ============================================================
+//  配置记忆（localStorage）
+// ============================================================
+const _PREF_KEY = 'vidslide_prefs';
+function _loadPrefs() {
+    try { return JSON.parse(localStorage.getItem(_PREF_KEY)) || {}; } catch { return {}; }
+}
+function _savePrefs(patch) {
+    const p = { ..._loadPrefs(), ...patch };
+    try { localStorage.setItem(_PREF_KEY, JSON.stringify(p)); } catch {}
+}
+function _applyPrefsToPane(pane) {
+    const p = _loadPrefs();
+    if (p.threshold != null) {
+        pane.querySelector('.js-threshold').value = p.threshold;
+        pane.querySelector('.js-threshold-val').textContent = p.threshold;
+    }
+    if (p.fast_mode != null) pane.querySelector('.js-fast-mode').checked = p.fast_mode;
+    if (p.use_roi != null) pane.querySelector('.js-use-roi').checked = p.use_roi;
+    if (p.use_gpu != null) pane.querySelector('.js-use-gpu').checked = p.use_gpu;
+    if (p.enable_history != null) {
+        pane.querySelector('.js-enable-history').checked = p.enable_history;
+        pane.querySelector('.js-max-history-group').style.display = p.enable_history ? 'flex' : 'none';
+    }
+    if (p.max_history != null) pane.querySelector('.js-max-history').value = p.max_history;
+    if (p.speed_mode) pane.querySelector('.js-speed-mode').value = p.speed_mode;
+}
+function _watchPrefs(pane) {
+    const save = () => _savePrefs({
+        threshold: parseFloat(pane.querySelector('.js-threshold').value),
+        fast_mode: pane.querySelector('.js-fast-mode').checked,
+        use_roi: pane.querySelector('.js-use-roi').checked,
+        use_gpu: pane.querySelector('.js-use-gpu').checked,
+        enable_history: pane.querySelector('.js-enable-history').checked,
+        max_history: parseInt(pane.querySelector('.js-max-history').value),
+        speed_mode: pane.querySelector('.js-speed-mode').value,
+    });
+    pane.querySelector('.js-threshold').addEventListener('change', save);
+    pane.querySelector('.js-fast-mode').addEventListener('change', save);
+    pane.querySelector('.js-use-roi').addEventListener('change', save);
+    pane.querySelector('.js-use-gpu').addEventListener('change', save);
+    pane.querySelector('.js-enable-history').addEventListener('change', save);
+    pane.querySelector('.js-max-history').addEventListener('change', save);
+    pane.querySelector('.js-speed-mode').addEventListener('change', save);
+}
 
 // ============================================================
 //  全局应用状态
@@ -383,6 +429,9 @@ function bindPaneEvents(sid, pane) {
     pane.querySelector('.js-btn-pptx').addEventListener('click', () => packageImages(sid, 'pptx'));
     pane.querySelector('.js-btn-zip').addEventListener('click', () => packageImages(sid, 'zip'));
     pane.querySelector('.js-btn-recycle-bin').addEventListener('click', () => openRecycleBin(sid));
+    // ── 恢复上次的参数配置 & 监听变更自动保存 ──
+    _applyPrefsToPane(pane);
+    _watchPrefs(pane);
 }
 
 function switchTab(sid) {
@@ -526,6 +575,7 @@ async function startExtraction(sid) {
             use_roi: pane.querySelector('.js-use-roi').checked,
             fast_mode: pane.querySelector('.js-fast-mode').checked,
             use_gpu: pane.querySelector('.js-use-gpu').checked,
+            speed_mode: pane.querySelector('.js-speed-mode').value,
         }),
     });
 
@@ -817,6 +867,9 @@ function showPreview(sid, idx) {
     document.getElementById('previewModal').classList.remove('hidden');
     document.getElementById('previewModal').classList.add('flex');
     document.body.style.overflow = 'hidden';
+    // 导航按钮智能显隐
+    document.getElementById('btnPrevPreview').style.visibility = idx > 0 ? '' : 'hidden';
+    document.getElementById('btnNextPreview').style.visibility = idx < ts.images.length - 1 ? '' : 'hidden';
 }
 
 function hidePreview() {

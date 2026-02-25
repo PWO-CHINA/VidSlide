@@ -1,10 +1,10 @@
 """
-影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.3.0)
+影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.3.1)
 =====================================================
 基于 Flask 的本地 Web 应用，提供可视化界面来提取、管理和打包 PPT 幻灯片。
 支持同时对多个视频进行提取（最多 3 个并行标签页）。
 
-v0.3.0 新特性：
+v0.3.1 新特性：
     - SSE (Server-Sent Events) 服务器推送，替代高频轮询
     - 异步后台打包导出，前端实时显示打包进度
     - GPU 硬件加速视频解码（自动检测）
@@ -19,7 +19,7 @@ v0.3.0 新特性：
     pip install flask opencv-python numpy pillow python-pptx psutil
 
 作者: PWO-CHINA
-版本: v0.3.0
+版本: v0.3.1
 """
 
 import cv2
@@ -689,6 +689,7 @@ def start_extraction(sid):
     use_roi = bool(data.get('use_roi', True))
     fast_mode = bool(data.get('fast_mode', True))
     use_gpu = bool(data.get('use_gpu', True))
+    speed_mode = data.get('speed_mode', 'eco')  # 'eco' | 'fast' | 'turbo'
 
     if not video_path:
         return jsonify(success=False, message='未提供视频路径')
@@ -745,7 +746,7 @@ def start_extraction(sid):
 
     threading.Thread(
         target=_extraction_worker,
-        args=(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu),
+        args=(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu, speed_mode),
         daemon=True,
     ).start()
 
@@ -755,7 +756,7 @@ def start_extraction(sid):
 # ============================================================
 #  后台提取 Worker（调用 extractor 模块 + SSE 推送）
 # ============================================================
-def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu=True):
+def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu=True, speed_mode='eco'):
     """中间层：将 extractor 的回调桥接到会话管理 + SSE 事件"""
 
     def on_progress(saved_count, progress_pct, message, eta_seconds, elapsed_seconds):
@@ -785,7 +786,8 @@ def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, ma
 
     status, message, saved_count = extract_slides(
         video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode,
-        use_gpu=use_gpu, on_progress=on_progress, should_cancel=should_cancel,
+        use_gpu=use_gpu, speed_mode=speed_mode,
+        on_progress=on_progress, should_cancel=should_cancel,
     )
 
     if status == 'done':
@@ -1196,7 +1198,7 @@ if __name__ == '__main__':
 
         print()
         print('=' * 60)
-        print('  影幻智提 (VidSlide) v0.3.0 - 性能优化版')
+        print('  影幻智提 (VidSlide) v0.3.1 - 性能狂飙版')
         print(f'  浏览器将自动打开: {url}')
         print(f'  临时文件目录: {SESSIONS_ROOT}')
         print(f'  最大并行标签页: {MAX_SESSIONS}')

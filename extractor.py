@@ -5,7 +5,7 @@
 支持 GPU 硬件加速解码（自动检测）和进程优先级调整。
 
 作者: PWO-CHINA
-版本: v0.3.0
+版本: v0.3.1
 """
 
 import cv2
@@ -66,6 +66,7 @@ def _open_video_capture(video_path, use_gpu=True):
 
 def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
                    max_history=5, use_roi=True, fast_mode=True, use_gpu=True,
+                   speed_mode='eco',
                    on_progress=None, should_cancel=None):
     """
     从视频中提取幻灯片截图。
@@ -79,6 +80,7 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
         use_roi:         是否裁剪 PPT 区域
         fast_mode:       是否使用快速模式（降低比较分辨率）
         use_gpu:         是否使用 GPU 硬件加速解码
+        speed_mode:      运行模式 'eco'(后台静默) | 'fast'(全速狂飙) | 'turbo'(极速狂暴)
         on_progress:     进度回调 (saved_count, progress_pct, message, eta_seconds, elapsed_seconds)
         should_cancel:   取消检查回调 () -> bool
 
@@ -96,8 +98,20 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
     saved = 0
 
     try:
-        # ── 降低进程优先级 ──
-        _lower_process_priority()
+        # ── 根据运行模式配置节流和优先级 ──
+        _is_turbo = (speed_mode == 'turbo')
+        _is_fast = (speed_mode == 'fast') or _is_turbo
+        if _is_fast:
+            _THROTTLE_INTERVAL = 0.001  # 1ms 微小间隙，仅让出 GIL
+            if _is_turbo:
+                print('[Turbo] 极速狂暴模式：2x帧跳距 + 320p对比 + 加速稳定帧检测')
+            else:
+                print('[Fast] 全速狂飙模式：保持正常优先级，最小节流')
+        else:
+            _THROTTLE_INTERVAL = 0.008  # 8ms 节流，降低峰值占用
+            _lower_process_priority()
+
+        _GC_EVERY_N_FRAMES = 500  # 每 500 帧强制 gc.collect() 防 OOM
 
         # ── 使用 GPU 硬件加速打开视频 ──
         cap = _open_video_capture(video_path, use_gpu=use_gpu)
@@ -107,7 +121,8 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
 
         total_frames = max(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), 1)
         fps = cap.get(cv2.CAP_PROP_FPS) or 30
-        frame_step = max(1, int(fps))
+        # Turbo: 2秒跳距（减少一半比较次数），其他: 1秒
+        frame_step = max(1, int(fps * (2 if _is_turbo else 1)))
 
         h, w = prev_frame.shape[:2]
         if use_roi:
@@ -118,7 +133,8 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
             x1, x2 = 0, w
 
         roi_w = x2 - x1
-        COMPARE_WIDTH = 480
+        # Turbo: 320p 超低分辨率对比（像素减 55%）; Fast/Eco: 480p
+        COMPARE_WIDTH = 320 if _is_turbo else 480
         if fast_mode and roi_w > COMPARE_WIDTH:
             _scale = COMPARE_WIDTH / roi_w
         else:
@@ -136,7 +152,6 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
 
         count = 0
         _extract_start_time = time.time()
-        _THROTTLE_INTERVAL = 0.008  # 每轮主循环让出 8ms CPU，降低峰值占用
 
         # ── 保存第一帧 ──
         fp = os.path.join(output_dir, f"slide_{saved:04d}.jpg")
@@ -160,6 +175,10 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
             if not grabbed:
                 break
 
+            # ── 定期 gc 防止内存溢出（Fast 模式下产生帧数组极快） ──
+            if count % _GC_EVERY_N_FRAMES == 0:
+                gc.collect()
+
             if should_cancel():
                 return ('cancelled', f'已取消，已保存 {saved} 张', saved)
 
@@ -179,7 +198,10 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
             mean_diff = np.mean(cv2.absdiff(curr_gray, prev_gray))
 
             if mean_diff > threshold:
-                check_step = max(1, int(fps * 0.5))
+                # Turbo: 稳定帧检测加速——0.3s 步长，1次确认；其他: 0.5s 步长，2次确认
+                _stable_secs = 0.3 if _is_turbo else 0.5
+                _stable_need = 1 if _is_turbo else 2
+                check_step = max(1, int(fps * _stable_secs))
                 stable = 0
                 last_gray = curr_gray
                 settled_frame = None
@@ -206,7 +228,7 @@ def extract_slides(video_path, output_dir, threshold=5.0, enable_history=False,
                     else:
                         stable = 0
                     last_gray = tmp_gray
-                    if stable >= 2:
+                    if stable >= _stable_need:
                         settled_frame = tmp
                         settled_gray = tmp_gray
                         break
