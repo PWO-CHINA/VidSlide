@@ -1,5 +1,5 @@
 /**
- * 影幻智提 (VidSlide) v0.4.0 - 前端主逻辑
+ * 影幻智提 (VidSlide) v0.4.1 - 前端主逻辑
  * ==========================================
  * 通信方式：SSE（Server-Sent Events）服务器推送
  * 打包导出：异步后台处理 + SSE 进度推送
@@ -91,6 +91,34 @@ function _applyPrefsToPane(pane) {
     }
     if (p.max_history != null) pane.querySelector('.js-max-history').value = p.max_history;
     if (p.speed_mode) pane.querySelector('.js-speed-mode').value = p.speed_mode;
+}
+const _PREF_DEFAULTS = {
+    threshold: 5,
+    fast_mode: true,
+    use_roi: true,
+    use_gpu: true,
+    enable_history: true,
+    max_history: 5,
+    speed_mode: 'fast',
+};
+function _resetPrefs(pane) {
+    try { localStorage.removeItem(_PREF_KEY); } catch { }
+    try {
+        // 将默认值写回 DOM
+        pane.querySelector('.js-threshold').value = _PREF_DEFAULTS.threshold;
+        pane.querySelector('.js-threshold-val').textContent = _PREF_DEFAULTS.threshold;
+        pane.querySelector('.js-fast-mode').checked = _PREF_DEFAULTS.fast_mode;
+        pane.querySelector('.js-use-roi').checked = _PREF_DEFAULTS.use_roi;
+        pane.querySelector('.js-use-gpu').checked = _PREF_DEFAULTS.use_gpu;
+        pane.querySelector('.js-enable-history').checked = _PREF_DEFAULTS.enable_history;
+        pane.querySelector('.js-max-history-group').style.display = 'flex';
+        pane.querySelector('.js-max-history').value = _PREF_DEFAULTS.max_history;
+        pane.querySelector('.js-speed-mode').value = _PREF_DEFAULTS.speed_mode;
+        showToast('已重置为默认参数', 'success', 2000);
+    } catch (e) {
+        console.error('[重置参数] 失败:', e);
+        showToast('重置失败，请刷新页面重试', 'error');
+    }
 }
 function _watchPrefs(pane) {
     const save = () => _savePrefs({
@@ -592,6 +620,24 @@ function bindPaneEvents(sid, pane) {
     // ── 恢复上次的参数配置 & 监听变更自动保存 ──
     _applyPrefsToPane(pane);
     _watchPrefs(pane);
+
+    // ── 动态创建重置按钮（避免 <template> 克隆丢失事件/样式）──
+    const paramSection = pane.querySelectorAll('section.card')[1]; // 第2个 section = 参数设置
+    if (paramSection) {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'margin-top:1rem;padding-top:1rem;border-top:1px solid #f3f4f6;display:flex;justify-content:flex-end';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-reset';
+        btn.title = '将所有参数恢复为默认值并清除记忆';
+        btn.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-weight:500;font-size:12px;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,.04);cursor:pointer;transition:all .15s;font-family:inherit';
+        btn.textContent = '🔄 重置为默认参数';
+        btn.addEventListener('mouseenter', () => { btn.style.color = '#dc2626'; btn.style.background = '#fef2f2'; btn.style.borderColor = '#fca5a5'; });
+        btn.addEventListener('mouseleave', () => { btn.style.color = '#64748b'; btn.style.background = '#f1f5f9'; btn.style.borderColor = '#e2e8f0'; });
+        btn.addEventListener('click', () => _resetPrefs(pane));
+        wrap.appendChild(btn);
+        paramSection.appendChild(wrap);
+    }
 }
 
 function switchTab(sid) {
@@ -930,6 +976,11 @@ function undoLastDelete(sid) {
     restoreImageAt(sid, filename, originalIndex);
     updateRecycleBinBtn(sid);
     showToast(`已恢复「${filename}」`, 'success', 2000);
+    // 如果正在预览模式，跳转到恢复的图片并刷新计数器
+    if (G.previewTabId === sid) {
+        const restoredIdx = Math.min(originalIndex, ts.images.length - 1);
+        showPreview(sid, restoredIdx);
+    }
 }
 
 function restoreImageAt(sid, filename, targetIdx) {
@@ -1137,6 +1188,10 @@ document.addEventListener('keydown', (e) => {
         if (e.key === 'Delete' || e.key === 'Backspace') {
             e.preventDefault();
             deleteInPreview();
+        }
+        if (e.ctrlKey && e.key === 'z') {
+            e.preventDefault();
+            if (G.previewTabId) undoLastDelete(G.previewTabId);
         }
         return;
     }

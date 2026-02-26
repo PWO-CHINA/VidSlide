@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>影幻智提 (VidSlide) v0.4.0 - 体验优化版</title>
+    <title>影幻智提 (VidSlide) v0.4.1 - 细节优化版</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
@@ -19,7 +19,7 @@
             }
         }
     </script>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=0.4.1">
     <script>
         // 在页面渲染前立即应用主题，避免闪烁
         (function(){
@@ -64,7 +64,7 @@
                 <div class="min-w-0">
                     <h1 class="text-xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
                         影幻智提 (VidSlide)
-                        <span class="text-xs font-normal bg-white/15 px-2 py-0.5 rounded-full">v0.4.0</span>
+                        <span class="text-xs font-normal bg-white/15 px-2 py-0.5 rounded-full">v0.4.1</span>
                     </h1>
                     <p class="text-slate-400 dark:text-slate-400 text-xs mt-0.5 truncate">从录播视频中一键提取 PPT</p>
                 </div>
@@ -158,7 +158,7 @@
             </div>
             <div class="text-center space-y-1">
                 <p class="text-xs text-slate-500 dark:text-slate-500">🔒 所有数据仅保存在本地 · 浏览器断联 5 分钟后服务自动退出</p>
-                <p class="text-xs text-slate-400 dark:text-slate-600">v0.4.0 体验优化版 · Made with ❤️ by <a href="https://github.com/PWO-CHINA" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition">PWO-CHINA</a></p>
+                <p class="text-xs text-slate-400 dark:text-slate-600">v0.4.1 细节优化版 · Made with ❤️ by <a href="https://github.com/PWO-CHINA" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition">PWO-CHINA</a></p>
                 <p class="text-xs text-slate-400 dark:text-slate-600 mt-2">⭐ 如果这个工具帮到了你，请在 <a href="https://github.com/PWO-CHINA/VidSlide" target="_blank" class="text-slate-600 dark:text-slate-400 hover:underline font-medium">GitHub</a> 或 <a href="https://gitee.com/pwo101/VidSlide" target="_blank" class="text-slate-600 dark:text-slate-400 hover:underline font-medium">Gitee</a> 上给我们一个 Star！</p>
             </div>
         </div>
@@ -272,15 +272,17 @@
                         <label class="text-sm font-medium text-gray-700 block mb-1">🎯 运行模式</label>
                         <select class="js-speed-mode w-full px-3 py-2 text-sm rounded-xl border-2 border-gray-200 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition bg-white">
                             <option value="eco">🍃 后台静默 (Eco)</option>
-                            <option value="fast">🚀 全速狂飙 (Fast)</option>
+                            <option value="fast" selected>🚀 全速狂飙 (Fast)</option>
                             <option value="turbo">⚡ 极速狂暴 (Turbo)</option>
                         </select>
                         <p class="text-xs text-gray-400 leading-relaxed mt-1">Eco 节省资源；Fast 释放算力；Turbo 极限压榜（2x跳帧+320p对比）</p>
                     </div>
                 </div>
-                <div class="mt-3 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
-                    <p class="text-xs text-amber-700 leading-relaxed">💡 <strong>核显用户极速组合</strong>：选择 <em>Turbo/Fast</em> + <em>关闭 GPU 加速</em>，让 CPU 负责解码速度更快。核显的 GPU 加速主要优势是“减负”而非“加速”，适合 Eco 模式后台挂机。</p>
-                </div>
+                <details class=”mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl”>
+                    <summary class=”text-xs text-amber-700 cursor-pointer select-none”>💡 核显用户性能提示（点击展开）</summary>
+                    <p class=”text-xs text-amber-700 leading-relaxed mt-1.5”>选择 <em>Turbo/Fast</em> + <em>关闭 GPU 加速</em>，让 CPU 负责解码速度更快。核显的 GPU 加速主要优势是”减负”而非”加速”，适合 Eco 模式后台挂机。</p>
+                </details>
+                <!-- 重置按钮由 JS 动态插入 -->
             </section>
 
             <!-- 步骤 3: 提取 -->
@@ -375,6 +377,6 @@
         </div>
     </template>
 
-    <script src="/static/js/main.js"></script>
+    <script src="/static/js/main.js?v=0.4.1"></script>
 </body>
 </html>

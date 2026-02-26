@@ -1,5 +1,5 @@
 """
-影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.4.0)
+影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.4.1)
 =====================================================
 基于 Flask 的本地 Web 应用，提供可视化界面来提取、管理和打包 PPT 幻灯片。
 支持同时对多个视频进行提取（最多 3 个并行标签页）。
@@ -117,6 +117,8 @@ MAX_SESSIONS = _compute_max_sessions()
 ORPHAN_SESSION_TIMEOUT = 60
 
 app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # 开发阶段禁用静态文件缓存
 
 
 # ============================================================
@@ -568,12 +570,12 @@ def _recover_sessions_from_disk():
             'last_frame_index': meta.get('last_frame_index', 0),
             'total_frames': meta.get('total_frames', 0),
             'threshold': meta.get('threshold', 5.0),
-            'enable_history': meta.get('enable_history', False),
+            'enable_history': meta.get('enable_history', True),
             'max_history': meta.get('max_history', 5),
             'use_roi': meta.get('use_roi', True),
             'fast_mode': meta.get('fast_mode', True),
             'use_gpu': meta.get('use_gpu', True),
-            'speed_mode': meta.get('speed_mode', 'eco'),
+            'speed_mode': meta.get('speed_mode', 'fast'),
         }
         with _sessions_lock:
             _sessions[sid] = session
@@ -873,6 +875,7 @@ def select_video():
         def _pick():
             try:
                 root = tk.Tk()
+                root.title('影幻智提 (VidSlide)')
                 root.withdraw()
                 root.wm_attributes('-topmost', 1)
                 root.focus_force()
@@ -928,17 +931,17 @@ def start_extraction(sid):
     print(f'[DEBUG][{sid}] 收到提取请求，视频路径: {repr(video_path)}')
 
     threshold = float(data.get('threshold', 5.0))
-    enable_history = bool(data.get('enable_history', False))
+    enable_history = bool(data.get('enable_history', True))
     max_history = int(data.get('max_history', 5))
     use_roi = bool(data.get('use_roi', True))
     fast_mode = bool(data.get('fast_mode', True))
     use_gpu = bool(data.get('use_gpu', True))
-    speed_mode = data.get('speed_mode', 'eco')  # 'eco' | 'fast' | 'turbo'
+    speed_mode = data.get('speed_mode', 'fast')  # 'eco' | 'fast' | 'turbo'
 
     if not video_path:
         return jsonify(success=False, message='未提供视频路径')
 
-    if not os.path.exists(video_path):
+    if not os.path.isfile(video_path):
         return jsonify(success=False, message=f'视频文件不存在: {video_path}',
                        hint='请检查文件是否已被移动或删除，然后重新选择视频。')
 
@@ -1021,12 +1024,12 @@ def resume_extraction(sid):
     # 读取提取参数（优先从 session 内存，回退到元数据文件）
     meta = _load_session_meta(os.path.join(SESSIONS_ROOT, sid))
     threshold = sess.get('threshold', meta.get('threshold', 5.0))
-    enable_history = sess.get('enable_history', meta.get('enable_history', False))
+    enable_history = sess.get('enable_history', meta.get('enable_history', True))
     max_history = sess.get('max_history', meta.get('max_history', 5))
     use_roi = sess.get('use_roi', meta.get('use_roi', True))
     fast_mode = sess.get('fast_mode', meta.get('fast_mode', True))
     use_gpu = sess.get('use_gpu', meta.get('use_gpu', True))
-    speed_mode = sess.get('speed_mode', meta.get('speed_mode', 'eco'))
+    speed_mode = sess.get('speed_mode', meta.get('speed_mode', 'fast'))
 
     cache_dir = sess['cache_dir']
     video_name = Path(video_path).stem or '未命名视频'
@@ -1045,7 +1048,7 @@ def resume_extraction(sid):
     ).start()
 
     return jsonify(success=True, resumed_from_frame=last_frame, existing_images=saved_count)
-def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu=True, speed_mode='eco', start_frame=0, saved_offset=0):
+def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu=True, speed_mode='fast', start_frame=0, saved_offset=0):
     """中间层：将 extractor 的回调桥接到会话管理 + SSE 事件"""
 
     _last_meta_save = [time.time()]  # 用列表以便闭包修改
@@ -1180,7 +1183,11 @@ def session_serve_image(sid, filename):
     sess = _get_session(sid)
     if not sess:
         return jsonify(success=False, message='会话不存在'), 404
-    resp = send_from_directory(sess['cache_dir'], filename)
+    # 安全：防止路径穿越
+    safe_name = os.path.basename(filename)
+    if not safe_name or safe_name != filename:
+        return jsonify(success=False, message='非法文件名'), 400
+    resp = send_from_directory(sess['cache_dir'], safe_name)
     resp.headers['Cache-Control'] = 'no-store'
     return resp
 
@@ -1211,7 +1218,11 @@ def session_package(sid):
 
     paths = []
     for f in files:
-        p = os.path.join(cache_dir, f)
+        # 安全：只允许纯文件名，防止路径穿越
+        safe_f = os.path.basename(f)
+        if not safe_f:
+            continue
+        p = os.path.join(cache_dir, safe_f)
         if os.path.exists(p):
             paths.append(p)
     if not paths:
@@ -1286,7 +1297,11 @@ def session_download(sid, filename):
     sess = _get_session(sid)
     if not sess:
         return jsonify(success=False, message='会话不存在'), 404
-    return send_from_directory(sess['pkg_dir'], filename, as_attachment=True)
+    # 安全：防止路径穿越
+    safe_name = os.path.basename(filename)
+    if not safe_name or safe_name != filename:
+        return jsonify(success=False, message='非法文件名'), 400
+    return send_from_directory(sess['pkg_dir'], safe_name, as_attachment=True)
 
 
 # ============================================================
@@ -1499,7 +1514,8 @@ def _find_free_port(start=5873):
     port_file = os.path.join(BASE_DIR, '.vidslide_port')
     if os.path.exists(port_file):
         try:
-            last_port = int(open(port_file).read().strip())
+            with open(port_file) as f:
+                last_port = int(f.read().strip())
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.bind(('127.0.0.1', last_port))
             s.close()
@@ -1528,32 +1544,71 @@ def _write_port_file(port):
 
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(
+        prog='VidSlide',
+        description='影幻智提 (VidSlide) - 从录播视频中智能提取 PPT 幻灯片',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""示例:
+  python app.py                    # 默认启动，自动打开浏览器
+  python app.py --port 8080        # 指定端口
+  python app.py --no-browser       # 不自动打开浏览器
+  python app.py --port 8080 --no-browser
+
+提示:
+  启动后在浏览器访问显示的地址即可使用。
+  按 Ctrl+C 可随时停止服务。
+"""
+    )
+    parser.add_argument(
+        '--port', type=int, default=None, metavar='PORT',
+        help='指定监听端口（默认自动选择 5873 附近的空闲端口）'
+    )
+    parser.add_argument(
+        '--no-browser', action='store_true',
+        help='启动后不自动打开浏览器'
+    )
+    args = parser.parse_args()
+
     try:
         os.makedirs(SESSIONS_ROOT, exist_ok=True)
 
         # 启动时恢复磁盘上的会话（断线恢复 & 断点续传）
         recovered = _recover_sessions_from_disk()
 
-        port = _find_free_port(5873)
+        if args.port:
+            # 用户指定端口，检查是否可用
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.bind(('127.0.0.1', args.port))
+                s.close()
+                port = args.port
+            except OSError:
+                print(f'❌ 错误：端口 {args.port} 已被占用，请换一个端口或不指定端口（自动选择）。')
+                sys.exit(1)
+        else:
+            port = _find_free_port(5873)
         _write_port_file(port)
         url = f'http://127.0.0.1:{port}'
 
-        threading.Timer(1.5, lambda: webbrowser.open(url)).start()
+        if not args.no_browser:
+            threading.Timer(1.5, lambda: webbrowser.open(url)).start()
 
         watcher = threading.Thread(target=_heartbeat_watcher, daemon=True)
         watcher.start()
 
         print()
         print('=' * 60)
-        print('  影幻智提 (VidSlide) v0.4.0 - 体验优化版')
-        print(f'  浏览器将自动打开: {url}')
+        print('  影幻智提 (VidSlide) v0.4.1 - 细节优化版')
+        print(f'  访问地址: {url}')
+        if args.no_browser:
+            print('  （已禁用自动打开浏览器，请手动访问上方地址）')
         print(f'  临时文件目录: {SESSIONS_ROOT}')
         print(f'  最大并行标签页: {MAX_SESSIONS}')
-        print('  ✨ 新特性: SSE 推送 · GPU 加速 · 异步打包 · 断点续传')
         print('  浏览器断联 5 分钟后服务自动退出（有任务时延长等待）')
         if recovered > 0:
             print(f'  📂 已从磁盘恢复 {recovered} 个会话')
-        print('  也可以按 Ctrl+C 手动停止')
+        print('  按 Ctrl+C 手动停止 | python app.py --help 查看命令行选项')
         print('=' * 60)
         print()
 

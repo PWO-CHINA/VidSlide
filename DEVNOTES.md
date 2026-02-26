@@ -11,7 +11,7 @@
 
 - **定位**：从延河课堂桌面录屏视频中提取 PPT 幻灯片的单机工具
 - **架构**：Python Flask 后端 + 原生 HTML/JS 前端（无框架），单进程多线程
-- **当前版本**：v0.4.0
+- **当前版本**：v0.4.1
 - **GitHub**：https://github.com/PWO-CHINA/VidSlide
 - **Gitee 镜像**：https://gitee.com/pwo101/VidSlide（国内下载更快）
 - **Python**：3.11（Microsoft Store 版），虚拟环境在 `./venv`
@@ -215,4 +215,87 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 - `showDisconnectOverlay()` 增加 `G._serverShutdown` 检查，用户主动关闭后不再触发断连遮罩
 
 **代码位置**：`main.js` `_showShutdownPage()` + `shutdownServer()`
+
+## v0.4.1 新增设计决策
+
+### 13. 任务管理器名称修正
+
+**背景**：tkinter 的 `Tk()` 窗口即使调用了 `withdraw()` 隐藏，在 `withdraw()` 执行前的短暂时间内，窗口标题会出现在任务管理器中，导致显示"请选择上传一个视频"。
+
+**方案**：在 `root.withdraw()` 之前先调用 `root.title('影幻智提 (VidSlide)')`，确保任务管理器始终显示正确名称。
+
+**代码位置**：`app.py` `select_video()` 函数内的 `_pick()` 闭包。
+
+### 14. 参数重置功能
+
+**方案**：
+- `_PREF_DEFAULTS` 常量对象集中定义所有参数的默认值，便于后续维护
+- `_resetPrefs(pane)` 清除 localStorage 中的 `vidslide_prefs`，并将 DOM 元素直接写回默认值
+- 重置按钮 `.js-btn-reset-prefs` 放在参数面板底部右侧，低调样式（灰色小字），避免误触
+
+**代码位置**：`main.js` `_PREF_DEFAULTS` / `_resetPrefs()` / `bindPaneEvents()`；`index.html` 参数面板底部。
+
+### 15. 大图预览 Ctrl+Z 支持
+
+**背景**：原键盘事件处理在 previewModal 打开时直接 `return`，导致 Ctrl+Z 被跳过。
+
+**方案**：在 `return` 前加入 Ctrl+Z 判断，使用 `G.previewTabId`（而非 `G.activeTabId`）确保撤回的是预览所在标签页的删除操作。
+
+**代码位置**：`main.js` `document.addEventListener('keydown', ...)` 块。
+
+### 16. 命令行参数支持
+
+**方案**：在 `__main__` 块顶部用 `argparse` 解析参数，支持：
+- `--port PORT`：指定端口，若端口被占用立即报错退出（而非静默切换）
+- `--no-browser`：禁用自动打开浏览器，适合服务器/脚本场景
+
+**注意**：`argparse` 在 `--noconsole` 打包的 exe 中仍然有效，用户可在命令提示符中使用。`--help` 在 `--noconsole` 模式下会弹出短暂控制台窗口后关闭，这是 PyInstaller 的已知行为，不影响功能。
+
+**代码位置**：`app.py` `if __name__ == '__main__':` 块顶部。
+
+### 17. `<template>` 克隆陷阱与重置按钮动态创建
+
+**背景**：HTML `<template>` 标签在 `cloneNode(true)` 时，Tailwind CDN JIT 不扫描其内部 class，导致 utility class 无样式；inline `onclick`/`onmouseover` 等事件属性在克隆后也可能丢失。这导致放在 template 内的重置按钮既无样式也无响应。
+
+**方案**：
+- 从 template HTML 中移除重置按钮
+- 在 `bindPaneEvents()` 中用 `document.createElement('button')` 动态创建按钮
+- 样式通过 `btn.style.cssText` 内联设置 + `style.css` 中的 `.btn-reset` class 双保险
+- 事件通过 `btn.addEventListener('click', ...)` 直接绑定，不依赖 template 克隆
+
+**教训**：`<template>` 内的元素不要依赖 Tailwind CDN 动态生成的 class，也不要依赖 inline 事件属性。需要交互的元素优先用 JS 动态创建。
+
+**代码位置**：`main.js` `bindPaneEvents()` 末尾；`style.css` `.btn-reset`。
+
+### 18. 默认值一致性修复
+
+**背景**：`enable_history` 后端默认值为 `False`，与前端默认 `True`（checkbox checked）不一致；`speed_mode` 后端默认 `'eco'`，前端默认 `'fast'`。
+
+**方案**：统一所有位置的默认值：
+- `enable_history` → `True`（后端 `start_extraction`、`resume`、`_extraction_worker`、会话恢复）
+- `speed_mode` → `'fast'`（同上所有位置 + HTML `<select>` 加 `selected`）
+
+**代码位置**：`app.py` 全局搜索 `enable_history` 和 `speed_mode`。
+
+### 19. Ctrl+Z 撤销后预览跳转
+
+**背景**：在大图预览模式下 Ctrl+Z 撤销删除后，预览图片和计数器不会更新，用户需要手动切换才能看到恢复的图片。
+
+**方案**：在 `undoLastDelete()` 末尾检测是否处于预览模式（`G.previewTabId === sid`），如果是则调用 `showPreview(sid, restoredIdx)` 跳转到恢复的图片位置。
+
+**代码位置**：`main.js` `undoLastDelete()`。
+
+### 20. 安全加固
+
+- 图片服务、下载、打包三个路由加 `os.path.basename()` 防路径穿越
+- 视频路径校验从 `os.path.exists` 改为 `os.path.isfile`
+- 端口文件读取改用 `with open()` 修复资源泄漏
+- 静态文件引用加 `?v=0.4.1` cache buster
+- Flask 加 `TEMPLATES_AUTO_RELOAD` 和 `SEND_FILE_MAX_AGE_DEFAULT=0`
+
+### 21. 核显提示折叠
+
+**方案**：将核显性能提示从始终可见的 `<div>` 改为 `<details>` 折叠元素，默认收起，标题"💡 核显用户性能提示（点击展开）"。非核显用户不会被干扰。
+
+**代码位置**：`index.html` 参数面板内。
 
