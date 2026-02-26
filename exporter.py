@@ -133,13 +133,13 @@ def package_images(paths, pkg_dir, fmt, video_name, on_progress=None):
     os.makedirs(pkg_dir, exist_ok=True)
 
     if fmt == 'pdf':
-        out = os.path.join(pkg_dir, f'{video_name}_整理版.pdf')
+        out = os.path.join(pkg_dir, f'{video_name}.pdf')
         package_pdf(paths, out, on_progress)
     elif fmt == 'pptx':
-        out = os.path.join(pkg_dir, f'{video_name}_整理版.pptx')
+        out = os.path.join(pkg_dir, f'{video_name}.pptx')
         package_pptx(paths, out, on_progress)
     elif fmt == 'zip':
-        out = os.path.join(pkg_dir, f'{video_name}_整理版.zip')
+        out = os.path.join(pkg_dir, f'{video_name}.zip')
         package_zip(paths, out, on_progress)
     else:
         raise ValueError(f'不支持的格式: {fmt}')

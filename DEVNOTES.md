@@ -11,7 +11,7 @@
 
 - **定位**：从延河课堂桌面录屏视频中提取 PPT 幻灯片的单机工具
 - **架构**：Python Flask 后端 + 原生 HTML/JS 前端（无框架），单进程多线程
-- **当前版本**：v0.4.1
+- **当前版本**：v0.5.0
 - **GitHub**：https://github.com/PWO-CHINA/VidSlide
 - **Gitee 镜像**：https://gitee.com/pwo101/VidSlide（国内下载更快）
 - **Python**：3.11（Microsoft Store 版），虚拟环境在 `./venv`
@@ -20,12 +20,14 @@
 
 | 文件 | 行数（约） | 职责 |
 |------|-----------|------|
-| `app.py` | ~1250 | Flask 路由、多会话管理、SSE 推送、GPU 监控、系统资源采样 |
+| `app.py` | ~2010 | Flask 路由、多会话管理、SSE 推送、GPU 监控、批量 API 路由（26+） |
+| `batch_manager.py` | ~1350 | 批量队列调度、并发 worker、缩略图、智能命名、持久化、打包导出 |
 | `extractor.py` | ~295 | 视频帧差检测核心、场景切换识别、三档速度模式 |
 | `exporter.py` | ~150 | PDF/PPTX/ZIP 导出 |
-| `templates/index.html` | ~340 | 前端 HTML 模板（Tailwind CDN） |
-| `static/js/main.js` | ~1230 | 前端全部逻辑：SSE、画廊、拖拽排序、localStorage 配置记忆 |
-| `static/css/style.css` | ~200 | 自定义样式 |
+| `templates/index.html` | ~620 | 前端 HTML 模板（Tailwind CDN），含批量面板、命名弹窗、视频详情弹窗 |
+| `static/js/main.js` | ~1660 | 前端核心逻辑：SSE、画廊、拖拽排序、localStorage 配置记忆 |
+| `static/js/batch.js` | ~1270 | 批量模式前端：视图切换、队列管理、SSE、进度、详情弹窗、导出、通知 |
+| `static/css/style.css` | ~880 | 自定义样式，含批量面板和详情弹窗样式 |
 
 ## 重要设计决策 & 踩坑记录
 
@@ -95,6 +97,37 @@
 - `beforeunload` 事件中检查此标志，为 true 时跳过确认提示
 - 否则在有未导出成果时弹出离开确认
 
+### 7. 批量处理系统（v0.5.0 新增）
+
+**架构**：独立于标签页会话系统，`batch_manager.py` 管理批量队列，`app.py` 提供 26+ 个 `/api/batch/*` 路由。
+
+**核心设计**：
+- 每个 batch 有独立的 `batch_dir`（`.vidslide_sessions/batch_{bid}/`），内含子目录按视频分组
+- 并发调度：`threading.Semaphore` 控制 worker 数量（1-3），根据 CPU 核心数和内存自动计算上限
+- SSE 事件推送：`queue.Queue` 队列，支持多客户端订阅，15 秒心跳保活
+- 持久化：`batch.json` 保存队列元数据，重启后自动恢复（running→paused，需手动继续）
+- 全局进度：按帧数加权计算，无帧数信息时按任务数平均
+
+**前端 batch.js**：
+- 视图切换：标签页模式 ↔ 批量模式，共享 Header 和资源监控条
+- 队列管理：SortableJS 拖拽排序、行内编辑名称、优先处理、逐个取消
+- 命名弹窗：支持拖拽调整顺序、自动递增命名（`课程_1`→`课程_2`→...）
+- 视频详情弹窗：画廊网格、大图预览（复用 previewModal）、单张删除、导出
+- 参数记忆：`localStorage` 保存批量参数（key: `vidslide_batch_prefs`）
+- 完成通知：浏览器 Notification + 标题闪烁 + Web Audio 音效
+- 队列计数徽章：Header 按钮上显示当前队列数量
+
+**智能命名递增模式**（`batch_manager.py`，按优先级匹配）：
+1. `第N节/章/课/讲` — 中文序数
+2. `（N）/(N)` — 括号数字
+3. `xxx_N / xxx-N` — 分隔符+数字
+4. 尾部纯数字 — `video01`→`video02`
+5. 无匹配 — 追加 `_1, _2, ...`
+
+**踩坑**：
+- CSS 中 `var(--brand-500)` 等自定义属性在 Tailwind CDN 模式下不会自动注入为 CSS 变量，必须用实际 hex 值（`#6366f1` 等）
+- 批量导出 ZIP 中文件夹名用 `display_name`，需要 `_sanitize_dirname()` 处理非法字符
+
 ## 已知问题 & 限制
 
 1. **Nuitka 编译在中文 Windows 用户名下失败**：gcc (msvcrt 变体) 的 `std::filesystem` 在中文系统 locale 下有 Illegal byte sequence bug。需要安装 VS2022 C++ 工具使用 MSVC 编译，或者继续用 PyInstaller
@@ -151,7 +184,9 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 - 代码注释比较充分，直接读源码即可理解大部分逻辑
 - GPU 监控部分最复杂（app.py 148-280 行），改动前务必理解 PDH 通配符方案
 - 前端是纯 JS（无框架），DOM 操作较多，`main.js` 的 `G` 对象是全局状态
-- 所有提取逻辑在后台线程执行（`_extraction_worker`），通过 SSE 队列推送进度
+- 批量模式前端在 `batch.js`，与 `main.js` 共享 `G` 对象和 `api()`/`showToast()` 等工具函数
+- 批量后端在 `batch_manager.py`，独立于 `app.py` 的会话系统，通过 `app.py` 路由层桥接
+- 所有提取逻辑在后台线程执行（标签页用 `_extraction_worker`，批量用 `_process_single_video`），通过 SSE 队列推送进度
 - 改完代码后用 `python app.py` 启动测试，浏览器会自动打开
 
 ## v0.4.0 新增设计决策
@@ -298,4 +333,227 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 **方案**：将核显性能提示从始终可见的 `<div>` 改为 `<details>` 折叠元素，默认收起，标题"💡 核显用户性能提示（点击展开）"。非核显用户不会被干扰。
 
 **代码位置**：`index.html` 参数面板内。
+
+## v0.5.1 批量队列交互修复
+
+### 22. 取消/暂停/跳过按钮重构
+
+**背景**：原设计中 queued 状态同时显示"移除"和"取消"两个按钮，功能完全重复；running 状态的"取消"按钮语义不够精确。
+
+**方案**：
+- 移除 `canCancel` 统一取消按钮，按状态精确分配：
+  - `queued` + 批量未运行 → 仅显示"移除"（✕）
+  - `queued` + 批量运行中 → 显示"跳过"（黄色按钮），调用 `_skipVideo()` 将状态标记为 `skipped`
+  - `running` → 显示"暂停"（橙色按钮），调用 `_pauseVideo()` 复用 cancel API 中断 worker
+- 后端 `cancel_video()` 新增 `skip=True` 参数，queued 视频可标记为 `skipped` 而非 `cancelled`
+- 后端 `retry_video()` 新增 `cancelled` 状态支持，暂停/取消后的视频可重试
+- `batch_status` SSE 事件触发 `_renderBatchQueue()` 完整重建，确保批量开始时按钮组正确切换
+- `_updateTaskStatus()` 在状态变化时完整重建队列项（而非仅更新 badge/message）
+
+**代码位置**：`batch.js` `_createVideoItem()` / `_pauseVideo()` / `_skipVideo()`；`batch_manager.py` `cancel_video()` / `retry_video()`；`app.py` `batch_cancel_video()`。
+
+### 23. 非完成视频图片查看
+
+**背景**：cancelled/skipped/error 状态的视频如果已有提取出的图片（`savedCount > 0`），原来无法查看。
+
+**方案**：
+- `_createVideoItem()` 中新增 `canView` 判断：`done` 或 `(savedCount > 0 && status in cancelled/skipped/error)`
+- `canView` 为 true 时显示"查看"按钮
+- `openBatchDetail()` 放宽 `status !== 'done'` 限制，改为检查 `canView`
+
+**代码位置**：`batch.js` `_createVideoItem()` / `openBatchDetail()`。
+
+### 24. 名称单击/双击冲突修复
+
+**背景**：done 视频名称同时绑定 `onclick`（打开详情）和 `ondblclick`（重命名），但浏览器 DOM 事件中单击总是先于双击触发，导致双击重命名永远无法执行。
+
+**方案**：
+- 移除 `onclick` + `ondblclick` 双绑定和 `_nameClickHandler` 延迟方案
+- 改为单击直接调用 `_startInlineEdit(this)` 进入重命名（`cursor:text`）
+- 查看详情统一由"查看"按钮负责，名称不再承担查看职责
+
+**代码位置**：`batch.js` `_createVideoItem()` 名称点击部分。
+
+### 25. 全选/取消全选按钮合并
+
+**背景**：批量导出区域有两个独立按钮"全选"和"取消全选"，交互冗余。
+
+**方案**：
+- HTML 合并为单个 `<button id="batchSelectToggleBtn">`，无参数调用 `selectAllBatchVideos()`
+- `selectAllBatchVideos()` 无参数时自动检测当前状态并切换（全选↔取消全选）
+- `_updateBatchExportSelection()` 同步更新按钮文字，确保单个 checkbox 变化时按钮文字也跟着变
+
+**代码位置**：`batch.js` `selectAllBatchVideos()` / `_updateBatchExportSelection()`；`index.html` 批量导出区域。
+
+### 26. 重试按钮改为"重新排队"
+
+**背景**：原重试按钮用 🔄 emoji，语义不清晰，且用户期望的是"重新加入队列"而非简单重试。
+
+**方案**：
+- 按钮文字从 `🔄` 改为 `重新排队`，title 改为"重新加入队列"
+- 后端 `retry_video()` 逻辑不变（重置状态为 queued，清理旧输出，必要时重启 dispatcher）
+- 适用状态：`error`、`skipped`、`cancelled`
+
+**代码位置**：`batch.js` `_createVideoItem()` 重试按钮行。
+
+### 27. 打包下载自动触发
+
+**背景**：单视频打包（ZIP/PDF/PPTX）完成后，`_onPackagingDone` 试图将下载链接插入 `.batch-video-download-links` 元素，但该元素在 `_createVideoItem` 中不存在，导致打包成功但用户看不到下载入口。批量打包同理，`_onBatchPackagingDone` 插入链接到 `#batchDownloadSection`。
+
+**方案**：
+- `_onPackagingDone` 和 `_onBatchPackagingDone` 改为创建隐藏 `<a>` 元素并自动 `.click()` 触发浏览器下载
+- 不再依赖 DOM 中预置的下载链接容器
+
+**代码位置**：`batch.js` `_onPackagingDone()` / `_onBatchPackagingDone()`。
+
+### 28. 批量导出格式支持
+
+**背景**：`package_batch_all()` 忽略 `fmt` 参数，始终将原始图片打包为 ZIP。用户点击"导出选中 PDF"或"导出选中 PPTX"时，得到的仍然是图片 ZIP。
+
+**方案**：
+- `fmt='zip'`：保持原逻辑，图片按视频名子文件夹打包
+- `fmt='pdf'` 或 `fmt='pptx'`：先为每个视频调用 `package_images()` 生成对应格式文件，再将所有生成的 PDF/PPTX 文件打包进一个 ZIP
+- 输出文件名区分格式：`批量导出_PDF_{bid}.zip` / `批量导出_PPTX_{bid}.zip` / `批量导出_ZIP_{bid}.zip`
+
+**代码位置**：`batch_manager.py` `package_batch_all()`。
+
+### 29. 导出文件名去除"整理版"后缀
+
+**背景**：`exporter.py` 的 `package_images()` 在输出文件名中硬编码了 `_整理版` 后缀，用户不需要。
+
+**方案**：移除 `_整理版`，直接用 `{video_name}.pdf` / `.pptx` / `.zip`。
+
+**代码位置**：`exporter.py` `package_images()`。
+
+### 30. 新完成视频自动勾选
+
+**背景**：视频处理完成后 `_onVideoDone` 未设置 `task.selected = true`，导致全选计数不包含新完成的视频，需要手动取消全选再全选。
+
+**方案**：`_onVideoDone` 中设置 `task.selected = true`，并调用 `_updateBatchExportSelection()` 同步更新计数和按钮文字。
+
+**代码位置**：`batch.js` `_onVideoDone()`。
+
+### 31. 重命名时图片数量混入名称
+
+**背景**：`_startInlineEdit` 用 `nameEl.textContent.trim()` 获取旧名称，但 DOM 中名称后有 `<span>(16张)</span>`，`textContent` 会把它一起取出来。
+
+**方案**：
+- 从 `G.batch.tasks` 数据源获取 `task.displayName` 作为旧名称，不再依赖 DOM 文本
+- 编辑完成后用 `_restoreNameEl()` 重建 innerHTML，正确分离名称和图片数量标签
+
+**代码位置**：`batch.js` `_startInlineEdit()` / `_restoreNameEl()`。
+
+### 32. 视频名称重复检测
+
+**背景**：批量导出时，同名视频的图片会被放入同一个 ZIP 文件夹，导致文件覆盖。
+
+**方案**：
+- **前端添加时检测**：`confirmBatchAdd()` 在提交前检查新增名称与已有队列是否重复，重复时 toast 提示并阻止提交
+- **前端重命名时检测**：`_startInlineEdit()` 的 `finish` 回调中检查新名称是否与其他视频重复，重复时 toast 提示并恢复原名
+- **后端导出兜底**：`package_batch_all()` 对 `display_name` 做去重处理，重复名称自动追加 `_1`、`_2` 后缀，确保 ZIP 内文件夹/文件名不冲突
+
+**代码位置**：`batch.js` `confirmBatchAdd()` / `_startInlineEdit()`；`batch_manager.py` `package_batch_all()`。
+
+### 33. 导出选择计数修复
+
+**背景**：视频移入回收站后，`_trashBatchVideo` 未调用 `_updateBatchExportSelection()`，导致"已选择 x/y 个视频"计数不更新。
+
+**方案**：在 `_trashBatchVideo` 成功回调中追加 `_updateBatchExportSelection()` 调用。
+
+**代码位置**：`batch.js` `_trashBatchVideo()`。
+
+### 34. 命名弹窗视频缩略图
+
+**背景**：命名弹窗中只有文件名文字，用户无法直观辨别视频内容。
+
+**方案**：
+- 新增 `POST /api/video-preview-thumb` API，接收视频路径，用 OpenCV 提取第 1 秒帧，缩放到 360p 宽度，返回 base64 JPEG
+- `_showBatchAddModal()` 渲染列表时为每项添加 `<img class="batch-add-thumb">`（64×36px），异步调用 API 加载缩略图
+- 加载失败不影响功能，图片保持灰色占位背景
+
+**代码位置**：`app.py` `video_preview_thumb()`；`batch.js` `_showBatchAddModal()`。
+
+### 35. 命名模板"应用"按钮 + 排序
+
+**背景**：原"预览命名"按钮已经会填入模板名称，但语义不够明确。用户还需要按名称排序视频列表。
+
+**方案**：
+- 模板区域新增"应用"按钮（`applyTemplateNames()`），调用 `previewTemplateNames()` 后显示"已应用"提示
+- 文件列表上方新增"名称 ↑"和"名称 ↓"排序按钮（`sortBatchAddList(order)`），按当前输入框中的名称进行 `localeCompare('zh')` 排序，排序后更新 `data-idx`
+
+**代码位置**：`batch.js` `applyTemplateNames()` / `sortBatchAddList()`；`index.html` 模板区域和文件列表上方。
+
+### 36. 命名弹窗关闭交互
+
+**方案**：
+- 弹窗右上角新增 `×` 关闭按钮
+- 点击遮罩层（`modal-overlay`）关闭弹窗
+- ESC 键关闭弹窗（`_batchAddModalKeyHandler`，弹窗关闭时自动移除监听）
+
+**代码位置**：`index.html` `#batchAddModal`；`batch.js` `_showBatchAddModal()`。
+
+### 37. 按钮浅色模式可见性修复
+
+**背景**：`.btn-ghost` 基础样式为白色文字（为 header 设计），`.modal-content` 内的按钮未被浅色覆盖规则覆盖，导致日间模式下排序按钮不可见。
+
+**方案**：CSS 覆盖选择器新增 `.modal-content .btn-ghost` 和对应的 dark 模式规则。
+
+**代码位置**：`style.css` `.btn-ghost` 覆盖规则。
+
+### 38. 全局进度条重设计
+
+**背景**：原进度条放在页面最顶部，只显示当前处理视频的进度，未计入等待中的视频，无百分比和预计时间。
+
+**方案**：
+- 进度条从顶部移至控制栏下方（紧贴"开始处理"按钮）
+- 进度计算改为前端自行统计所有视频：queued=0%、running=其进度、done/error/cancelled/skipped=100%，按任务数平均
+- 新增百分比显示（`#batchProgressPct`）和 ETA 预估（`#batchProgressEta`），基于已用时间和当前进度线性推算
+- 进度条样式复用标签页的 `.progress-fill`（shimmer 动画 + progressGlow 光效）
+- `G.batch._startTime` 在 `startBatch()` / `resumeBatch()` 时记录
+
+**代码位置**：`index.html` 控制栏内 `#batchGlobalStats`；`batch.js` `_updateGlobalProgress()` / `_formatDuration()`；`style.css` `.batch-global-stats`。
+
+### 39. 批量面板视觉统一
+
+**背景**：批量面板与标签页模式在视觉风格上存在差异（宽度、圆角、颜色硬编码、阴影等）。
+
+**方案**：
+- 面板宽度从 `max-w-7xl` 改为 `max-w-5xl`，与标签页一致
+- 队列项、缩略图、输入框、弹窗列表项的 `border-radius` 统一为 `0.75rem`/`0.5rem`/`0.375rem` 三级体系
+- 硬编码颜色全部替换为 CSS 变量（`var(--bg-muted)`、`var(--border)`、`var(--text-primary)` 等）
+- 输入框新增 `:focus` 样式（`box-shadow: 0 0 0 3px var(--ring-brand)`）
+- 迷你进度条高度从 4px 增至 6px，圆角改为 `9999px`，渐变色与全局进度条一致
+- 拖拽 ghost 样式新增虚线边框，chosen 样式改用 `var(--ring-brand)` 光环
+- 区域标题从 emoji 改为编号圆圈（`1` 全局参数、`2` 视频队列、`3` 批量导出），与标签页步骤风格一致
+
+**代码位置**：`style.css` 批量面板样式区域；`index.html` 批量面板 section 标题。
+
+### 40. 批量队列控制状态机修复
+
+**背景**：暂停/跳过的视频点击"重新排队"后立即完成（不到 1 秒），再次开始处理时按钮显示混乱。
+
+**根因**：
+1. `retry_video()` 未重置 `task['cancel_flag']`，导致 worker 启动后 `should_cancel()` 立即返回 True
+2. 暂停和取消共用 `cancelled` 状态，语义不清
+
+**修复**：
+- `retry_video()` 新增 `task['cancel_flag'] = False` 和 `task['_pause_intent'] = False` 重置
+- `retry_video()` 支持 `paused` 状态，暂停的视频保留已提取图片（不清理 cache_dir）
+- `cancel_video()` 新增 `pause` 参数，running 视频设置 `task['_pause_intent'] = pause`
+- `_video_worker` 完成时检查 `_pause_intent`：True → `paused` 状态，False → `cancelled` 状态
+- SSE 事件类型：paused 视频发送 `video_status` 而非 `video_error`
+- `_new_video_task()` 新增 `'_pause_intent': False` 字段
+- 前端 `_pauseVideo()` 发送 `{ pause: true }`
+- 前端新增 `paused` 状态标签（"已暂停"）、按钮逻辑、CSS 样式（橙色系）
+
+**视频状态机**：
+```
+queued → running → done
+                → paused（用户暂停）→ queued（重新排队）
+                → cancelled（用户取消）→ queued（重新排队）
+                → error（异常）→ queued（重新排队）
+queued → skipped（用户跳过）→ queued（重新排队）
+```
+
+**代码位置**：`batch_manager.py` `retry_video()` / `cancel_video()` / `_video_worker()` / `_new_video_task()`；`app.py` `batch_cancel_video()`；`batch.js` `_pauseVideo()` / `_createVideoItem()` / `statusLabels`；`style.css` `.status-paused` / `.batch-status-badge.paused`。
 

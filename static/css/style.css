@@ -313,6 +313,41 @@ body {
 .btn-ghost:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.22); color: #fff; }
 .btn-ghost:active { transform: scale(0.96); }
 
+/* 在浅色卡片区域内，btn-ghost 使用深色文字 */
+.card .btn-ghost,
+.batch-panel .btn-ghost,
+.batch-control-bar .btn-ghost,
+.modal-content .btn-ghost {
+    color: rgba(51,65,85,.85);
+    background: rgba(100,116,139,.08);
+    border-color: rgba(100,116,139,.18);
+}
+.card .btn-ghost:hover,
+.batch-panel .btn-ghost:hover,
+.batch-control-bar .btn-ghost:hover,
+.modal-content .btn-ghost:hover {
+    background: rgba(100,116,139,.15);
+    border-color: rgba(100,116,139,.25);
+    color: #334155;
+}
+/* 深色模式下恢复浅色文字 */
+.dark .card .btn-ghost,
+.dark .batch-panel .btn-ghost,
+.dark .batch-control-bar .btn-ghost,
+.dark .modal-content .btn-ghost {
+    color: rgba(255,255,255,.85);
+    background: rgba(255,255,255,.08);
+    border-color: rgba(255,255,255,.12);
+}
+.dark .card .btn-ghost:hover,
+.dark .batch-panel .btn-ghost:hover,
+.dark .batch-control-bar .btn-ghost:hover,
+.dark .modal-content .btn-ghost:hover {
+    background: rgba(255,255,255,.18);
+    border-color: rgba(255,255,255,.22);
+    color: #fff;
+}
+
 .btn-ghost-danger {
     display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
     padding: 0.4rem 0.75rem; border-radius: 0.5rem;
@@ -324,6 +359,36 @@ body {
 }
 .btn-ghost-danger:hover { background: rgba(239,68,68,.55); border-color: rgba(239,68,68,.4); color: #fff; }
 .btn-ghost-danger:active { transform: scale(0.96); }
+
+/* 浅色卡片区域内，btn-ghost-danger 使用可见的红色文字 */
+.card .btn-ghost-danger,
+.batch-panel .btn-ghost-danger,
+.batch-control-bar .btn-ghost-danger {
+    color: rgba(220,38,38,.9);
+    background: rgba(239,68,68,.08);
+    border-color: rgba(239,68,68,.2);
+}
+.card .btn-ghost-danger:hover,
+.batch-panel .btn-ghost-danger:hover,
+.batch-control-bar .btn-ghost-danger:hover {
+    background: rgba(239,68,68,.15);
+    border-color: rgba(239,68,68,.3);
+    color: #dc2626;
+}
+.dark .card .btn-ghost-danger,
+.dark .batch-panel .btn-ghost-danger,
+.dark .batch-control-bar .btn-ghost-danger {
+    color: rgba(255,255,255,.9);
+    background: rgba(239,68,68,.35);
+    border-color: rgba(239,68,68,.25);
+}
+.dark .card .btn-ghost-danger:hover,
+.dark .batch-panel .btn-ghost-danger:hover,
+.dark .batch-control-bar .btn-ghost-danger:hover {
+    background: rgba(239,68,68,.55);
+    border-color: rgba(239,68,68,.4);
+    color: #fff;
+}
 
 .btn-export {
     display: flex; flex-direction: column; align-items: center; gap: 0.625rem;
@@ -627,4 +692,312 @@ body {
 }
 .dark input[type="text"]:focus, .dark input[type="number"]:focus, .dark select:focus {
     border-color: #94a3b8; background-color: #0f172a;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   批量处理面板样式
+   ═══════════════════════════════════════════════════════════ */
+
+/* 批量面板整体 */
+.batch-panel { min-height: 60vh; }
+
+/* 全局进度统计 — 复用标签页进度条风格 */
+.batch-global-stats .progress-track {
+    height: 1.25rem;
+    background-color: #e5e7eb;
+    border-radius: 9999px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.06);
+}
+.dark .batch-global-stats .progress-track { background: #334155; }
+.batch-global-stats .progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #475569 0%, #64748b 50%, #475569 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+    transition: width .4s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 0 8px rgba(71,85,105,.3);
+    position: relative;
+}
+.batch-global-stats .progress-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.25) 50%, transparent 100%);
+    animation: progressGlow 1.8s ease-in-out infinite;
+}
+.dark .batch-global-stats .progress-fill { box-shadow: 0 0 8px rgba(100,116,139,.3); }
+
+/* 磁盘空间预警 */
+.batch-disk-warning {
+    background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;
+    border-radius: 0.75rem; padding: 10px 16px; margin-bottom: 12px;
+    font-size: 0.8rem; font-weight: 500;
+}
+.dark .batch-disk-warning {
+    background: #451a03; color: #fcd34d; border-color: #92400e;
+}
+
+/* 队列列表 */
+.batch-queue-list {
+    display: flex; flex-direction: column; gap: 8px;
+}
+
+/* 队列项 — 使用 CSS 变量保持主题一致 */
+.batch-video-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; border-radius: 0.75rem;
+    background: var(--bg-muted); border: 1.5px solid var(--border);
+    transition: all 0.2s ease;
+}
+.dark .batch-video-item {
+    background: var(--bg-muted); border-color: var(--border);
+}
+.batch-video-item:hover {
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-card-hover);
+}
+.dark .batch-video-item:hover { border-color: var(--border-hover); }
+
+/* 队列项状态 */
+.batch-video-item.status-running {
+    border-color: #818cf8; background: #f0f9ff;
+}
+.dark .batch-video-item.status-running {
+    border-color: #4f46e5; background: #0c2d48;
+}
+.batch-video-item.status-done {
+    border-color: #86efac; background: #f0fdf4;
+}
+.dark .batch-video-item.status-done {
+    border-color: #166534; background: #052e16;
+}
+.batch-video-item.status-error,
+.batch-video-item.status-skipped {
+    border-color: #fca5a5; background: #fef2f2;
+}
+.dark .batch-video-item.status-error,
+.dark .batch-video-item.status-skipped {
+    border-color: #991b1b; background: #450a0a;
+}
+.batch-video-item.status-paused {
+    border-color: #fdba74; background: #fff7ed;
+}
+.dark .batch-video-item.status-paused {
+    border-color: #9a3412; background: #431407;
+}
+
+/* 缩略图 */
+.batch-thumbnail {
+    width: 80px; height: 45px; object-fit: cover;
+    border-radius: 0.5rem; flex-shrink: 0;
+    background: var(--bg-muted);
+}
+.dark .batch-thumbnail { background: #334155; }
+
+/* 视频名称（可编辑） */
+.batch-video-name {
+    font-size: 0.85rem; font-weight: 500;
+    color: var(--text-primary);
+    min-width: 0; flex: 1;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.batch-video-name-input {
+    font-size: 0.8rem; padding: 2px 6px;
+    border: 1.5px solid #818cf8; border-radius: 0.375rem;
+    background: var(--bg-card); width: 100%;
+    color: var(--text-primary);
+    outline: none;
+}
+.batch-video-name-input:focus {
+    box-shadow: 0 0 0 3px var(--ring-brand);
+}
+.dark .batch-video-name-input {
+    background: #0f172a; border-color: #475569; color: #e2e8f0;
+}
+
+/* 状态徽章 */
+.batch-status-badge {
+    font-size: 0.7rem; padding: 2px 8px;
+    border-radius: 9999px; font-weight: 500;
+    flex-shrink: 0; white-space: nowrap;
+}
+.batch-status-badge.queued { background: #e2e8f0; color: #475569; }
+.batch-status-badge.running { background: #dbeafe; color: #1d4ed8; }
+.batch-status-badge.done { background: #dcfce7; color: #166534; }
+.batch-status-badge.error { background: #fee2e2; color: #991b1b; }
+.batch-status-badge.skipped { background: #fef3c7; color: #92400e; }
+.batch-status-badge.cancelled { background: #f1f5f9; color: #64748b; }
+.batch-status-badge.paused { background: #fed7aa; color: #9a3412; }
+.dark .batch-status-badge.queued { background: #334155; color: #94a3b8; }
+.dark .batch-status-badge.running { background: #1e3a5f; color: #60a5fa; }
+.dark .batch-status-badge.done { background: #052e16; color: #86efac; }
+.dark .batch-status-badge.error { background: #450a0a; color: #fca5a5; }
+.dark .batch-status-badge.skipped { background: #451a03; color: #fcd34d; }
+.dark .batch-status-badge.cancelled { background: #1e293b; color: #64748b; }
+.dark .batch-status-badge.paused { background: #431407; color: #fdba74; }
+
+/* 队列项进度条（迷你）— 与全局进度条风格一致 */
+.batch-mini-progress {
+    width: 100px; height: 6px; border-radius: 9999px;
+    background: #e5e7eb; flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.04);
+}
+.dark .batch-mini-progress { background: #334155; }
+.batch-mini-progress-fill {
+    height: 100%; border-radius: 9999px;
+    background: linear-gradient(90deg, #475569, #64748b);
+    transition: width 0.3s ease;
+}
+
+/* 队列项操作按钮 */
+.batch-item-actions {
+    display: flex; gap: 4px; flex-shrink: 0; align-items: center;
+}
+.batch-item-actions button {
+    font-size: 0.7rem; padding: 3px 8px;
+    border-radius: 0.375rem; cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    font-weight: 500;
+}
+
+/* 拖拽排序 */
+.batch-video-item.sortable-ghost {
+    opacity: 0.35; background: #eef2ff; border: 2px dashed #94a3b8;
+}
+.dark .batch-video-item.sortable-ghost { background: #312e81; }
+.batch-video-item.sortable-chosen {
+    box-shadow: 0 0 0 3px var(--ring-brand);
+}
+.batch-video-item .drag-handle {
+    cursor: grab; color: var(--text-muted); font-size: 1rem;
+    flex-shrink: 0; user-select: none;
+}
+.batch-video-item .drag-handle:active { cursor: grabbing; }
+
+/* 控制栏 */
+.batch-control-bar {
+    position: sticky; bottom: 0; z-index: 10;
+    border-top: 1px solid var(--border);
+}
+.dark .batch-control-bar { border-top-color: var(--border); }
+
+/* 添加视频弹窗 */
+.batch-add-modal {
+    max-width: 560px; width: 90vw;
+}
+.batch-add-list-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 0.5rem;
+    border: 1px solid var(--border); margin-bottom: 6px;
+    transition: border-color 0.15s;
+}
+.batch-add-list-item:hover { border-color: var(--border-hover); }
+.dark .batch-add-list-item { border-color: var(--border); }
+.batch-add-list-item .file-icon {
+    font-size: 1.2rem; flex-shrink: 0;
+}
+.batch-add-list-item input[type="text"] {
+    flex: 1; font-size: 0.8rem; padding: 3px 8px;
+    border: 1px solid var(--border); border-radius: 0.375rem;
+    background: var(--bg-input); color: var(--text-primary);
+}
+.batch-add-list-item input[type="text"]:focus {
+    border-color: #818cf8; outline: none;
+    box-shadow: 0 0 0 3px var(--ring-brand);
+}
+.dark .batch-add-list-item input[type="text"] {
+    background: #0f172a; border-color: #475569; color: #e2e8f0;
+}
+
+/* 完成横幅 */
+.batch-complete-banner {
+    margin-top: 12px; padding: 12px 16px;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #dcfce7, #d1fae5);
+    border: 1px solid #86efac;
+}
+.dark .batch-complete-banner {
+    background: linear-gradient(135deg, #052e16, #064e3b);
+    border-color: #166534;
+}
+
+/* 模态遮罩（复用） */
+.modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+}
+.modal-content {
+    background: white; border-radius: 12px;
+    padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.dark .modal-content {
+    background: #1e293b; color: #e2e8f0;
+}
+
+/* ═══════ 命名弹窗拖拽手柄 ═══════ */
+.batch-add-drag-handle {
+    cursor: grab; color: #94a3b8; font-size: 14px;
+    user-select: none; flex-shrink: 0; padding: 0 2px;
+}
+.batch-add-drag-handle:active { cursor: grabbing; }
+.batch-add-list-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 6px;
+    transition: background 0.15s;
+}
+.batch-add-list-item:hover { background: #f1f5f9; }
+.dark .batch-add-list-item:hover { background: #334155; }
+
+/* ═══════ 视频详情弹窗画廊 ═══════ */
+.batch-detail-thumb-wrap {
+    position: relative; border-radius: 8px; overflow: hidden;
+    cursor: pointer; aspect-ratio: 16/9; background: #f1f5f9;
+}
+.dark .batch-detail-thumb-wrap { background: #334155; }
+.batch-detail-thumb {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.2s;
+}
+.batch-detail-thumb-wrap:hover .batch-detail-thumb {
+    transform: scale(1.05);
+}
+.batch-detail-thumb-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 4px 6px; opacity: 0; transition: opacity 0.2s;
+    background: linear-gradient(transparent 50%, rgba(0,0,0,0.5));
+}
+.batch-detail-thumb-wrap:hover .batch-detail-thumb-overlay { opacity: 1; }
+.batch-detail-del-btn {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(239,68,68,0.8); color: white;
+    font-size: 10px; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+}
+.batch-detail-del-btn:hover { background: rgba(220,38,38,1); }
+
+/* 批量详情画廊 - 删除动画 */
+.batch-detail-thumb-wrap.removing {
+    opacity: 0; transform: scale(0.8);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+/* 批量视频勾选框 */
+.batch-select-cb {
+    width: 16px; height: 16px; cursor: pointer;
+    accent-color: #6366f1; flex-shrink: 0;
+}
+
+/* 批量详情画廊 - 拖拽 */
+.batch-detail-thumb-wrap.sortable-ghost {
+    opacity: 0.4;
+}
+.batch-detail-thumb-wrap.sortable-chosen {
+    box-shadow: 0 0 0 2px #6366f1;
 }

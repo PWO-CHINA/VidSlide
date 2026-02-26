@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>影幻智提 (VidSlide) v0.4.1 - 细节优化版</title>
+    <title>影幻智提 (VidSlide) v0.5.0 - 批量处理版</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
@@ -19,7 +19,7 @@
             }
         }
     </script>
-    <link rel="stylesheet" href="/static/css/style.css?v=0.4.1">
+    <link rel="stylesheet" href="/static/css/style.css?v=0.5.1">
     <script>
         // 在页面渲染前立即应用主题，避免闪烁
         (function(){
@@ -64,7 +64,7 @@
                 <div class="min-w-0">
                     <h1 class="text-xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
                         影幻智提 (VidSlide)
-                        <span class="text-xs font-normal bg-white/15 px-2 py-0.5 rounded-full">v0.4.1</span>
+                        <span class="text-xs font-normal bg-white/15 px-2 py-0.5 rounded-full">v0.5.0</span>
                     </h1>
                     <p class="text-slate-400 dark:text-slate-400 text-xs mt-0.5 truncate">从录播视频中一键提取 PPT</p>
                 </div>
@@ -73,8 +73,11 @@
                 <button onclick="toggleTheme()" class="theme-toggle" title="切换深色/浅色模式">
                     <span class="icon" id="themeIcon">🌙</span>
                 </button>
-                <button onclick="cleanupAll()" class="btn-ghost text-xs" title="清空所有标签页缓存">
-                    🗑️ 清空
+                <button onclick="toggleBatchMode()" class="btn-ghost text-xs" id="btnToggleMode" title="切换批量处理模式">
+                    📋 批量模式
+                </button>
+                <button onclick="cleanupAll()" class="btn-ghost text-xs" title="清空所有模式的全部缓存">
+                    🗑️ 全部清空
                 </button>
                 <button onclick="shutdownServer()" class="btn-ghost-danger text-xs" title="关闭服务并清理临时文件">
                     ⏻ 关闭
@@ -134,6 +137,286 @@
         </div>
     </main>
 
+    <!-- ═══════ 批量处理面板（默认隐藏） ═══════ -->
+    <div id="batchPanel" class="batch-panel max-w-5xl mx-auto px-6 py-6" style="display:none">
+
+        <!-- 磁盘空间预警 -->
+        <div id="batchDiskWarning" class="batch-disk-warning" style="display:none">
+            ⚠️ 磁盘空间不足（剩余 <span id="batchDiskFree">0</span> MB），部分视频可能被跳过
+        </div>
+
+        <!-- 全局参数卡片 -->
+        <section class="card mb-4">
+            <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 flex items-center justify-center text-xs font-bold">1</span>
+                全局提取参数
+                <span class="text-xs text-slate-400 font-normal">（所有视频共用）</span>
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                        场景检测灵敏度: <span id="batchThresholdVal" class="font-bold text-brand-600">5.0</span>
+                    </label>
+                    <input type="range" id="batchThreshold" min="1" max="15" step="0.5" value="5"
+                           class="w-full accent-brand-500">
+                    <div class="flex justify-between text-xs text-slate-400 mt-0.5">
+                        <span>敏感 (1)</span><span>保守 (15)</span>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <div>
+                        <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="batchUseRoi" checked> PPT 录屏裁剪
+                        </label>
+                        <p class="text-xs text-slate-400 mt-0.5 ml-5">启用后忽略左侧缩略图栏和顶部工具栏</p>
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="batchFastMode" checked> ⚡ 快速模式
+                        </label>
+                        <p class="text-xs text-slate-400 mt-0.5 ml-5">将比较分辨率降至 480p 以加速检测（不影响输出质量）</p>
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="batchUseGpu" checked> 🎮 GPU 硬件加速
+                        </label>
+                        <p class="text-xs text-slate-400 mt-0.5 ml-5">使用显卡加速视频解码（不支持时自动回退 CPU）</p>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <div>
+                        <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="batchEnableHistory" checked> 历史记忆池
+                            <input type="number" id="batchMaxHistory" value="5" min="2" max="20"
+                                   class="w-14 text-xs px-1 py-0.5 border rounded dark:bg-slate-700 dark:border-slate-600"> 张
+                        </label>
+                        <p class="text-xs text-slate-400 mt-0.5 ml-5">防止 A→B→A 跳页导致重复提取</p>
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-slate-600 dark:text-slate-300 block mb-1">🎯 运行模式</label>
+                        <select id="batchSpeedMode" class="w-full text-xs px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600">
+                            <option value="eco">🍃 后台静默 (Eco)</option>
+                            <option value="fast" selected>🚀 全速狂飙 (Fast) — 推荐</option>
+                            <option value="turbo">⚡ 极速狂暴 (Turbo)</option>
+                        </select>
+                        <p class="text-xs text-slate-400 mt-0.5">Eco 节省资源；Fast 释放算力；Turbo 极限压榜</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 队列列表 -->
+        <section class="card mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 flex items-center justify-center text-xs font-bold">2</span>
+                    视频队列
+                    <span class="text-xs text-slate-400 font-normal" id="batchQueueCount">（0 个视频）</span>
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="clearBatchQueue()" class="btn-ghost-danger text-xs" id="btnBatchClearQueue" style="display:none">
+                        清空队列
+                    </button>
+                </div>
+            </div>
+
+            <!-- 空状态 -->
+            <div id="batchEmptyHint" class="text-center py-12 text-slate-400">
+                <span class="text-4xl mb-3 block">📁</span>
+                <p class="text-sm mb-2">队列为空，请添加视频</p>
+                <p class="text-xs">支持多选文件或选择整个文件夹</p>
+            </div>
+
+            <!-- 队列列表容器 -->
+            <div id="batchQueueList" class="batch-queue-list" style="display:none"></div>
+        </section>
+
+        <!-- 底部控制栏 -->
+        <div class="batch-control-bar card">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center gap-2">
+                    <button onclick="addVideosToBatch()" class="btn-secondary text-xs" id="btnBatchAddFiles">
+                        📂 添加视频
+                    </button>
+                    <button onclick="scanFolderForBatch()" class="btn-secondary text-xs" id="btnBatchScanFolder"
+                            title="递归扫描文件夹中所有视频文件（mp4/avi/mkv/mov 等）">
+                        📁 扫描文件夹
+                    </button>
+                    <button onclick="openBatchVideoRecycleBin()" class="btn-ghost text-xs" id="btnBatchVideoRecycle"
+                            title="查看回收站中的视频">
+                        🗑️ 回收站
+                    </button>
+                    <button onclick="cleanupBatchMode()" class="btn-ghost-danger text-xs" id="btnBatchCleanup"
+                            title="清空批量队列的所有数据">
+                        🧹 清空批量
+                    </button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1">
+                        <label class="text-xs text-slate-500 dark:text-slate-400">并发数:</label>
+                        <select id="batchWorkerCount" class="text-xs px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600">
+                            <option value="1" selected>1（低占用）</option>
+                            <option value="2">2（均衡）</option>
+                            <option value="3">3（高性能）</option>
+                        </select>
+                    </div>
+                    <button onclick="startBatch()" class="btn-primary text-xs" id="btnBatchStart" disabled>
+                        ▶ 开始处理
+                    </button>
+                    <button onclick="pauseBatch()" class="btn-secondary text-xs" id="btnBatchPause" style="display:none">
+                        ⏸ 暂停
+                    </button>
+                    <button onclick="resumeBatch()" class="btn-primary text-xs" id="btnBatchResume" style="display:none">
+                        ▶ 继续
+                    </button>
+                    <button onclick="cancelBatch()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition shadow-sm" id="btnBatchCancel" style="display:none">
+                        ✕ 取消全部
+                    </button>
+                </div>
+            </div>
+
+            <!-- 全局进度条（紧贴控制栏下方） -->
+            <div class="batch-global-stats mt-3" id="batchGlobalStats" style="display:none">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-medium text-slate-700 dark:text-slate-200" id="batchStatsText">就绪</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400" id="batchStatsDetail"></span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="batchGlobalProgress" style="width:0%"></div>
+                </div>
+                <div class="flex items-center justify-between mt-1">
+                    <span class="text-xs text-slate-400" id="batchProgressPct"></span>
+                    <span class="text-xs text-slate-400" id="batchProgressEta"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 批量导出区域 -->
+        <div id="batchExportSection" class="card mt-4" style="display:none">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 flex items-center justify-center text-xs font-bold">3</span>
+                    批量导出
+                </h3>
+                <div class="flex items-center gap-2">
+                    <button id="batchSelectToggleBtn" onclick="selectAllBatchVideos()" class="btn-ghost text-xs">取消全选</button>
+                    <span class="text-xs text-slate-400" id="batchExportHint">已选择 0 个视频</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <button onclick="packageBatchAll('zip')" class="btn-export text-xs" id="btnBatchExportZip">
+                    导出选中 ZIP
+                </button>
+                <button onclick="packageBatchAll('pdf')" class="btn-export text-xs" id="btnBatchExportPdf">
+                    导出选中 PDF
+                </button>
+                <button onclick="packageBatchAll('pptx')" class="btn-export text-xs" id="btnBatchExportPptx">
+                    导出选中 PPTX
+                </button>
+            </div>
+            <div class="mt-2" id="batchExportProgress" style="display:none">
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="batchExportProgressBar" style="width:0%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-1" id="batchExportMessage"></p>
+            </div>
+            <div id="batchDownloadSection" class="mt-2"></div>
+        </div>
+
+        <!-- 完成横幅 -->
+        <div id="batchCompleteBanner" class="batch-complete-banner" style="display:none">
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="text-lg mr-2">✅</span>
+                    <span class="font-medium" id="batchCompleteText">批量处理完成</span>
+                </div>
+                <button onclick="document.getElementById('batchCompleteBanner').style.display='none'"
+                        class="btn-ghost text-xs">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ 批量添加视频命名弹窗 ═══════ -->
+    <div id="batchAddModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)cancelBatchAdd()">
+        <div class="modal-content batch-add-modal">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold">📝 视频命名</h3>
+                <button onclick="cancelBatchAdd()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg leading-none" title="关闭 (ESC)">&times;</button>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                为每个视频设置显示名称，用于导出时的文件夹命名
+            </p>
+
+            <!-- 命名方式选择 -->
+            <div class="flex items-center gap-4 mb-3 p-2 bg-slate-50 dark:bg-slate-800 rounded">
+                <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+                    <input type="radio" name="batchNamingMode" value="original" checked onchange="_onNamingModeChange()"> 保留原文件名
+                </label>
+                <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+                    <input type="radio" name="batchNamingMode" value="template" onchange="_onNamingModeChange()"> 使用命名模板
+                </label>
+                <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+                    <input type="radio" name="batchNamingMode" value="free" onchange="_onNamingModeChange()"> 自由编辑
+                </label>
+            </div>
+
+            <!-- 模板区域 -->
+            <div id="namingTemplateArea" style="display:none" class="mb-3 p-3 bg-slate-50 dark:bg-slate-800 rounded space-y-2">
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-medium text-slate-600 dark:text-slate-300 whitespace-nowrap">课程/主题：</label>
+                    <input type="text" id="batchCourseName" placeholder="如：高等数学"
+                           class="flex-1 text-xs px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600">
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-medium text-slate-600 dark:text-slate-300 whitespace-nowrap">命名模板：</label>
+                    <select id="batchNamingTemplate" class="flex-1 text-xs px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600">
+                        <option value="course_lessonN">课程名_第N节（如：高等数学_第1节）</option>
+                        <option value="lessonN_course">第N讲_课程名（如：第1讲_高等数学）</option>
+                        <option value="course_parenN">课程名(N)（如：高等数学(1)）</option>
+                        <option value="course_dashN">课程名-N（如：高等数学-01）</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-medium text-slate-600 dark:text-slate-300 whitespace-nowrap">起始编号：</label>
+                    <input type="number" id="batchStartNum" value="1" min="1"
+                           class="w-16 text-xs px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600">
+                    <button onclick="previewTemplateNames()" class="btn-ghost text-xs">预览命名</button>
+                    <button onclick="applyTemplateNames()" class="btn-primary text-xs">应用</button>
+                </div>
+            </div>
+
+            <!-- 自由编辑区域（旧版自动递增） -->
+            <div id="batchAutoIncrementArea" style="display:none" class="mb-3">
+                <div class="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded">
+                    <label class="flex items-center gap-2 text-xs">
+                        <input type="checkbox" id="batchAutoIncrement"> 自动递增命名
+                    </label>
+                    <input type="text" id="batchBaseNameInput" placeholder="如: 数学_第1节"
+                           class="flex-1 text-xs px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600"
+                           disabled>
+                    <button onclick="previewAutoIncrement()" class="btn-ghost text-xs" id="btnPreviewIncrement" disabled>
+                        预览
+                    </button>
+                </div>
+            </div>
+
+            <!-- 排序按钮 -->
+            <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs text-slate-500">排序：</span>
+                <button onclick="sortBatchAddList('asc')" class="btn-ghost text-xs" title="按名称升序">名称 ↑</button>
+                <button onclick="sortBatchAddList('desc')" class="btn-ghost text-xs" title="按名称降序">名称 ↓</button>
+            </div>
+
+            <!-- 文件列表 -->
+            <div id="batchAddList" class="batch-add-list max-h-64 overflow-y-auto mb-3"></div>
+
+            <div class="flex justify-end gap-2">
+                <button onclick="cancelBatchAdd()" class="btn-ghost text-xs">取消</button>
+                <button onclick="confirmBatchAdd()" class="btn-primary text-xs">确认添加</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══════ 底部 ═══════ -->
     <footer class="max-w-5xl mx-auto px-4 pb-8 mt-12">
         <div class="border-t border-slate-200 dark:border-slate-700 pt-8">
@@ -158,7 +441,7 @@
             </div>
             <div class="text-center space-y-1">
                 <p class="text-xs text-slate-500 dark:text-slate-500">🔒 所有数据仅保存在本地 · 浏览器断联 5 分钟后服务自动退出</p>
-                <p class="text-xs text-slate-400 dark:text-slate-600">v0.4.1 细节优化版 · Made with ❤️ by <a href="https://github.com/PWO-CHINA" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition">PWO-CHINA</a></p>
+                <p class="text-xs text-slate-400 dark:text-slate-600">v0.5.0 批量处理版 · Made with ❤️ by <a href="https://github.com/PWO-CHINA" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition">PWO-CHINA</a></p>
                 <p class="text-xs text-slate-400 dark:text-slate-600 mt-2">⭐ 如果这个工具帮到了你，请在 <a href="https://github.com/PWO-CHINA/VidSlide" target="_blank" class="text-slate-600 dark:text-slate-400 hover:underline font-medium">GitHub</a> 或 <a href="https://gitee.com/pwo101/VidSlide" target="_blank" class="text-slate-600 dark:text-slate-400 hover:underline font-medium">Gitee</a> 上给我们一个 Star！</p>
             </div>
         </div>
@@ -180,6 +463,25 @@
         </div>
         <div id="recycleList" class="flex-1 overflow-y-auto p-4 space-y-2">
             <p id="recycleEmpty" class="text-center text-gray-400 text-sm py-12">回收站是空的</p>
+        </div>
+    </div>
+
+    <!-- ═══════ 批量视频回收站抽屉 ═══════ -->
+    <div id="batchVideoRecycleBackdrop" class="recycle-backdrop" onclick="closeBatchVideoRecycleBin()"></div>
+    <div id="batchVideoRecycleDrawer" class="recycle-drawer">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+            <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                🗑️ 视频回收站 <span id="batchVideoRecycleCount" class="text-sm font-normal text-gray-400"></span>
+            </h3>
+            <div class="flex gap-2">
+                <button onclick="restoreAllBatchVideos()" id="btnBatchVideoRestoreAll" class="btn-secondary" style="font-size:.75rem;padding:.375rem .75rem;color:#4f46e5;border-color:#c7d2fe;background:#eef2ff">
+                    ↩️ 全部恢复
+                </button>
+                <button onclick="closeBatchVideoRecycleBin()" class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-600 flex items-center justify-center transition">✕</button>
+            </div>
+        </div>
+        <div id="batchVideoRecycleList" class="flex-1 overflow-y-auto p-4 space-y-2">
+            <p class="text-center text-gray-400 text-sm py-12">回收站是空的</p>
         </div>
     </div>
 
@@ -377,6 +679,46 @@
         </div>
     </template>
 
-    <script src="/static/js/main.js?v=0.4.1"></script>
+    <!-- ═══════ 批量视频详情弹窗 ═══════ -->
+    <div id="batchDetailModal" class="fixed inset-0 z-50 hidden" onclick="if(event.target===this)closeBatchDetail()">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="relative z-10 max-w-5xl mx-auto mt-8 mb-8 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col" style="max-height:calc(100vh - 4rem)">
+            <!-- 头部 -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span class="text-lg">🎬</span>
+                    <h3 class="text-sm font-semibold truncate" id="batchDetailTitle">视频详情</h3>
+                    <span class="text-xs text-slate-400" id="batchDetailCount"></span>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <button onclick="_batchDetailExport('zip')" class="btn-ghost text-xs" title="导出 ZIP">导出 ZIP</button>
+                    <button onclick="_batchDetailExport('pdf')" class="btn-ghost text-xs" title="导出 PDF">导出 PDF</button>
+                    <button onclick="_batchDetailExport('pptx')" class="btn-ghost text-xs" title="导出 PPTX">导出 PPTX</button>
+                    <button id="batchDetailRecycleBtn" onclick="_openBatchDetailRecycleBin()" class="btn-ghost text-xs" style="display:none" title="查看已删除图片">🗑 回收站</button>
+                    <button onclick="closeBatchDetail()" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 flex items-center justify-center transition">✕</button>
+                </div>
+            </div>
+            <!-- 画廊 -->
+            <div class="flex-1 overflow-y-auto p-6" id="batchDetailGallery">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" id="batchDetailGrid"></div>
+                <!-- 图片回收站面板（内嵌） -->
+                <div id="batchDetailRecyclePanel" class="mt-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700" style="display:none">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-xs font-semibold text-slate-600 dark:text-slate-300">🗑 已删除的图片</h4>
+                        <button onclick="_closeBatchDetailRecycleBin()" class="text-xs text-slate-400 hover:text-slate-600">收起</button>
+                    </div>
+                    <div id="batchDetailRecycleList" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                </div>
+            </div>
+            <!-- 底部信息 -->
+            <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs text-slate-400">
+                <span id="batchDetailInfo">点击图片放大预览 · Delete 删除 · Ctrl+Z 撤销 · 拖拽排序</span>
+                <span id="batchDetailExportStatus"></span>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js?v=0.5.1"></script>
+    <script src="/static/js/batch.js?v=0.5.1"></script>
 </body>
 </html>

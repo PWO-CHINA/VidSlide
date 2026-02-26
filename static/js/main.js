@@ -148,6 +148,9 @@ const G = {
     maxSessions: 3,
     previewTabId: null,
     previewIndex: -1,
+    // 批量模式
+    batchMode: false,
+    batch: null,       // BatchState | null
 };
 
 // 每个标签页的独立状态
@@ -1254,14 +1257,21 @@ function addDownloadLink(sid, filename, fmt) {
 // ============================================================
 async function cleanupAll() {
     const tabCount = Object.keys(G.tabs).length;
-    if (tabCount === 0) { showToast('没有需要清理的标签页', 'info'); return; }
-    if (!confirm(`确定要关闭所有 ${tabCount} 个标签页并清空全部缓存吗？`)) return;
+    const hasBatch = typeof G.batch !== 'undefined' && G.batch && G.batch.tasks && G.batch.tasks.length > 0;
+    if (tabCount === 0 && !hasBatch) { showToast('没有需要清理的内容', 'info'); return; }
+    if (!confirm('确定要清空所有标签页和批量队列的全部缓存吗？')) return;
 
     // 断开所有 SSE 连接
     for (const sid of Object.keys(G.tabs)) {
         const ts = G.tabs[sid];
         ts.disconnectSSE();
     }
+
+    // 清空批量模式（如果存在）
+    if (hasBatch && typeof _disconnectBatchSSE === 'function') {
+        _disconnectBatchSSE();
+    }
+
     await api('/api/cleanup-all', { method: 'POST' });
 
     document.querySelectorAll('.tab-item').forEach(t => t.remove());
@@ -1272,6 +1282,25 @@ async function cleanupAll() {
     if (hint) hint.style.display = '';
     updateTabAddBtn();
     closeRecycleBin();
+
+    // 重置批量模式 UI
+    if (hasBatch) {
+        G.batch = null;
+        const batchList = document.getElementById('batchQueueList');
+        const batchEmpty = document.getElementById('batchEmptyHint');
+        const batchCount = document.getElementById('batchQueueCount');
+        const batchStats = document.getElementById('batchGlobalStats');
+        const batchExport = document.getElementById('batchExportSection');
+        const batchBanner = document.getElementById('batchCompleteBanner');
+        if (batchList) batchList.style.display = 'none';
+        if (batchEmpty) batchEmpty.style.display = '';
+        if (batchCount) batchCount.textContent = '（0 个视频）';
+        if (batchStats) batchStats.style.display = 'none';
+        if (batchExport) batchExport.style.display = 'none';
+        if (batchBanner) batchBanner.style.display = 'none';
+        if (typeof _updateBatchBadge === 'function') _updateBatchBadge();
+    }
+
     showToast('全部清空完成', 'success');
 }
 window.cleanupAll = cleanupAll;
@@ -1640,5 +1669,14 @@ window.addEventListener('pagehide', () => {
     // 第三步：如果没有恢复任何会话，创建第一个标签页
     if (Object.keys(G.tabs).length === 0) {
         await addNewTab();
+    }
+
+    // 第四步：恢复批量队列（如果有）& 初始化批量参数面板事件
+    if (typeof _initBatchParamEvents === 'function') _initBatchParamEvents();
+    if (typeof _recoverBatch === 'function') {
+        const recovered = await _recoverBatch();
+        if (recovered && G.batch && G.batch.tasks.length > 0) {
+            console.log('[初始化] 已恢复批量队列，' + G.batch.tasks.length + ' 个视频');
+        }
     }
 })();
