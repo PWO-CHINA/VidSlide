@@ -1130,6 +1130,9 @@ function showPreview(sid, idx) {
     document.getElementById('previewModal').classList.remove('hidden');
     document.getElementById('previewModal').classList.add('flex');
     document.body.style.overflow = 'hidden';
+    // 重置导航按钮 onclick（批量预览模式会覆盖此处理函数，切回标签页模式时必须还原）
+    document.getElementById('btnPrevPreview').onclick = prevPreview;
+    document.getElementById('btnNextPreview').onclick = nextPreview;
     // 导航按钮智能显隐
     document.getElementById('btnPrevPreview').style.visibility = idx > 0 ? '' : 'hidden';
     document.getElementById('btnNextPreview').style.visibility = idx < ts.images.length - 1 ? '' : 'hidden';
