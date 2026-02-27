@@ -205,34 +205,8 @@
             </div>
         </section>
 
-        <!-- 队列列表 -->
-        <section class="card mb-4">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 flex items-center justify-center text-xs font-bold">2</span>
-                    视频队列
-                    <span class="text-xs text-slate-400 font-normal" id="batchQueueCount">（0 个视频）</span>
-                </h3>
-                <div class="flex gap-2">
-                    <button onclick="clearBatchQueue()" class="btn-ghost-danger text-xs" id="btnBatchClearQueue" style="display:none">
-                        清空队列
-                    </button>
-                </div>
-            </div>
-
-            <!-- 空状态 -->
-            <div id="batchEmptyHint" class="text-center py-12 text-slate-400">
-                <span class="text-4xl mb-3 block">📁</span>
-                <p class="text-sm mb-2">队列为空，请添加视频</p>
-                <p class="text-xs">支持多选文件或选择整个文件夹</p>
-            </div>
-
-            <!-- 队列列表容器 -->
-            <div id="batchQueueList" class="batch-queue-list" style="display:none"></div>
-        </section>
-
-        <!-- 底部控制栏 -->
-        <div class="batch-control-bar card">
+        <!-- ═══ 顶部操作栏 ═══ -->
+        <div class="batch-top-bar card mb-4">
             <div class="flex items-center justify-between flex-wrap gap-3">
                 <div class="flex items-center gap-2">
                     <button onclick="addVideosToBatch()" class="btn-secondary text-xs" id="btnBatchAddFiles">
@@ -242,16 +216,6 @@
                             title="递归扫描文件夹中所有视频文件（mp4/avi/mkv/mov 等）">
                         📁 扫描文件夹
                     </button>
-                    <button onclick="openBatchVideoRecycleBin()" class="btn-ghost text-xs" id="btnBatchVideoRecycle"
-                            title="查看回收站中的视频">
-                        🗑️ 回收站
-                    </button>
-                    <button onclick="cleanupBatchMode()" class="btn-ghost-danger text-xs" id="btnBatchCleanup"
-                            title="清空批量队列的所有数据">
-                        🧹 清空批量
-                    </button>
-                </div>
-                <div class="flex items-center gap-3">
                     <div class="flex items-center gap-1">
                         <label class="text-xs text-slate-500 dark:text-slate-400">并发数:</label>
                         <select id="batchWorkerCount" class="text-xs px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600">
@@ -260,67 +224,114 @@
                             <option value="3">3（高性能）</option>
                         </select>
                     </div>
-                    <button onclick="startBatch()" class="btn-primary text-xs" id="btnBatchStart" disabled>
-                        ▶ 开始处理
-                    </button>
-                    <button onclick="pauseBatch()" class="btn-secondary text-xs" id="btnBatchPause" style="display:none">
-                        ⏸ 暂停
-                    </button>
-                    <button onclick="resumeBatch()" class="btn-primary text-xs" id="btnBatchResume" style="display:none">
-                        ▶ 继续
-                    </button>
-                    <button onclick="cancelBatch()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition shadow-sm" id="btnBatchCancel" style="display:none">
-                        ✕ 取消全部
-                    </button>
                 </div>
-            </div>
-
-            <!-- 全局进度条（紧贴控制栏下方） -->
-            <div class="batch-global-stats mt-3" id="batchGlobalStats" style="display:none">
-                <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-xs font-medium text-slate-700 dark:text-slate-200" id="batchStatsText">就绪</span>
-                    <span class="text-xs text-slate-500 dark:text-slate-400" id="batchStatsDetail"></span>
-                </div>
-                <div class="progress-track">
-                    <div class="progress-fill" id="batchGlobalProgress" style="width:0%"></div>
-                </div>
-                <div class="flex items-center justify-between mt-1">
-                    <span class="text-xs text-slate-400" id="batchProgressPct"></span>
-                    <span class="text-xs text-slate-400" id="batchProgressEta"></span>
+                <div class="flex items-center gap-2">
+                    <button onclick="cleanupBatchMode()" class="btn-ghost-danger text-xs" id="btnBatchCleanup"
+                            title="清空批量队列的所有数据">
+                        🧹 清空批量
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- 批量导出区域 -->
-        <div id="batchExportSection" class="card mt-4" style="display:none">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 flex items-center justify-center text-xs font-bold">3</span>
-                    批量导出
-                </h3>
-                <div class="flex items-center gap-2">
-                    <button id="batchSelectToggleBtn" onclick="selectAllBatchVideos()" class="btn-ghost text-xs">取消全选</button>
-                    <span class="text-xs text-slate-400" id="batchExportHint">已选择 0 个视频</span>
+        <!-- ═══ 三区域容器 ═══ -->
+        <div class="batch-zones-container">
+
+            <!-- 区域1：未选中 -->
+            <section class="batch-zone card mb-3" id="zoneUnselected">
+                <div class="zone-header flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold flex items-center gap-2">
+                        <span class="zone-badge unselected">1</span>
+                        📋 未选中区域
+                        <span class="text-xs text-slate-400 font-normal" id="unselectedCount">(0)</span>
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="moveSelectedToQueue()" class="btn-primary text-xs" id="btnMoveToQueue">
+                            全部移入队列 →
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="flex items-center gap-3 flex-wrap">
-                <button onclick="packageBatchAll('zip')" class="btn-export text-xs" id="btnBatchExportZip">
-                    导出选中 ZIP
-                </button>
-                <button onclick="packageBatchAll('pdf')" class="btn-export text-xs" id="btnBatchExportPdf">
-                    导出选中 PDF
-                </button>
-                <button onclick="packageBatchAll('pptx')" class="btn-export text-xs" id="btnBatchExportPptx">
-                    导出选中 PPTX
-                </button>
-            </div>
-            <div class="mt-2" id="batchExportProgress" style="display:none">
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="batchExportProgressBar" style="width:0%"></div>
+                <div id="unselectedEmpty" class="text-center py-8 text-slate-400">
+                    <span class="text-3xl mb-2 block">📁</span>
+                    <p class="text-sm mb-1">添加视频后将显示在这里</p>
+                    <p class="text-xs">支持多选文件或选择整个文件夹</p>
                 </div>
-                <p class="text-xs text-slate-500 mt-1" id="batchExportMessage"></p>
-            </div>
-            <div id="batchDownloadSection" class="mt-2"></div>
+                <div id="unselectedList" class="zone-list" style="display:none"></div>
+            </section>
+
+            <!-- 区域2：处理队列 -->
+            <section class="batch-zone card mb-3" id="zoneQueue">
+                <div class="zone-header flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold flex items-center gap-2">
+                        <span class="zone-badge queue">2</span>
+                        ⚙️ 处理队列
+                        <span class="text-xs text-slate-400 font-normal" id="queueCount">(0)</span>
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="moveSelectedToUnselected()" class="btn-ghost text-xs" id="btnMoveToUnselected" disabled>
+                            ← 移回未选中
+                        </button>
+                        <button class="btn-primary text-xs" id="btnStartOrPause" onclick="startProcessing()" disabled>
+                            ▶ 开始处理
+                        </button>
+                    </div>
+                </div>
+                <!-- 全局进度条 -->
+                <div id="queueProgress" class="batch-global-stats mb-3" style="display:none">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-medium text-slate-700 dark:text-slate-200" id="batchStatsText">就绪</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400" id="batchStatsDetail"></span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="batchGlobalProgress" style="width:0%"></div>
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-xs text-slate-400" id="batchProgressPct"></span>
+                        <span class="text-xs text-slate-400" id="batchProgressEta"></span>
+                    </div>
+                </div>
+                <div id="queueEmpty" class="text-center py-8 text-slate-400">
+                    <span class="text-3xl mb-2 block">⚙️</span>
+                    <p class="text-sm">从未选中区域移入视频开始处理</p>
+                </div>
+                <div id="queueList" class="zone-list" style="display:none"></div>
+            </section>
+
+            <!-- 区域3：已完成 -->
+            <section class="batch-zone card mb-3" id="zoneCompleted">
+                <div class="zone-header flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold flex items-center gap-2">
+                        <span class="zone-badge completed">3</span>
+                        ✅ 已完成处理
+                        <span class="text-xs text-slate-400 font-normal" id="completedCount">(0)</span>
+                    </h3>
+                    <div class="flex items-center gap-2" id="completedExportBar" style="display:none">
+                        <button onclick="selectAllInZone('completed')" class="btn-ghost text-xs" id="btnSelectAllCompleted">全选</button>
+                        <span class="text-xs text-slate-400" id="batchExportHint">已选择 0 个视频</span>
+                        <button onclick="packageBatchAll('zip')" class="btn-export text-xs">ZIP</button>
+                        <button onclick="packageBatchAll('pdf')" class="btn-export text-xs">PDF</button>
+                        <button onclick="packageBatchAll('pptx')" class="btn-export text-xs">PPTX</button>
+                    </div>
+                </div>
+                <div id="completedEmpty" class="text-center py-8 text-slate-400">
+                    <span class="text-3xl mb-2 block">✅</span>
+                    <p class="text-sm">处理完成的视频将显示在这里</p>
+                </div>
+                <div id="completedList" class="zone-list" style="display:none"></div>
+                <!-- 导出进度 -->
+                <div class="mt-2" id="batchExportProgress" style="display:none">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="batchExportProgressBar" style="width:0%"></div>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1" id="batchExportMessage"></p>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- 回收站胶囊 -->
+        <div id="recycleCapsule" class="recycle-capsule" style="display:none" onclick="openVideoRecycleBin()">
+            🗑️ 回收站 (<span id="recycleCapsuleCount">0</span>)
         </div>
 
         <!-- 完成横幅 -->
@@ -467,18 +478,13 @@
     </div>
 
     <!-- ═══════ 批量视频回收站抽屉 ═══════ -->
-    <div id="batchVideoRecycleBackdrop" class="recycle-backdrop" onclick="closeBatchVideoRecycleBin()"></div>
+    <div id="batchVideoRecycleBackdrop" class="recycle-backdrop" onclick="closeVideoRecycleBin()"></div>
     <div id="batchVideoRecycleDrawer" class="recycle-drawer">
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
             <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                 🗑️ 视频回收站 <span id="batchVideoRecycleCount" class="text-sm font-normal text-gray-400"></span>
             </h3>
-            <div class="flex gap-2">
-                <button onclick="restoreAllBatchVideos()" id="btnBatchVideoRestoreAll" class="btn-secondary" style="font-size:.75rem;padding:.375rem .75rem;color:#4f46e5;border-color:#c7d2fe;background:#eef2ff">
-                    ↩️ 全部恢复
-                </button>
-                <button onclick="closeBatchVideoRecycleBin()" class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-600 flex items-center justify-center transition">✕</button>
-            </div>
+            <button onclick="closeVideoRecycleBin()" class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-600 flex items-center justify-center transition">✕</button>
         </div>
         <div id="batchVideoRecycleList" class="flex-1 overflow-y-auto p-4 space-y-2">
             <p class="text-center text-gray-400 text-sm py-12">回收站是空的</p>
@@ -486,7 +492,7 @@
     </div>
 
     <!-- ═══════ 图片预览弹窗 ═══════ -->
-    <div id="previewModal" class="fixed inset-0 z-50 hidden flex items-center justify-center modal-backdrop" onclick="if(event.target===this)hidePreview()">
+    <div id="previewModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center modal-backdrop" onclick="if(event.target===this)hidePreview()">
         <button onclick="hidePreview()" class="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white text-xl flex items-center justify-center transition">✕</button>
         <button onclick="deleteInPreview()" id="btnDeletePreview" class="preview-del-btn absolute bottom-6 right-5 z-[60] px-4 py-2 rounded-full bg-red-500/70 hover:bg-red-600/90 text-white text-sm font-medium flex items-center gap-1.5 transition-all shadow-lg backdrop-blur" title="删除当前图片 (Delete)">🗑️ 删除 (Del)</button>
         <button onclick="prevPreview()" id="btnPrevPreview" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/25 text-white text-2xl flex items-center justify-center transition">◀</button>
@@ -691,10 +697,12 @@
                     <span class="text-xs text-slate-400" id="batchDetailCount"></span>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                    <button onclick="_batchDetailExport('zip')" class="btn-ghost text-xs" title="导出 ZIP">导出 ZIP</button>
-                    <button onclick="_batchDetailExport('pdf')" class="btn-ghost text-xs" title="导出 PDF">导出 PDF</button>
-                    <button onclick="_batchDetailExport('pptx')" class="btn-ghost text-xs" title="导出 PPTX">导出 PPTX</button>
                     <button id="batchDetailRecycleBtn" onclick="_openBatchDetailRecycleBin()" class="btn-ghost text-xs" style="display:none" title="查看已删除图片">🗑 回收站</button>
+                    <div id="batchDetailExportBar" class="flex items-center gap-2">
+                        <button onclick="_batchDetailExport('zip')" class="btn-ghost text-xs" title="导出 ZIP">导出 ZIP</button>
+                        <button onclick="_batchDetailExport('pdf')" class="btn-ghost text-xs" title="导出 PDF">导出 PDF</button>
+                        <button onclick="_batchDetailExport('pptx')" class="btn-ghost text-xs" title="导出 PPTX">导出 PPTX</button>
+                    </div>
                     <button onclick="closeBatchDetail()" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 flex items-center justify-center transition">✕</button>
                 </div>
             </div>
@@ -718,7 +726,15 @@
         </div>
     </div>
 
-    <script src="/static/js/main.js?v=0.5.1"></script>
-    <script src="/static/js/batch.js?v=0.5.1"></script>
+    <script src="/static/js/main.js?v=0.5.3"></script>
+    <!-- 批量模块（三区域架构） -->
+    <script src="/static/js/batch/core.js?v=0.5.3"></script>
+    <script src="/static/js/batch/zones.js?v=0.5.3"></script>
+    <script src="/static/js/batch/select.js?v=0.5.3"></script>
+    <script src="/static/js/batch/controls.js?v=0.5.3"></script>
+    <script src="/static/js/batch/detail.js?v=0.5.3"></script>
+    <script src="/static/js/batch/naming.js?v=0.5.3"></script>
+    <script src="/static/js/batch/export.js?v=0.5.3"></script>
+    <script src="/static/js/batch/recycle.js?v=0.5.3"></script>
 </body>
 </html>

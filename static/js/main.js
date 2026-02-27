@@ -1257,7 +1257,7 @@ function addDownloadLink(sid, filename, fmt) {
 // ============================================================
 async function cleanupAll() {
     const tabCount = Object.keys(G.tabs).length;
-    const hasBatch = typeof G.batch !== 'undefined' && G.batch && G.batch.tasks && G.batch.tasks.length > 0;
+    const hasBatch = typeof G.batch !== 'undefined' && G.batch && G.batch.zones;
     if (tabCount === 0 && !hasBatch) { showToast('没有需要清理的内容', 'info'); return; }
     if (!confirm('确定要清空所有标签页和批量队列的全部缓存吗？')) return;
 
@@ -1286,18 +1286,7 @@ async function cleanupAll() {
     // 重置批量模式 UI
     if (hasBatch) {
         G.batch = null;
-        const batchList = document.getElementById('batchQueueList');
-        const batchEmpty = document.getElementById('batchEmptyHint');
-        const batchCount = document.getElementById('batchQueueCount');
-        const batchStats = document.getElementById('batchGlobalStats');
-        const batchExport = document.getElementById('batchExportSection');
-        const batchBanner = document.getElementById('batchCompleteBanner');
-        if (batchList) batchList.style.display = 'none';
-        if (batchEmpty) batchEmpty.style.display = '';
-        if (batchCount) batchCount.textContent = '（0 个视频）';
-        if (batchStats) batchStats.style.display = 'none';
-        if (batchExport) batchExport.style.display = 'none';
-        if (batchBanner) batchBanner.style.display = 'none';
+        if (typeof renderAllZones === 'function') renderAllZones();
         if (typeof _updateBatchBadge === 'function') _updateBatchBadge();
     }
 
@@ -1675,8 +1664,9 @@ window.addEventListener('pagehide', () => {
     if (typeof _initBatchParamEvents === 'function') _initBatchParamEvents();
     if (typeof _recoverBatch === 'function') {
         const recovered = await _recoverBatch();
-        if (recovered && G.batch && G.batch.tasks.length > 0) {
-            console.log('[初始化] 已恢复批量队列，' + G.batch.tasks.length + ' 个视频');
+        if (recovered && G.batch && G.batch.zones) {
+            const total = G.batch.zones.unselected.length + G.batch.zones.queue.length + G.batch.zones.completed.length;
+            console.log('[初始化] 已恢复批量队列，' + total + ' 个视频');
         }
     }
 })();

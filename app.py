@@ -1622,17 +1622,35 @@ def batch_remove_video(bid, vid):
     return jsonify(success=ok, message=msg)
 
 
-@app.route('/api/batch/<bid>/clear-queue', methods=['POST'])
-def batch_clear_queue(bid):
-    count = _bm.clear_queue(bid)
-    return jsonify(success=True, removed=count)
+@app.route('/api/batch/<bid>/move-to-queue', methods=['POST'])
+def batch_move_to_queue(bid):
+    """将视频从未选中区域移入处理队列"""
+    data = request.json or {}
+    video_ids = data.get('video_ids', [])
+    position = data.get('position', None)
+    if not video_ids:
+        return jsonify(success=False, message='未提供视频 ID')
+    count = _bm.move_to_queue(bid, video_ids, position)
+    return jsonify(success=True, moved=count)
+
+
+@app.route('/api/batch/<bid>/move-to-unselected', methods=['POST'])
+def batch_move_to_unselected(bid):
+    """将视频从处理队列移回未选中区域"""
+    data = request.json or {}
+    video_ids = data.get('video_ids', [])
+    if not video_ids:
+        return jsonify(success=False, message='未提供视频 ID')
+    count = _bm.move_to_unselected(bid, video_ids)
+    return jsonify(success=True, moved=count)
 
 
 @app.route('/api/batch/<bid>/reorder', methods=['POST'])
 def batch_reorder(bid):
     data = request.json or {}
     ordered_vids = data.get('order', [])
-    ok = _bm.reorder_queue(bid, ordered_vids)
+    zone = data.get('zone', 'queue')
+    ok = _bm.reorder_zone(bid, zone, ordered_vids)
     return jsonify(success=ok)
 
 
@@ -1657,25 +1675,13 @@ def batch_start(bid):
     warning = _check_resource_warning()
     if warning:
         return jsonify(success=False, message=f'系统资源不足：{warning}')
-    ok, msg = _bm.start_batch(bid)
+    ok, msg = _bm.start_processing(bid)
     return jsonify(success=ok, message=msg)
 
 
 @app.route('/api/batch/<bid>/pause', methods=['POST'])
 def batch_pause(bid):
-    ok = _bm.pause_batch(bid)
-    return jsonify(success=ok)
-
-
-@app.route('/api/batch/<bid>/resume', methods=['POST'])
-def batch_resume(bid):
-    ok = _bm.resume_batch(bid)
-    return jsonify(success=ok)
-
-
-@app.route('/api/batch/<bid>/cancel', methods=['POST'])
-def batch_cancel(bid):
-    ok = _bm.cancel_batch(bid)
+    ok = _bm.pause_after_current(bid)
     return jsonify(success=ok)
 
 
@@ -1683,12 +1689,6 @@ def batch_cancel(bid):
 def batch_retry(bid, vid):
     ok, msg = _bm.retry_video(bid, vid)
     return jsonify(success=ok, message=msg)
-
-
-@app.route('/api/batch/<bid>/retry-all', methods=['POST'])
-def batch_retry_all(bid):
-    count = _bm.retry_all_failed(bid)
-    return jsonify(success=True, retried=count)
 
 
 @app.route('/api/batch/<bid>/set-workers', methods=['POST'])
@@ -1784,12 +1784,8 @@ def batch_video_image(bid, vid, filename):
 
 @app.route('/api/batch/<bid>/cancel-video/<vid>', methods=['POST'])
 def batch_cancel_video(bid, vid):
-    """取消/暂停单个视频（支持 queued 和 running 状态）"""
-    data = request.json or {}
-    auto_trash = data.get('auto_trash', False)
-    skip = data.get('skip', False)
-    pause = data.get('pause', False)
-    ok, msg = _bm.cancel_video(bid, vid, auto_trash=auto_trash, skip=skip, pause=pause)
+    """取消视频（running → 回收站）"""
+    ok, msg = _bm.cancel_video(bid, vid)
     return jsonify(success=ok, message=msg)
 
 
@@ -1886,15 +1882,22 @@ def batch_trash_video(bid, vid):
 
 @app.route('/api/batch/<bid>/restore-video/<vid>', methods=['POST'])
 def batch_restore_video(bid, vid):
-    """从回收站恢复视频"""
-    ok, msg = _bm.restore_video(bid, vid)
+    """从回收站恢复视频（三选项）"""
+    data = request.json or {}
+    action = data.get('action', 'to_unselected')
+    ok, msg = _bm.restore_from_trash(bid, vid, action)
     return jsonify(success=ok, message=msg)
 
 
 @app.route('/api/batch/<bid>/restore-all-videos', methods=['POST'])
 def batch_restore_all_videos(bid):
-    """恢复所有回收站中的视频"""
-    count = _bm.restore_all_videos(bid)
+    """恢复所有回收站中的视频到未选中区域"""
+    videos = _bm.list_trashed_videos(bid)
+    count = 0
+    for v in videos:
+        ok, _ = _bm.restore_from_trash(bid, v['id'], 'to_unselected')
+        if ok:
+            count += 1
     return jsonify(success=True, count=count)
 
 
