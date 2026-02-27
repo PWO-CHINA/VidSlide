@@ -11,7 +11,7 @@
 
 - **定位**：从延河课堂桌面录屏视频中提取 PPT 幻灯片的单机工具
 - **架构**：Python Flask 后端 + 原生 HTML/JS 前端（无框架），单进程多线程
-- **当前版本**：v0.5.0
+- **当前版本**：v0.5.3
 - **GitHub**：https://github.com/PWO-CHINA/VidSlide
 - **Gitee 镜像**：https://gitee.com/pwo101/VidSlide（国内下载更快）
 - **Python**：3.11（Microsoft Store 版），虚拟环境在 `./venv`
@@ -21,13 +21,20 @@
 | 文件 | 行数（约） | 职责 |
 |------|-----------|------|
 | `app.py` | ~2010 | Flask 路由、多会话管理、SSE 推送、GPU 监控、批量 API 路由（26+） |
-| `batch_manager.py` | ~1350 | 批量队列调度、并发 worker、缩略图、智能命名、持久化、打包导出 |
+| `batch_manager.py` | ~2050 | 批量队列调度（三区域模型）、并发 worker、缩略图、智能命名、持久化、打包导出 |
 | `extractor.py` | ~295 | 视频帧差检测核心、场景切换识别、三档速度模式 |
 | `exporter.py` | ~150 | PDF/PPTX/ZIP 导出 |
-| `templates/index.html` | ~620 | 前端 HTML 模板（Tailwind CDN），含批量面板、命名弹窗、视频详情弹窗 |
+| `templates/index.html` | ~740 | 前端 HTML 模板（Tailwind CDN），含批量三区域面板、命名弹窗、视频详情弹窗 |
 | `static/js/main.js` | ~1660 | 前端核心逻辑：SSE、画廊、拖拽排序、localStorage 配置记忆 |
-| `static/js/batch.js` | ~1270 | 批量模式前端：视图切换、队列管理、SSE、进度、详情弹窗、导出、通知 |
-| `static/css/style.css` | ~880 | 自定义样式，含批量面板和详情弹窗样式 |
+| `static/js/batch/core.js` | ~530 | 批量模式核心：状态模型、SSE、初始化、恢复、工具函数 |
+| `static/js/batch/zones.js` | ~320 | 三区域渲染：未选中/处理队列/已完成的视频卡片 |
+| `static/js/batch/select.js` | ~200 | 多选模块：有序/无序多选、Shift 范围选 |
+| `static/js/batch/controls.js` | ~350 | 控制模块：开始/暂停、移入队列/移回、重试、SortableJS |
+| `static/js/batch/detail.js` | ~480 | 详情页：画廊、预览、删除/撤销、图片回收站、导出 |
+| `static/js/batch/naming.js` | ~190 | 命名弹窗：模板命名、自动递增 |
+| `static/js/batch/export.js` | ~120 | 导出模块：单视频/批量导出、打包进度 |
+| `static/js/batch/recycle.js` | ~270 | 回收站模块：视频回收站、三选项恢复、图片预览 |
+| `static/css/style.css` | ~1010 | 自定义样式，含三区域模型和详情弹窗样式 |
 
 ## 重要设计决策 & 踩坑记录
 
@@ -97,9 +104,25 @@
 - `beforeunload` 事件中检查此标志，为 true 时跳过确认提示
 - 否则在有未导出成果时弹出离开确认
 
-### 7. 批量处理系统（v0.5.0 新增）
+### 7. 批量处理系统（v0.5.0 新增，v0.5.3 三区域重构）
 
 **架构**：独立于标签页会话系统，`batch_manager.py` 管理批量队列，`app.py` 提供 26+ 个 `/api/batch/*` 路由。
+
+**三区域模型（v0.5.3）**：
+- **未选中区 (unselected)**：添加/扫描的视频默认落入此区，支持拖拽排序、有序多选
+- **处理队列 (queue)**：用户手动移入，必须点击「开始处理」才启动调度器
+- **已完成区 (completed)**：处理完成的视频自动移入，支持详情预览和导出
+- **回收站 (trash)**：半处理/已完成视频的暂存区，支持三种恢复方式
+
+**前端模块化（v0.5.3）**：原 `batch.js` 拆分为 8 个独立模块：
+- `core.js` — 状态模型、SSE、初始化
+- `zones.js` — 三区域卡片渲染
+- `select.js` — 多选逻辑（有序/无序/Shift 范围选）
+- `controls.js` — 开始/暂停、移入队列/移回、SortableJS
+- `detail.js` — 详情页画廊、预览、删除/撤销、图片回收站
+- `naming.js` — 命名弹窗、模板命名、自动递增
+- `export.js` — 单视频/批量导出
+- `recycle.js` — 视频回收站、三选项恢复
 
 **核心设计**：
 - 每个 batch 有独立的 `batch_dir`（`.vidslide_sessions/batch_{bid}/`），内含子目录按视频分组
@@ -108,7 +131,7 @@
 - 持久化：`batch.json` 保存队列元数据，重启后自动恢复（running→paused，需手动继续）
 - 全局进度：按帧数加权计算，无帧数信息时按任务数平均
 
-**前端 batch.js**：
+**前端 batch/ 模块**：
 - 视图切换：标签页模式 ↔ 批量模式，共享 Header 和资源监控条
 - 队列管理：SortableJS 拖拽排序、行内编辑名称、优先处理、逐个取消
 - 命名弹窗：支持拖拽调整顺序、自动递增命名（`课程_1`→`课程_2`→...）
@@ -139,9 +162,11 @@
 ### PyInstaller（当前在用）
 ```bash
 .\venv\Scripts\activate
-pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt" --add-data "templates;templates" --add-data "static;static" --hidden-import extractor --hidden-import exporter --name "VidSlide" app.py
+build.bat
 ```
-输出：`dist/VidSlide.exe`，约 72 MB
+`build.bat` 会自动从 `version.txt` 提取版本号，打包后重命名为 `dist/VidSlide_v{版本号}.exe`（约 72 MB）。
+
+**版本号自动提取机制**：`build.bat` 用 Python 单行脚本从 `version.txt` 的 `FileVersion` 字段正则提取版本号，打包完成后自动 `rename` 为 `VidSlide_v0.x.x.exe`，无需手动重命名。
 
 ### Nuitka（理论更优但有 bug，基本放弃）
 中文 Windows 用户名 + gcc msvcrt 变体 = `std::filesystem` 编译失败。解决方案：
@@ -153,10 +178,13 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 发新版时需要同步修改：
 1. `version.txt` — exe 版本元数据（filevers / prodvers / FileVersion / ProductVersion）
 2. `README.md` — 更新日志
-3. `extractor.py` 头部注释的版本号
-4. `build_nuitka.bat` 中的 `--product-version`
-5. Git tag：`git tag v0.x.x && git push origin v0.x.x`
-6. GitHub / Gitee Release：通过 API 或网页创建 Release，**exe 文件需在网页端手动上传附件**（GitHub API 和 Gitee API 均不支持通过当前工具链上传二进制文件；`gh` CLI 可以但需要 `gh auth login` 交互认证）
+3. `batch_manager.py` 头部注释的版本号
+4. `static/js/batch/*.js` — 所有 8 个模块文件头部注释的版本号
+5. `static/css/style.css` — 三区域模型样式注释中的版本号
+6. `templates/index.html` — script 标签的 `?v=` 缓存破坏参数
+7. `build_nuitka.bat` 中的 `--product-version`
+8. Git tag：`git tag v0.x.x && git push origin v0.x.x`
+9. GitHub / Gitee Release：通过 API 或网页创建 Release，**exe 文件需在网页端手动上传附件**
 
 > **分工约定**：AI 负责创建 tag、Release 及版本说明；exe 附件由人类在 GitHub/Gitee 网页端上传。
 

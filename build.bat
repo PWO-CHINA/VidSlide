@@ -1,9 +1,16 @@
 @echo off
 chcp 65001 >nul
+setlocal enabledelayedexpansion
 echo.
 echo ============================================
 echo   影幻智提 (VidSlide) - 一键打包脚本
 echo ============================================
+echo.
+
+REM 从 version.txt 自动提取版本号
+set VERSION=unknown
+for /f %%v in ('python -c "import re; m=re.search(r\"FileVersion.*?'([\\d.]+)\",open('version.txt').read()); print(m.group(1) if m else 'unknown')"') do set VERSION=%%v
+echo [INFO] 当前版本: v%VERSION%
 echo.
 
 REM 检查是否在虚拟环境中
@@ -47,15 +54,20 @@ pyinstaller --onefile --noconsole ^
 
 echo.
 if exist "dist\VidSlide.exe" (
+    REM 自动重命名为带版本号的文件名
+    set FINAL_NAME=VidSlide_v%VERSION%.exe
+    if exist "dist\!FINAL_NAME!" del "dist\!FINAL_NAME!"
+    rename "dist\VidSlide.exe" "!FINAL_NAME!"
     echo ============================================
     echo   打包成功！
-    echo   输出文件: dist\VidSlide.exe
+    echo   输出文件: dist\!FINAL_NAME!
     echo ============================================
     echo.
-    echo 你可以把 dist\VidSlide.exe 拷贝给同学，双击即可使用。
+    echo 你可以把 dist\!FINAL_NAME! 拷贝给同学，双击即可使用。
 ) else (
     echo [错误] 打包失败，请检查上方的错误日志。
 )
 
 echo.
+endlocal
 pause
