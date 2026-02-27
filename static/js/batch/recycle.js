@@ -1,5 +1,5 @@
 /**
- * VidSlide v0.5.3 - 回收站模块
+ * VidSlide v0.6.0 - 回收站模块
  * ==============================
  * 视频回收站胶囊、三选项恢复、图片预览（无导出）
  */
@@ -56,24 +56,24 @@ async function openVideoRecycleBin() {
             if (isHalfProcessed) {
                 actionsHtml +=
                     '<button class="recycle-action-btn" data-vid="' + v.id + '" data-action="to_unselected" title="删除提取结果，重新加入未选中区域">' +
-                        '🔄 重置到未选中' +
+                        '<i data-lucide="rotate-ccw" class="w-3 h-3 inline-block"></i> 重置到未选中' +
                     '</button>' +
                     '<button class="recycle-action-btn" data-vid="' + v.id + '" data-action="resume_to_queue" title="从断点继续处理，加入队列末尾">' +
-                        '▶ 断点续传' +
+                        '<i data-lucide="play" class="w-3 h-3 inline-block"></i> 断点续传' +
                     '</button>' +
                     '<button class="recycle-action-btn danger" data-vid="' + v.id + '" data-action="permanent_delete" title="永久删除所有数据">' +
-                        '✕ 永久删除' +
+                        '<i data-lucide="x" class="w-3 h-3 inline-block"></i> 永久删除' +
                     '</button>';
             } else {
                 actionsHtml +=
                     '<button class="recycle-action-btn" data-vid="' + v.id + '" data-action="to_unselected" title="删除提取结果，重新加入未选中区域">' +
-                        '🔄 重置到未选中' +
+                        '<i data-lucide="rotate-ccw" class="w-3 h-3 inline-block"></i> 重置到未选中' +
                     '</button>' +
                     '<button class="recycle-action-btn" data-vid="' + v.id + '" data-action="to_completed" title="保留提取结果，直接恢复到已完成区域">' +
-                        '✅ 恢复到已完成' +
+                        '<i data-lucide="check-circle-2" class="w-3 h-3 inline-block text-emerald-500"></i> 恢复到已完成' +
                     '</button>' +
                     '<button class="recycle-action-btn danger" data-vid="' + v.id + '" data-action="permanent_delete" title="永久删除所有数据">' +
-                        '✕ 永久删除' +
+                        '<i data-lucide="x" class="w-3 h-3 inline-block"></i> 永久删除' +
                     '</button>';
             }
             actionsHtml += '</div>';
@@ -101,6 +101,7 @@ async function openVideoRecycleBin() {
         });
     }
 
+    refreshIcons(list);
     drawer.classList.add('open');
     backdrop.classList.add('open');
     document.body.style.overflow = 'hidden';

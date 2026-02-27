@@ -178,14 +178,30 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 ```
 VidSlide/
 ├── app.py              # Flask 后端（多会话 + SSE 推送 + 资源监控）
+├── batch_manager.py    # 批量处理任务调度器（三区域状态机）
 ├── extractor.py        # 视频提取核心（GPU 加速 + 进程优先级调整）
 ├── exporter.py         # 打包导出（PDF / PPTX / ZIP）
 ├── templates/
 │   └── index.html      # 前端页面模板
 ├── static/
-│   ├── css/style.css   # 外部样式表
-│   └── js/main.js      # 前端主逻辑（SSE + DocumentFragment）
-├── logo.ico            # 应用图标
+│   ├── favicon.svg     # 浏览器标签页图标
+│   ├── logo.png        # 页眉 Logo
+│   ├── css/
+│   │   └── style.css   # 外部样式表
+│   └── js/
+│       ├── main.js     # 标签页模式主逻辑（SSE + 画廊 + 导出）
+│       └── batch/      # 批量处理模块（v0.5.2+）
+│           ├── core.js       # 批量模式入口 + 全局状态
+│           ├── zones.js      # 三区域渲染（未选中 / 队列 / 已完成）
+│           ├── select.js     # 视频勾选与批量导出选择
+│           ├── controls.js   # 开始 / 暂停 / 跳过控制
+│           ├── detail.js     # 详情页（画廊 + 删除 + 导出）
+│           ├── naming.js     # 命名弹窗与批量命名模板
+│           ├── export.js     # 批量导出逻辑
+│           └── recycle.js    # 视频回收站
+├── docs/
+│   └── cat-catch-demo.png    # 文档配图
+├── logo.ico            # Windows 应用图标（打包用）
 ├── version.txt         # exe 版本信息
 ├── requirements.txt    # Python 依赖
 ├── build_nuitka.bat    # Nuitka 打包脚本（推荐）
@@ -251,6 +267,21 @@ VidSlide/
 本项目绝大部分代码由 **GitHub Copilot (Claude Opus 4.6)** AI 生成，由 [PWO-CHINA](https://github.com/PWO-CHINA) 审核、测试和维护。
 
 ## 更新日志
+
+### v0.6.0 (2026-02-27) — 视觉风格全面重构版
+
+**界面重构：**
+- 🎨 **极简毛玻璃 AI 风**：全面升级为冷调钛金蓝色系（Slate Blue），替换原高饱和 Indigo 风格
+- 🖼️ **Lucide SVG 图标**：全面替换 Unicode Emoji 为线性 SVG 图标，解决跨平台渲染不一致问题
+- 🪟 **毛玻璃面板**：页眉与控制栏采用 `backdrop-filter: blur(16px)` 毛玻璃效果
+- 🔘 **iOS 风格开关**：所有 checkbox 升级为纯 CSS 实现的滑动开关
+- 📊 **进度条焕新**：6px 细线进度条 + 双色渐变 shimmer 动画
+- 🎚️ **细线滑块**：场景检测灵敏度滑块升级为 4px 轨道极简风格
+- 🖼️ **自定义 favicon**：浏览器标签页图标替换为项目专属 SVG 图标
+
+**Bug 修复：**
+- 🔧 **修复详情页导出图标缺失**：批量模式详情页导出按钮（ZIP / PDF / PPTX）补全 Lucide 图标
+- 🔧 **修复回收站图标消失**：详情页回收站按钮改用静态 SVG，避免动态刷新时图标消失
 
 ### v0.5.3 (2026-02-27) — 三区域重构版
 

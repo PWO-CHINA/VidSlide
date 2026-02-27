@@ -1,5 +1,5 @@
 /**
- * VidSlide v0.5.3 - 三区域渲染模块
+ * VidSlide v0.6.0 - 三区域渲染模块
  * ===================================
  * 未选中 / 处理队列 / 已完成 三区域的视频卡片渲染
  */
@@ -46,6 +46,7 @@ function _renderZone(zone) {
     tasks.forEach(t => frag.appendChild(_createZoneVideoItem(t, zone)));
     list.innerHTML = '';
     list.appendChild(frag);
+    refreshIcons(list);
 
     // 初始化拖拽
     _initZoneSortable(zone);
@@ -103,7 +104,7 @@ function _createZoneVideoItem(task, zone) {
         const est = task.estimatedTime;
         infoHtml = est > 0 ? '预估处理时间: ' + _formatDuration(est) : '';
         actionsHtml =
-            '<button onclick="_removeFromUnselected(\'' + task.vid + '\')" class="btn-ghost-danger text-xs" title="从列表移除">✕</button>';
+            '<button onclick="_removeFromUnselected(\'' + task.vid + '\')" class="btn-ghost-danger text-xs" title="从列表移除"><i data-lucide="x" class="w-3 h-3"></i></button>';
 
     } else if (zone === 'queue') {
         showDragHandle = task.status === 'waiting';
@@ -114,18 +115,18 @@ function _createZoneVideoItem(task, zone) {
             const eta = task.etaSeconds > 0 ? _formatDuration(task.etaSeconds) : '--';
             infoHtml = elapsed + ' · ' + task.progress + '% · 剩余 ' + eta;
             actionsHtml =
-                '<button onclick="_trashRunningVideo(\'' + task.vid + '\')" class="btn-ghost-danger text-xs" title="取消并移入回收站">🗑</button>';
+                '<button onclick="_trashRunningVideo(\'' + task.vid + '\')" class="btn-ghost-danger text-xs" title="取消并移入回收站"><i data-lucide="trash-2" class="w-3 h-3"></i></button>';
         } else if (task.status === 'waiting') {
             const est = task.estimatedTime;
             infoHtml = est > 0 ? '预估: ' + _formatDuration(est) : '等待处理';
             actionsHtml =
-                '<button onclick="_prioritizeInQueue(\'' + task.vid + '\')" class="btn-ghost text-xs" title="优先处理">⬆</button>' +
+                '<button onclick="_prioritizeInQueue(\'' + task.vid + '\')" class="btn-ghost text-xs" title="优先处理"><i data-lucide="arrow-up" class="w-3 h-3"></i></button>' +
                 '<button onclick="_moveBackToUnselected(\'' + task.vid + '\')" class="btn-ghost text-xs" title="移回未选中">← 移回</button>';
         } else if (task.status === 'error') {
             infoHtml = '<span class="text-red-500">' + _escHtml(task.errorMessage || task.message || '处理失败') + '</span>';
             actionsHtml =
                 '<button onclick="_retryQueueVideo(\'' + task.vid + '\')" class="btn-ghost text-xs" title="重试">重试</button>' +
-                '<button onclick="_trashErrorVideo(\'' + task.vid + '\')" class="btn-ghost-danger text-xs" title="移入回收站">🗑</button>';
+                '<button onclick="_trashErrorVideo(\'' + task.vid + '\')" class="btn-ghost-danger text-xs" title="移入回收站"><i data-lucide="trash-2" class="w-3 h-3"></i></button>';
         }
 
     } else if (zone === 'completed') {
@@ -134,7 +135,7 @@ function _createZoneVideoItem(task, zone) {
         const elapsed = _formatDuration(task.elapsedSeconds || 0);
         infoHtml = elapsed + ' · ' + task.savedCount + ' 张幻灯片';
         actionsHtml =
-            '<button onclick="_trashCompletedVideo(\'' + task.vid + '\')" class="btn-ghost-danger text-xs" title="移入回收站">🗑</button>';
+            '<button onclick="_trashCompletedVideo(\'' + task.vid + '\')" class="btn-ghost-danger text-xs" title="移入回收站"><i data-lucide="trash-2" class="w-3 h-3"></i></button>';
     }
 
     // 名称点击行为

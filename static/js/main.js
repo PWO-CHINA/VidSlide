@@ -1,10 +1,19 @@
 /**
- * 影幻智提 (VidSlide) v0.4.1 - 前端主逻辑
+ * 影幻智提 (VidSlide) v0.6.0 - 前端主逻辑
  * ==========================================
  * 通信方式：SSE（Server-Sent Events）服务器推送
  * 打包导出：异步后台处理 + SSE 进度推送
  * 画廊渲染：DocumentFragment 批量插入
  */
+
+// ============================================================
+//  Lucide 图标刷新工具（动态 innerHTML 后需调用）
+// ============================================================
+function refreshIcons(container) {
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons({ nodes: container ? container.querySelectorAll('[data-lucide]') : undefined });
+    }
+}
 
 // ============================================================
 //  跨浏览器标签页通信（BroadcastChannel）
@@ -44,7 +53,8 @@ function updateThemeIcon() {
     const icon = document.getElementById('themeIcon');
     if (!icon) return;
     const isDark = document.documentElement.classList.contains('dark');
-    icon.textContent = isDark ? '☀️' : '🌙';
+    icon.innerHTML = isDark ? '<i data-lucide="sun" class="w-4 h-4"></i>' : '<i data-lucide="moon" class="w-4 h-4"></i>';
+    refreshIcons(icon);
 }
 window.toggleTheme = toggleTheme;
 // 初始化图标
@@ -242,7 +252,7 @@ function handleInitEvent(sid, state) {
     // 恢复打包进行中的状态
     if (state.pkg_status === 'running' && !ts.isPackaging) {
         ts.isPackaging = true;
-        setExportButtonsState(sid, true, '⏳ 打包中…');
+        setExportButtonsState(sid, true, '打包中…');
         showPackagingProgress(sid, state.pkg_progress || 0, state.pkg_message || '打包中…');
     }
 }
@@ -281,11 +291,11 @@ function handleExtractionEvent(sid, data) {
         updateTabStatus(sid, data.status);
 
         if (data.status === 'done') {
-            q(sid, 'js-progress-message').textContent = '✅ ' + data.message;
+            q(sid, 'js-progress-message').textContent = data.message;
             showToast(data.message, 'success', 5000);
             loadImages(sid);
         } else if (data.status === 'cancelled') {
-            q(sid, 'js-progress-message').textContent = '⏹ ' + data.message;
+            q(sid, 'js-progress-message').textContent = data.message;
             showToast(data.message, 'warning');
             loadImages(sid);
             // 有已提取的图片时显示「继续提取」按钮
@@ -293,7 +303,7 @@ function handleExtractionEvent(sid, data) {
                 q(sid, 'js-btn-resume').classList.remove('hidden');
             }
         } else {
-            q(sid, 'js-progress-message').textContent = '❌ ' + data.message;
+            q(sid, 'js-progress-message').textContent = data.message;
             showErrorModal('提取出错', data.message,
                 '如果问题持续出现，请点击下方按钮提交 Issue，开发者会尽快修复。');
         }
@@ -415,12 +425,13 @@ async function api(path, opts = {}) {
 // ============================================================
 function showToast(msg, type = 'info', duration = 3500) {
     const colors = { info: 'bg-blue-500', success: 'bg-emerald-500', error: 'bg-red-500', warning: 'bg-amber-500' };
-    const icons = { info: 'ℹ️', success: '✅', error: '❌', warning: '⚠️' };
+    const icons = { info: '<i data-lucide="info" class="w-4 h-4"></i>', success: '<i data-lucide="check-circle-2" class="w-4 h-4"></i>', error: '<i data-lucide="x-circle" class="w-4 h-4"></i>', warning: '<i data-lucide="alert-triangle" class="w-4 h-4"></i>' };
     const el = document.createElement('div');
     el.className = `${colors[type] || colors.info} text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium pointer-events-auto flex items-center gap-2 toast-enter backdrop-blur-sm`;
     el.style.background = type === 'info' ? 'rgba(59,130,246,.9)' : type === 'success' ? 'rgba(16,185,129,.9)' : type === 'error' ? 'rgba(239,68,68,.9)' : 'rgba(245,158,11,.9)';
     el.innerHTML = `<span>${icons[type] || ''}</span><span>${msg}</span>`;
     document.getElementById('toasts').appendChild(el);
+    refreshIcons(el);
     setTimeout(() => {
         el.classList.remove('toast-enter');
         el.classList.add('toast-leave');
@@ -584,16 +595,18 @@ function createTabUI(sid, title) {
     tab.innerHTML = `
         <span class="tab-status idle"></span>
         <span class="tab-title" title="${title}">${title}</span>
-        <span class="tab-close" onclick="event.stopPropagation();closeTab('${sid}')" title="关闭此标签页">✕</span>
+        <span class="tab-close" onclick="event.stopPropagation();closeTab('${sid}')" title="关闭此标签页"><i data-lucide="x" class="w-3 h-3"></i></span>
     `;
     tab.addEventListener('click', () => switchTab(sid));
     document.getElementById('tabAddBtn').before(tab);
+    refreshIcons(tab);
 
     const template = document.getElementById('tabPaneTemplate');
     const pane = template.content.cloneNode(true).firstElementChild;
     pane.dataset.sid = sid;
     bindPaneEvents(sid, pane);
     document.getElementById('tabContentArea').appendChild(pane);
+    refreshIcons(pane);
 
     const hint = document.getElementById('emptyHint');
     if (hint) hint.style.display = 'none';
@@ -634,7 +647,8 @@ function bindPaneEvents(sid, pane) {
         btn.className = 'btn-reset';
         btn.title = '将所有参数恢复为默认值并清除记忆';
         btn.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-weight:500;font-size:12px;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,.04);cursor:pointer;transition:all .15s;font-family:inherit';
-        btn.textContent = '🔄 重置为默认参数';
+        btn.innerHTML = '<i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> 重置为默认参数';
+        refreshIcons(btn);
         btn.addEventListener('mouseenter', () => { btn.style.color = '#dc2626'; btn.style.background = '#fef2f2'; btn.style.borderColor = '#fca5a5'; });
         btn.addEventListener('mouseleave', () => { btn.style.color = '#64748b'; btn.style.background = '#f1f5f9'; btn.style.borderColor = '#e2e8f0'; });
         btn.addEventListener('click', () => _resetPrefs(pane));
@@ -718,10 +732,12 @@ async function selectVideo(sid) {
     if (!ts) return;
     const btn = q(sid, 'js-btn-select-video');
     btn.disabled = true;
-    btn.textContent = '⏳ 请在弹出窗口中选择文件…';
+    btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 inline-block animate-spin"></i> 请在弹出窗口中选择文件…';
+    refreshIcons(btn);
     const data = await api('/api/select-video', { method: 'POST' });
     btn.disabled = false;
-    btn.innerHTML = '📁 浏览选择视频文件';
+    btn.innerHTML = '<i data-lucide="folder-open" class="w-4 h-4 inline-block"></i> 浏览选择视频文件';
+    refreshIcons(btn);
     if (data.success && data.path) {
         setVideoPath(sid, data.path);
     } else if (data.message && data.message !== '未选择文件') {
@@ -888,7 +904,7 @@ function createCardEl(sid, fn, idx) {
         <img src="/api/session/${sid}/image/${encodeURIComponent(fn)}" alt="Slide ${idx + 1}" loading="lazy">
         <div class="overlay">
             <span class="bg-black/60 text-white text-xs px-2 py-0.5 rounded-full font-bold backdrop-blur">${idx + 1}</span>
-            <button class="del-btn w-7 h-7 rounded-full bg-red-500/80 hover:bg-red-600 text-white text-sm flex items-center justify-center backdrop-blur transition" title="删除">✕</button>
+            <button class="del-btn w-7 h-7 rounded-full bg-red-500/80 hover:bg-red-600 text-white text-sm flex items-center justify-center backdrop-blur transition" title="删除"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
         </div>
     `;
     card.querySelector('.del-btn').addEventListener('click', (e) => {
@@ -915,6 +931,7 @@ function renderGallery(sid) {
     const fragment = document.createDocumentFragment();
     ts.images.forEach((fn, i) => fragment.appendChild(createCardEl(sid, fn, i)));
     gallery.appendChild(fragment);
+    refreshIcons(gallery);
 
     q(sid, 'js-image-count').textContent = `共 ${ts.images.length} 张`;
     initSortable(sid);
@@ -1003,6 +1020,7 @@ function restoreImageAt(sid, filename, targetIdx) {
     } else {
         gallery.insertBefore(card, gallery.children[insertIdx]);
     }
+    refreshIcons(card);
     refreshBadges(sid);
 }
 
@@ -1061,7 +1079,7 @@ function renderRecycleList(sid) {
                 <p class="text-sm font-medium text-gray-700 truncate">${filename}</p>
                 <p class="text-xs text-gray-400">原位置: 第 ${originalIndex + 1} 张</p>
             </div>
-            <button class="shrink-0 btn text-xs bg-brand-50 text-brand-600 hover:bg-brand-100 border border-brand-200" title="恢复到原位置">↩️ 恢复</button>
+            <button class="shrink-0 btn text-xs bg-brand-50 text-brand-600 hover:bg-brand-100 border border-brand-200" title="恢复到原位置"><i data-lucide="undo-2" class="w-3 h-3 inline-block"></i> 恢复</button>
         `;
         const stackIdx = i;
         item.querySelector('button').addEventListener('click', (e) => {
@@ -1070,6 +1088,7 @@ function renderRecycleList(sid) {
         });
         list.appendChild(item);
     }
+    refreshIcons(list);
 }
 
 function restoreFromRecycleBin(sid, stackIdx) {
@@ -1243,13 +1262,14 @@ function addDownloadLink(sid, filename, fmt) {
     if (ts.downloadLinks.includes(filename)) return;
     ts.downloadLinks.push(filename);
 
-    const icons = { pdf: '📄', pptx: '📊', zip: '📦' };
+    const icons = { pdf: '<i data-lucide="file-text" class="w-4 h-4 inline-block"></i>', pptx: '<i data-lucide="presentation" class="w-4 h-4 inline-block"></i>', zip: '<i data-lucide="archive" class="w-4 h-4 inline-block"></i>' };
     const el = document.createElement('a');
     el.href = `/api/session/${sid}/download/${encodeURIComponent(filename)}`;
     el.className = 'flex items-center gap-3 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition text-emerald-800 text-sm font-medium';
-    el.innerHTML = `<span class="text-xl">${icons[fmt] || '📎'}</span> ${filename} <span class="ml-auto text-xs text-emerald-500">点击下载 ↓</span>`;
+    el.innerHTML = `<span class="text-xl">${icons[fmt] || '<i data-lucide="paperclip" class="w-4 h-4 inline-block"></i>'}</span> ${filename} <span class="ml-auto text-xs text-emerald-500">点击下载 ↓</span>`;
     el.download = filename;
     sec.appendChild(el);
+    refreshIcons(el);
 }
 
 // ============================================================
@@ -1349,7 +1369,8 @@ async function refreshResourceBar() {
 
         const banner = document.getElementById('resourceWarning');
         if (data.warning) {
-            banner.textContent = '⚠️ 系统资源告警：' + data.warning;
+            banner.innerHTML = '<i data-lucide="alert-triangle" class="w-4 h-4 inline-block"></i> 系统资源告警：' + data.warning;
+            refreshIcons(banner);
             banner.classList.add('visible');
         } else {
             banner.classList.remove('visible');
@@ -1379,22 +1400,23 @@ function showDisconnectOverlay() {
     overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,0.85);backdrop-filter:blur(4px);';
     overlay.innerHTML = `
         <div style="text-align:center;max-width:480px;padding:48px 36px;background:white;border-radius:16px;box-shadow:0 25px 50px rgba(0,0,0,0.25);">
-            <div style="font-size:56px;margin-bottom:16px;">⚠️</div>
+            <div style="font-size:56px;margin-bottom:16px;"><i data-lucide="wifi-off" class="w-14 h-14" style="display:inline-block"></i></div>
             <h1 style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:12px;">后端服务已断开</h1>
             <p style="color:#475569;line-height:1.7;font-size:15px;margin-bottom:20px;">
                 服务进程已退出或被关闭。<br>正在自动尝试重新连接…
             </p>
             <div id="reconnectStatus" style="background:#f1f5f9;border-radius:10px;padding:16px 20px;text-align:center;margin-bottom:20px;">
-                <p style="color:#334155;font-size:14px;font-weight:600;margin-bottom:4px;">🔄 自动重连中…</p>
+                <p style="color:#334155;font-size:14px;font-weight:600;margin-bottom:4px;"><i data-lucide="refresh-cw" class="w-4 h-4 inline-block animate-spin"></i> 自动重连中…</p>
                 <p id="reconnectCountdown" style="color:#64748b;font-size:13px;">每 5 秒尝试一次</p>
             </div>
             <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-                <button id="btnSmartRefresh" onclick="smartRefresh()" style="padding:10px 20px;background:#6366f1;color:white;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;">🔄 检测并刷新</button>
-                <a href="https://github.com/PWO-CHINA/VidSlide/issues/new?title=${encodeURIComponent('[Bug] 后端服务意外断开')}&body=${encodeURIComponent('## 问题描述\\n后端服务意外断开连接。\\n\\n## 环境信息\\n- 时间: ' + new Date().toLocaleString() + '\\n\\n## 复现步骤\\n1. \\n2. \\n3. ')}" target="_blank" style="padding:10px 20px;background:#e2e8f0;color:#334155;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;">🐛 提交 Issue</a>
+                <button id="btnSmartRefresh" onclick="smartRefresh()" style="padding:10px 20px;background:#7394b8;color:white;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;"><i data-lucide="refresh-cw" class="w-4 h-4 inline-block"></i> 检测并刷新</button>
+                <a href="https://github.com/PWO-CHINA/VidSlide/issues/new?title=${encodeURIComponent('[Bug] 后端服务意外断开')}&body=${encodeURIComponent('## 问题描述\\n后端服务意外断开连接。\\n\\n## 环境信息\\n- 时间: ' + new Date().toLocaleString() + '\\n\\n## 复现步骤\\n1. \\n2. \\n3. ')}" target="_blank" style="padding:10px 20px;background:#e2e8f0;color:#334155;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;"><i data-lucide="bug" class="w-4 h-4 inline-block"></i> 提交 Issue</a>
             </div>
             <p id="smartRefreshHint" style="color:#94a3b8;font-size:12px;margin-top:12px;display:none;"></p>
         </div>`;
     document.body.appendChild(overlay);
+    refreshIcons(overlay);
 
     // 启动自动重连定时器
     _startAutoReconnect();
@@ -1406,7 +1428,7 @@ function showDisconnectOverlay() {
 async function smartRefresh() {
     const btn = document.getElementById('btnSmartRefresh');
     const hint = document.getElementById('smartRefreshHint');
-    if (btn) { btn.disabled = true; btn.textContent = '🔄 正在检测后端…'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 inline-block animate-spin"></i> 正在检测后端…'; refreshIcons(btn); }
     if (hint) { hint.style.display = 'block'; hint.textContent = '正在尝试连接后端服务…'; }
     try {
         const resp = await fetch('/api/heartbeat', { method: 'POST', signal: AbortSignal.timeout(3000) });
@@ -1416,7 +1438,7 @@ async function smartRefresh() {
             return;
         }
     } catch { /* 后端不可用 */ }
-    if (btn) { btn.disabled = false; btn.textContent = '🔄 检测并刷新'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4 inline-block"></i> 检测并刷新'; refreshIcons(btn); }
     if (hint) {
         hint.style.display = 'block';
         hint.innerHTML = '后端服务未运行。请重新双击 <b>VidSlide.exe</b> 或在终端运行 <code>python app.py</code> 启动后端，然后再点击此按钮。';
@@ -1452,9 +1474,10 @@ function _startAutoReconnect() {
             const statusEl = document.getElementById('reconnectStatus');
             if (statusEl) {
                 statusEl.innerHTML = `
-                    <p style="color:#991b1b;font-size:14px;font-weight:600;margin-bottom:4px;">❌ 自动重连失败</p>
+                    <p style="color:#991b1b;font-size:14px;font-weight:600;margin-bottom:4px;"><i data-lucide="x-circle" class="w-4 h-4 inline-block"></i> 自动重连失败</p>
                     <p style="color:#64748b;font-size:13px;">已尝试 ${MAX_RECONNECT} 次，后端服务可能已关闭。<br>请手动重启后端后点击「检测并刷新」。</p>
                 `;
+                refreshIcons(statusEl);
             }
         }
     }, 5000);
@@ -1590,20 +1613,21 @@ window.addEventListener('pagehide', () => {
             document.body.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#f8fafc;">
                     <div style="text-align:center;max-width:480px;padding:40px;">
-                        <div style="font-size:56px;margin-bottom:16px;">🔁</div>
+                        <div style="font-size:56px;margin-bottom:16px;"><i data-lucide="repeat" class="w-14 h-14" style="display:inline-block"></i></div>
                         <h1 style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:12px;">已在其他标签页中打开</h1>
                         <p style="color:#475569;line-height:1.7;font-size:15px;margin-bottom:24px;">
                             检测到另一个浏览器标签页已经在运行影幻智提。<br>同时打开多个标签页可能导致会话冲突。
                         </p>
                         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-                            <button id="btnForceOpen" style="padding:10px 20px;background:#6366f1;color:white;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;">🔄 强制在此标签页打开</button>
-                            <button id="btnCloseDup" style="padding:10px 20px;background:#e2e8f0;color:#334155;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;">✕ 关闭此标签页</button>
+                            <button id="btnForceOpen" style="padding:10px 20px;background:#7394b8;color:white;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;"><i data-lucide="refresh-cw" class="w-4 h-4 inline-block"></i> 强制在此标签页打开</button>
+                            <button id="btnCloseDup" style="padding:10px 20px;background:#e2e8f0;color:#334155;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;"><i data-lucide="x" class="w-4 h-4 inline-block"></i> 关闭此标签页</button>
                         </div>
                         <label style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px;color:#94a3b8;font-size:12px;cursor:pointer;">
-                            <input type="checkbox" id="cbNoDupWarn" style="accent-color:#6366f1;"> 不再提示
+                            <input type="checkbox" id="cbNoDupWarn" style="accent-color:#7394b8;"> 不再提示
                         </label>
                     </div>
                 </div>`;
+            refreshIcons(document.body);
             document.getElementById('btnForceOpen').addEventListener('click', () => {
                 try { sessionStorage.setItem('vidslide_force_open', '1'); } catch {}
                 location.reload();

@@ -7,6 +7,73 @@
 > 项目根目录下 `.\venv` 是现有虚拟环境，`requirements.txt` 是依赖清单。
 > 所有改动都已提交推送，可通过 `git log` 追溯设计演变。
 
+---
+
+## ⚡ QUICK REFERENCE（AI 快速定向，每次大任务先读这里）
+
+**项目状态**：后端 v0.5.3 三区域架构 + 前端 v0.6.0 视觉重构 | Flask 本地服务 + 原生 JS（无框架、无构建步骤）
+
+**关键文件速查**：
+
+| 文件 | 一句话职责 |
+|------|-----------|
+| `app.py` | 路由 + 会话 + SSE + GPU 监控（148-280 行最复杂，改前务必读 §1） |
+| `batch_manager.py` | 批量队列状态机（完全独立于标签页会话系统） |
+| `extractor.py` | 帧差检测核心（三档速度模式） |
+| `exporter.py` | PDF / PPTX / ZIP 打包 |
+| `static/js/main.js` | 标签页前端核心 + 全局工具函数（`api` / `showToast` / `refreshIcons`）+ `G` 对象 |
+| `static/js/batch/*.js` | 批量前端（8 个模块），共享 `main.js` 全局作用域 |
+| `static/css/style.css` | CSS 变量 + 全部自定义组件样式 |
+| `templates/index.html` | 单页 HTML，含 Tailwind CDN 配置和所有模态框 / `<template>` 标签 |
+
+**最高优先级规则（违反即出 bug）**：
+
+1. **Lucide 图标刷新**：动态 `innerHTML` 赋值后若含 `data-lucide` → **必须**调用 `refreshIcons(container)`
+2. **`<template>` cloneNode 后**：**必须**调用 `refreshIcons(pane)`；template 内避免 Tailwind 动态 class 和 inline onclick
+3. **禁止用 innerHTML 重建含 Lucide 图标的按钮**：SVG 已由页面加载时初始化，重建会销毁它；改用独立 `<span>` 更新文本
+4. **CSS 只能用 hex 值**：Tailwind CDN 不自动注入自定义 CSS 变量，`var(--brand-500)` 之类在 class 里不生效；品牌色用 `#7394b8`
+5. **SSE 依赖 Flask dev server**：不能换 waitress（waitress 会缓冲 streaming response，直接破坏 SSE）
+6. **批量模块共享全局作用域**：`batch/*.js` 的函数全部暴露为全局变量，命名与 `main.js` 冲突会静默覆盖
+
+**任务类型导读**：
+
+| 做什么 | 主要读哪些文件 | 参考 DEVNOTES 章节 |
+|--------|--------------|------------------|
+| 标签页模式 UI / 逻辑 | `main.js`, `index.html`, `style.css` | §3 配置记忆, §17 template 陷阱 |
+| 批量处理逻辑 / 新功能 | `batch_manager.py`, `app.py` batch 路由, `batch/*.js` | §7 批量系统, §22–40 |
+| 前端样式 / 新组件 | `style.css`, `index.html` | §41–43 Lucide/CSS 规范 |
+| 视频提取算法 | `extractor.py` | §2 三档速度模式 |
+| GPU / 资源监控 | `app.py` 148–280 行 | **§1（务必先读！）** |
+| 打包 exe | `build.bat`, `version.txt` | §打包方式, §版本号更新清单 |
+
+---
+
+## 目录
+
+- [⚡ QUICK REFERENCE](#-quick-reference)
+- [项目概况](#项目概况)
+- [核心文件职责](#核心文件职责)
+- [重要设计决策 & 踩坑记录](#重要设计决策--踩坑记录)
+  - [§1 GPU 监控 — Intel 核显兼容](#1-gpu-监控--intel-核显兼容)
+  - [§2 三档速度模式](#2-三档速度模式)
+  - [§3 前端 localStorage 配置记忆](#3-前端-localstorage-配置记忆)
+  - [§4 SSE 服务器推送](#4-sse-服务器推送)
+  - [§5 多会话架构](#5-多会话架构)
+  - [§6 beforeunload 与关闭服务](#6-beforeunload-与关闭服务)
+  - [§7 批量处理系统](#7-批量处理系统v050-新增v053-三区域重构)
+- [已知问题 & 限制](#已知问题--限制)
+- [打包方式](#打包方式)
+- [版本号更新清单](#版本号更新清单)
+- [依赖说明](#依赖说明)
+- [v0.3.2 修复的逻辑漏洞](#v032-修复的逻辑漏洞)
+- [给 AI 的提示](#给-ai-的提示)
+- [v0.4.0 新增设计决策](#v040-新增设计决策)（§7–11）
+- [v0.4.1 新增设计决策](#v041-新增设计决策)（§13–21）
+- [v0.5.1 批量队列交互修复](#v051-批量队列交互修复)（§22–40）
+- [v0.6.0 视觉风格重构](#v060-视觉风格重构极简毛玻璃-ai-风)（§41–44）
+
+---
+
 ## 项目概况
 
 - **定位**：从延河课堂桌面录屏视频中提取 PPT 幻灯片的单机工具
@@ -148,7 +215,7 @@
 5. 无匹配 — 追加 `_1, _2, ...`
 
 **踩坑**：
-- CSS 中 `var(--brand-500)` 等自定义属性在 Tailwind CDN 模式下不会自动注入为 CSS 变量，必须用实际 hex 值（`#6366f1` 等）
+- CSS 中 `var(--brand-500)` 等自定义属性在 Tailwind CDN 模式下不会自动注入为 CSS 变量，必须用实际 hex 值（v0.5.x 的 Indigo 为 `#6366f1`，v0.6.0 重构后新品牌色为 `#7394b8`）
 - 批量导出 ZIP 中文件夹名用 `display_name`，需要 `_sanitize_dirname()` 处理非法字符
 
 ## 已知问题 & 限制
@@ -212,7 +279,7 @@ build.bat
 - 代码注释比较充分，直接读源码即可理解大部分逻辑
 - GPU 监控部分最复杂（app.py 148-280 行），改动前务必理解 PDH 通配符方案
 - 前端是纯 JS（无框架），DOM 操作较多，`main.js` 的 `G` 对象是全局状态
-- 批量模式前端在 `batch.js`，与 `main.js` 共享 `G` 对象和 `api()`/`showToast()` 等工具函数
+- 批量模式前端拆分为 `static/js/batch/*.js`（8 个模块），与 `main.js` 共享全局 `G` 对象和 `api()`/`showToast()`/`refreshIcons()` 等工具函数
 - 批量后端在 `batch_manager.py`，独立于 `app.py` 的会话系统，通过 `app.py` 路由层桥接
 - 所有提取逻辑在后台线程执行（标签页用 `_extraction_worker`，批量用 `_process_single_video`），通过 SSE 队列推送进度
 - 改完代码后用 `python app.py` 启动测试，浏览器会自动打开
@@ -584,4 +651,54 @@ queued → skipped（用户跳过）→ queued（重新排队）
 ```
 
 **代码位置**：`batch_manager.py` `retry_video()` / `cancel_video()` / `_video_worker()` / `_new_video_task()`；`app.py` `batch_cancel_video()`；`batch.js` `_pauseVideo()` / `_createVideoItem()` / `statusLabels`；`style.css` `.status-paused` / `.batch-status-badge.paused`。
+
+## v0.6.0 视觉风格重构（极简毛玻璃 AI 风）
+
+### 41. Lucide SVG 图标系统
+
+**背景**：前端大量使用 Unicode Emoji（📁 ✅ 🗑 等），跨平台渲染不一致（Windows/macOS 颜色、尺寸差异明显）。
+
+**方案**：全面替换为 [Lucide](https://lucide.dev/) 线性 SVG 图标（v0.460.0，通过 `cdn.jsdelivr.net` 加载，国内访问较稳定）。
+
+**关键实现细节**：
+- `index.html` `<head>` 引入 Lucide CDN，`</body>` 前调用 `lucide.createIcons()` 一次性初始化所有静态 `data-lucide` 图标
+- `main.js` 顶部定义 `refreshIcons(container)` 工具函数：所有动态 `innerHTML` 赋值后必须调用，传入最小容器节点以限定扫描范围
+- `<template>` 内的图标无法被页面加载时的 `createIcons()` 初始化，必须在 `cloneNode()` 后调用 `refreshIcons(pane)`
+- `<option>`、`confirm()` 对话框、`document.title` 中保留原始 Emoji（这些上下文不支持 HTML 渲染）
+- **不要用 innerHTML 重建含图标的按钮**——重建会销毁已初始化的 SVG，再调 `refreshIcons` 存在时序风险。正确做法：保留静态 SVG，只更新计数等文本节点（例：`batchDetailRecycleBtn` 用独立 `<span id="batchDetailRecycleCount">` 显示数量）
+
+**代码位置**：`index.html` 第 10 行（CDN）/ 末尾（createIcons）；`main.js` `refreshIcons()` 函数；`batch/*.js` 各模块动态渲染后的 `refreshIcons()` 调用。
+
+### 42. 新调色板与 CSS 变量
+
+**方案**：
+- **Tailwind 品牌色**：自定义 `brand` 色系（冷调钛金蓝，`brand-500: #7394b8`）替代原 Indigo（`#6366f1`）；`soft.success/warning/error` 替代硬编码 Tailwind 状态色
+- **CSS 变量（`:root` / `.dark`）**：`--ring-brand` 降饱和为 `rgba(115, 148, 184, 0.2)`；`.dark` 使用更深 Zinc 黑（`--bg-body: #09090b`，`--bg-card: #18181b`）
+- **按钮主色**：`.btn-primary` 从 Slate 系改为 Brand 系（`bg-[#5a7a9e]` hover `#486180`）
+- **强制颜色点**：`accent-color`（checkbox/range 系统样式）从 `#6366f1` 改为 `#7394b8`
+
+**代码位置**：`index.html` Tailwind config；`static/css/style.css` `:root` / `.dark` 变量块。
+
+### 43. 毛玻璃面板与现代 AI 组件
+
+**新增 CSS 类**：
+| 类名 | 用途 |
+|------|------|
+| `.glass-header` | 页眉深色毛玻璃（`rgba(30,41,59,0.75)` + `blur(16px) saturate(1.3)`） |
+| `.glass-panel` | 通用浅色毛玻璃面板（`rgba(255,255,255,0.8)` + `blur(16px)`） |
+| `.ai-switch` | iOS 风格 checkbox 开关（`appearance:none` + `::after` 伪元素滑块） |
+| `.progress-track` / `.progress-fill` | 6px 高进度条 + 双色渐变 shimmer 动画（`@keyframes shimmer`） |
+| `.range-input` / `.ai-range` | 细线滑块（4px 轨道 + 16px 圆形 thumb） |
+
+**踩坑**：
+- `backdrop-filter` 在某些集成显卡驱动下可能影响性能，保守使用 `blur(16px)` 而非更大值；必要时可加 `@media (prefers-reduced-motion)` 降级
+- `.ai-switch` 的 `::after` 伪元素需要 `appearance: none` 先行，Chrome/Firefox/Edge 均支持，IE 不支持（本项目无需兼容）
+
+**代码位置**：`static/css/style.css` 各 class；`index.html` `<header class="glass-header">`；表单 checkbox 加 `class="ai-switch"`，range 加 `class="range-input"`。
+
+### 44. favicon 替换
+
+**方案**：移除原内联 SVG Emoji `data:` URI，改用 `static/favicon.svg`（项目自定义图标），`<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">`。
+
+**注意**：`static/favicon.svg` 是较大的矢量文件（~95KB），不适合内联到 HTML。打包时已通过 `--add-data "static;static"` 一并打入 exe。
 

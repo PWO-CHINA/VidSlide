@@ -1,5 +1,5 @@
 /**
- * VidSlide v0.5.3 - 详情页模块
+ * VidSlide v0.6.0 - 详情页模块
  * ==============================
  * 未选中详情（重命名 + 预估时间）
  * 已完成详情（画廊 + 预览 + 删除 + 撤销 + 导出）
@@ -159,7 +159,7 @@ function _renderBatchDetailGrid() {
             '<img src="' + url + '" alt="' + _escHtml(img) + '" class="batch-detail-thumb" loading="lazy">' +
             '<div class="batch-detail-thumb-overlay">' +
                 '<span class="bg-black/60 text-white text-xs px-2 py-0.5 rounded-full font-bold backdrop-blur">' + (idx + 1) + '</span>' +
-                '<button class="batch-detail-del-btn" title="删除">✕</button>' +
+                '<button class="batch-detail-del-btn" title="删除"><i data-lucide="x" class="w-3 h-3"></i></button>' +
             '</div>';
         div.querySelector('img').addEventListener('click', () => _openBatchPreview(idx));
         div.querySelector('.batch-detail-del-btn').addEventListener('click', (e) => {
@@ -170,6 +170,7 @@ function _renderBatchDetailGrid() {
         frag.appendChild(div);
     });
     grid.appendChild(frag);
+    refreshIcons(grid);
     document.getElementById('batchDetailCount').textContent = _batchDetailImages.length + ' 张图片';
     _updateBatchDetailRecycleBtn();
     _initBatchDetailSortable();
@@ -367,7 +368,8 @@ async function _updateBatchDetailRecycleBtn() {
         } catch { }
     }
     btn.style.display = count > 0 ? '' : 'none';
-    btn.textContent = '🗑 回收站 (' + count + ')';
+    const countSpan = document.getElementById('batchDetailRecycleCount');
+    if (countSpan) countSpan.textContent = count > 0 ? '(' + count + ')' : '';
 }
 
 async function _openBatchDetailRecycleBin() {
@@ -398,7 +400,7 @@ async function _openBatchDetailRecycleBin() {
         item.innerHTML =
             '<img src="' + url + '" alt="' + _escHtml(img) + '" style="width:60px;height:45px;object-fit:cover;border-radius:4px">' +
             '<div class="flex-1 min-w-0"><p class="text-sm text-gray-700 truncate">' + _escHtml(img) + '</p></div>' +
-            '<button class="shrink-0 btn text-xs bg-brand-50 text-brand-600 hover:bg-brand-100 border border-brand-200">↩️ 恢复</button>';
+            '<button class="shrink-0 btn text-xs bg-brand-50 text-brand-600 hover:bg-brand-100 border border-brand-200"><i data-lucide="undo-2" class="w-3 h-3 inline-block"></i> 恢复</button>';
         item.querySelector('button').addEventListener('click', async () => {
             const res = await api('/api/batch/' + bid + '/video/' + vid + '/restore-image/' + img, { method: 'POST' });
             if (res.success) {
@@ -417,10 +419,12 @@ async function _openBatchDetailRecycleBin() {
         });
         list.appendChild(item);
     });
+    refreshIcons(list);
 
     const restoreAllBtn = document.createElement('button');
     restoreAllBtn.className = 'w-full mt-2 btn text-xs bg-brand-50 text-brand-600 hover:bg-brand-100 border border-brand-200';
-    restoreAllBtn.textContent = '↩️ 全部恢复 (' + trashedImages.length + ' 张)';
+    restoreAllBtn.innerHTML = '<i data-lucide="undo-2" class="w-3 h-3 inline-block"></i> 全部恢复 (' + trashedImages.length + ' 张)';
+    refreshIcons(restoreAllBtn);
     restoreAllBtn.addEventListener('click', async () => {
         const res = await api('/api/batch/' + bid + '/video/' + vid + '/restore-all-images', { method: 'POST' });
         if (res.success) {

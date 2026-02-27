@@ -1,5 +1,5 @@
 /**
- * 影幻智提 (VidSlide) v0.5.3 - 批量处理核心模块
+ * 影幻智提 (VidSlide) v0.6.0 - 批量处理核心模块
  * ================================================
  * 状态模型、SSE、初始化、恢复、工具函数
  * 依赖 main.js 中的 G, api(), showToast(), formatTime()
@@ -85,12 +85,13 @@ function _updateBatchBadge() {
         count = z.unselected.length + z.queue.length + z.completed.length;
     }
     if (G.batchMode) {
-        btn.innerHTML = '📑 标签页模式';
+        btn.innerHTML = '<i data-lucide="layout-grid" class="w-3.5 h-3.5 inline-block"></i> 标签页模式';
     } else if (count > 0) {
-        btn.innerHTML = '📋 批量模式 <span class="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full ml-1">' + count + '</span>';
+        btn.innerHTML = '<i data-lucide="layers" class="w-3.5 h-3.5 inline-block"></i> 批量模式 <span class="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full ml-1">' + count + '</span>';
     } else {
-        btn.innerHTML = '📋 批量模式';
+        btn.innerHTML = '<i data-lucide="layers" class="w-3.5 h-3.5 inline-block"></i> 批量模式';
     }
+    refreshIcons(btn);
 }
 
 // ============================================================

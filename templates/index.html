@@ -4,22 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>影幻智提 (VidSlide) v0.5.0 - 批量处理版</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        brand: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81' }
+                        brand: { 50: '#f6f8fa', 100: '#eef2f6', 200: '#dce4ed', 300: '#bacce0', 400: '#94b0cf', 500: '#7394b8', 600: '#5a7a9e', 700: '#486180', 800: '#3e5169', 900: '#354457', 950: '#232d3b' },
+                        soft: { success: '#34d399', warning: '#fbbf24', error: '#fb7185' }
+                    },
+                    boxShadow: {
+                        'ai-sm': '0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.03)',
+                        'ai-md': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03)',
                     }
                 }
             }
         }
     </script>
-    <link rel="stylesheet" href="/static/css/style.css?v=0.5.1">
+    <link rel="stylesheet" href="/static/css/style.css?v=0.6.0">
     <script>
         // 在页面渲染前立即应用主题，避免闪烁
         (function(){
@@ -39,25 +45,25 @@
     <div id="errorModal" class="error-modal-backdrop" onclick="if(event.target===this)closeErrorModal()">
         <div class="error-modal">
             <div class="flex items-start justify-between mb-4">
-                <div class="flex items-center gap-3"><span class="text-3xl">❌</span><h2 class="text-lg font-bold text-gray-900" id="errorModalTitle">出错了</h2></div>
+                <div class="flex items-center gap-3"><i data-lucide="alert-circle" class="w-8 h-8 text-red-500 flex-shrink-0"></i><h2 class="text-lg font-bold text-gray-900" id="errorModalTitle">出错了</h2></div>
                 <button onclick="closeErrorModal()" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
             </div>
             <div id="errorModalMessage" class="text-sm text-gray-700 mb-3 leading-relaxed"></div>
             <div id="errorModalHint" class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 mb-4 hidden">
-                <p class="font-semibold mb-1">💡 建议操作：</p>
+                <p class="font-semibold mb-1"><i data-lucide="lightbulb" class="w-4 h-4 inline-block"></i> 建议操作：</p>
                 <p id="errorModalHintText"></p>
             </div>
             <div class="flex items-center gap-3 flex-wrap">
                 <button onclick="closeErrorModal()" class="btn-secondary" style="min-width:80px">关闭</button>
                 <a id="errorModalIssueLink" href="#" target="_blank" class="btn-primary flex items-center gap-2" style="text-decoration:none;font-size:13px">
-                    🐛 提交 Issue 反馈
+                    <i data-lucide="bug" class="w-4 h-4 inline-block"></i> 提交 Issue 反馈
                 </a>
             </div>
         </div>
     </div>
 
     <!-- ═══════ Header (Sticky) ═══════ -->
-    <header class="sticky-header bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-white shadow-lg border-b border-slate-600/30 dark:border-slate-700">
+    <header class="sticky-header glass-header text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3 min-w-0">
                 <img src="/static/logo.png" alt="VidSlide" class="logo-icon w-10 h-10 flex-shrink-0">
@@ -71,16 +77,16 @@
             </div>
             <nav class="flex gap-2 items-center flex-shrink-0">
                 <button onclick="toggleTheme()" class="theme-toggle" title="切换深色/浅色模式">
-                    <span class="icon" id="themeIcon">🌙</span>
+                    <span class="icon" id="themeIcon"><i data-lucide="moon" class="w-4 h-4"></i></span>
                 </button>
                 <button onclick="toggleBatchMode()" class="btn-ghost text-xs" id="btnToggleMode" title="切换批量处理模式">
-                    📋 批量模式
+                    <i data-lucide="layers" class="w-4 h-4 inline-block"></i> 批量模式
                 </button>
                 <button onclick="cleanupAll()" class="btn-ghost text-xs" title="清空所有模式的全部缓存">
-                    🗑️ 全部清空
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5 inline-block"></i> 全部清空
                 </button>
                 <button onclick="shutdownServer()" class="btn-ghost-danger text-xs" title="关闭服务并清理临时文件">
-                    ⏻ 关闭
+                    <i data-lucide="power" class="w-3.5 h-3.5 inline-block"></i> 关闭
                 </button>
             </nav>
         </div>
@@ -130,7 +136,7 @@
         <div class="tab-content-area" id="tabContentArea">
             <!-- 每个标签页的内容面板会动态插入 -->
             <div id="emptyHint" class="flex flex-col items-center justify-center py-20 text-gray-400">
-                <span class="text-5xl mb-4">📂</span>
+                <span class="text-5xl mb-4"><i data-lucide="folder-open" class="w-12 h-12"></i></span>
                 <p class="text-lg font-medium mb-2">点击上方 ＋ 新建一个标签页开始工作</p>
                 <p class="text-sm">每个标签页可独立处理一个视频，最多同时开 3 个</p>
             </div>
@@ -142,7 +148,7 @@
 
         <!-- 磁盘空间预警 -->
         <div id="batchDiskWarning" class="batch-disk-warning" style="display:none">
-            ⚠️ 磁盘空间不足（剩余 <span id="batchDiskFree">0</span> MB），部分视频可能被跳过
+            ⚠ 磁盘空间不足（剩余 <span id="batchDiskFree">0</span> MB），部分视频可能被跳过
         </div>
 
         <!-- 全局参数卡片 -->
@@ -158,7 +164,7 @@
                         场景检测灵敏度: <span id="batchThresholdVal" class="font-bold text-brand-600">5.0</span>
                     </label>
                     <input type="range" id="batchThreshold" min="1" max="15" step="0.5" value="5"
-                           class="w-full accent-brand-500">
+                           class="w-full range-input accent-brand-500">
                     <div class="flex justify-between text-xs text-slate-400 mt-0.5">
                         <span>敏感 (1)</span><span>保守 (15)</span>
                     </div>
@@ -166,19 +172,19 @@
                 <div class="flex flex-col gap-3">
                     <div>
                         <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
-                            <input type="checkbox" id="batchUseRoi" checked> PPT 录屏裁剪
+                            <input type="checkbox" id="batchUseRoi" class="ai-switch" checked> PPT 录屏裁剪
                         </label>
                         <p class="text-xs text-slate-400 mt-0.5 ml-5">启用后忽略左侧缩略图栏和顶部工具栏</p>
                     </div>
                     <div>
                         <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
-                            <input type="checkbox" id="batchFastMode" checked> ⚡ 快速模式
+                            <input type="checkbox" id="batchFastMode" class="ai-switch" checked> <i data-lucide="zap" class="w-3.5 h-3.5 inline-block"></i> 快速模式
                         </label>
                         <p class="text-xs text-slate-400 mt-0.5 ml-5">将比较分辨率降至 480p 以加速检测（不影响输出质量）</p>
                     </div>
                     <div>
                         <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
-                            <input type="checkbox" id="batchUseGpu" checked> 🎮 GPU 硬件加速
+                            <input type="checkbox" id="batchUseGpu" class="ai-switch" checked> <i data-lucide="monitor" class="w-3.5 h-3.5 inline-block"></i> GPU 硬件加速
                         </label>
                         <p class="text-xs text-slate-400 mt-0.5 ml-5">使用显卡加速视频解码（不支持时自动回退 CPU）</p>
                     </div>
@@ -186,18 +192,18 @@
                 <div class="flex flex-col gap-3">
                     <div>
                         <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
-                            <input type="checkbox" id="batchEnableHistory" checked> 历史记忆池
+                            <input type="checkbox" id="batchEnableHistory" class="ai-switch" checked> 历史记忆池
                             <input type="number" id="batchMaxHistory" value="5" min="2" max="20"
                                    class="w-14 text-xs px-1 py-0.5 border rounded dark:bg-slate-700 dark:border-slate-600"> 张
                         </label>
                         <p class="text-xs text-slate-400 mt-0.5 ml-5">防止 A→B→A 跳页导致重复提取</p>
                     </div>
                     <div>
-                        <label class="text-xs font-medium text-slate-600 dark:text-slate-300 block mb-1">🎯 运行模式</label>
+                        <label class="text-xs font-medium text-slate-600 dark:text-slate-300 block mb-1"><i data-lucide="crosshair" class="w-3.5 h-3.5 inline-block"></i> 运行模式</label>
                         <select id="batchSpeedMode" class="w-full text-xs px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600">
-                            <option value="eco">🍃 后台静默 (Eco)</option>
-                            <option value="fast" selected>🚀 全速狂飙 (Fast) — 推荐</option>
-                            <option value="turbo">⚡ 极速狂暴 (Turbo)</option>
+                            <option value="eco">后台静默 (Eco)</option>
+                            <option value="fast" selected>全速狂飙 (Fast) — 推荐</option>
+                            <option value="turbo">极速狂暴 (Turbo)</option>
                         </select>
                         <p class="text-xs text-slate-400 mt-0.5">Eco 节省资源；Fast 释放算力；Turbo 极限压榜</p>
                     </div>
@@ -210,11 +216,11 @@
             <div class="flex items-center justify-between flex-wrap gap-3">
                 <div class="flex items-center gap-2">
                     <button onclick="addVideosToBatch()" class="btn-secondary text-xs" id="btnBatchAddFiles">
-                        📂 添加视频
+                        <i data-lucide="file-video" class="w-3.5 h-3.5 inline-block"></i> 添加视频
                     </button>
                     <button onclick="scanFolderForBatch()" class="btn-secondary text-xs" id="btnBatchScanFolder"
                             title="递归扫描文件夹中所有视频文件（mp4/avi/mkv/mov 等）">
-                        📁 扫描文件夹
+                        <i data-lucide="folder-search" class="w-3.5 h-3.5 inline-block"></i> 扫描文件夹
                     </button>
                     <div class="flex items-center gap-1">
                         <label class="text-xs text-slate-500 dark:text-slate-400">并发数:</label>
@@ -228,7 +234,7 @@
                 <div class="flex items-center gap-2">
                     <button onclick="cleanupBatchMode()" class="btn-ghost-danger text-xs" id="btnBatchCleanup"
                             title="清空批量队列的所有数据">
-                        🧹 清空批量
+                        <i data-lucide="eraser" class="w-3.5 h-3.5 inline-block"></i> 清空批量
                     </button>
                 </div>
             </div>
@@ -242,7 +248,7 @@
                 <div class="zone-header flex items-center justify-between mb-3">
                     <h3 class="text-sm font-semibold flex items-center gap-2">
                         <span class="zone-badge unselected">1</span>
-                        📋 未选中区域
+                        <i data-lucide="list" class="w-4 h-4 inline-block"></i> 未选中区域
                         <span class="text-xs text-slate-400 font-normal" id="unselectedCount">(0)</span>
                     </h3>
                     <div class="flex items-center gap-2">
@@ -252,7 +258,7 @@
                     </div>
                 </div>
                 <div id="unselectedEmpty" class="text-center py-8 text-slate-400">
-                    <span class="text-3xl mb-2 block">📁</span>
+                    <span class="text-3xl mb-2 block"><i data-lucide="folder-open" class="w-8 h-8 inline-block"></i></span>
                     <p class="text-sm mb-1">添加视频后将显示在这里</p>
                     <p class="text-xs">支持多选文件或选择整个文件夹</p>
                 </div>
@@ -264,7 +270,7 @@
                 <div class="zone-header flex items-center justify-between mb-3">
                     <h3 class="text-sm font-semibold flex items-center gap-2">
                         <span class="zone-badge queue">2</span>
-                        ⚙️ 处理队列
+                        <i data-lucide="cpu" class="w-4 h-4 inline-block"></i> 处理队列
                         <span class="text-xs text-slate-400 font-normal" id="queueCount">(0)</span>
                     </h3>
                     <div class="flex items-center gap-2">
@@ -272,7 +278,7 @@
                             ← 移回未选中
                         </button>
                         <button class="btn-primary text-xs" id="btnStartOrPause" onclick="startProcessing()" disabled>
-                            ▶ 开始处理
+                            <i data-lucide="play" class="w-3.5 h-3.5 inline-block"></i> 开始处理
                         </button>
                     </div>
                 </div>
@@ -291,7 +297,7 @@
                     </div>
                 </div>
                 <div id="queueEmpty" class="text-center py-8 text-slate-400">
-                    <span class="text-3xl mb-2 block">⚙️</span>
+                    <span class="text-3xl mb-2 block"><i data-lucide="cpu" class="w-8 h-8 inline-block"></i></span>
                     <p class="text-sm">从未选中区域移入视频开始处理</p>
                 </div>
                 <div id="queueList" class="zone-list" style="display:none"></div>
@@ -302,7 +308,7 @@
                 <div class="zone-header flex items-center justify-between mb-3">
                     <h3 class="text-sm font-semibold flex items-center gap-2">
                         <span class="zone-badge completed">3</span>
-                        ✅ 已完成处理
+                        <i data-lucide="check-circle-2" class="w-4 h-4 inline-block text-emerald-500"></i> 已完成处理
                         <span class="text-xs text-slate-400 font-normal" id="completedCount">(0)</span>
                     </h3>
                     <div class="flex items-center gap-2" id="completedExportBar" style="display:none">
@@ -314,7 +320,7 @@
                     </div>
                 </div>
                 <div id="completedEmpty" class="text-center py-8 text-slate-400">
-                    <span class="text-3xl mb-2 block">✅</span>
+                    <span class="text-3xl mb-2 block"><i data-lucide="check-circle-2" class="w-8 h-8 inline-block text-emerald-500"></i></span>
                     <p class="text-sm">处理完成的视频将显示在这里</p>
                 </div>
                 <div id="completedList" class="zone-list" style="display:none"></div>
@@ -331,14 +337,14 @@
 
         <!-- 回收站胶囊 -->
         <div id="recycleCapsule" class="recycle-capsule" style="display:none" onclick="openVideoRecycleBin()">
-            🗑️ 回收站 (<span id="recycleCapsuleCount">0</span>)
+            <i data-lucide="trash-2" class="w-3.5 h-3.5 inline-block"></i> 回收站 (<span id="recycleCapsuleCount">0</span>)
         </div>
 
         <!-- 完成横幅 -->
         <div id="batchCompleteBanner" class="batch-complete-banner" style="display:none">
             <div class="flex items-center justify-between">
                 <div>
-                    <span class="text-lg mr-2">✅</span>
+                    <span class="text-lg mr-2"><i data-lucide="check-circle-2" class="w-5 h-5 inline-block text-emerald-600"></i></span>
                     <span class="font-medium" id="batchCompleteText">批量处理完成</span>
                 </div>
                 <button onclick="document.getElementById('batchCompleteBanner').style.display='none'"
@@ -351,7 +357,7 @@
     <div id="batchAddModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)cancelBatchAdd()">
         <div class="modal-content batch-add-modal">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold">📝 视频命名</h3>
+                <h3 class="text-sm font-semibold"><i data-lucide="file-edit" class="w-4 h-4 inline-block"></i> 视频命名</h3>
                 <button onclick="cancelBatchAdd()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg leading-none" title="关闭 (ESC)">&times;</button>
             </div>
             <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
@@ -400,7 +406,7 @@
             <div id="batchAutoIncrementArea" style="display:none" class="mb-3">
                 <div class="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded">
                     <label class="flex items-center gap-2 text-xs">
-                        <input type="checkbox" id="batchAutoIncrement"> 自动递增命名
+                        <input type="checkbox" id="batchAutoIncrement" class="ai-switch"> 自动递增命名
                     </label>
                     <input type="text" id="batchBaseNameInput" placeholder="如: 数学_第1节"
                            class="flex-1 text-xs px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600"
@@ -451,9 +457,9 @@
                 </div>
             </div>
             <div class="text-center space-y-1">
-                <p class="text-xs text-slate-500 dark:text-slate-500">🔒 所有数据仅保存在本地 · 浏览器断联 5 分钟后服务自动退出</p>
-                <p class="text-xs text-slate-400 dark:text-slate-600">v0.5.0 批量处理版 · Made with ❤️ by <a href="https://github.com/PWO-CHINA" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition">PWO-CHINA</a></p>
-                <p class="text-xs text-slate-400 dark:text-slate-600 mt-2">⭐ 如果这个工具帮到了你，请在 <a href="https://github.com/PWO-CHINA/VidSlide" target="_blank" class="text-slate-600 dark:text-slate-400 hover:underline font-medium">GitHub</a> 或 <a href="https://gitee.com/pwo101/VidSlide" target="_blank" class="text-slate-600 dark:text-slate-400 hover:underline font-medium">Gitee</a> 上给我们一个 Star！</p>
+                <p class="text-xs text-slate-500 dark:text-slate-500"><i data-lucide="lock" class="w-3.5 h-3.5 inline-block"></i> 所有数据仅保存在本地 · 浏览器断联 5 分钟后服务自动退出</p>
+                <p class="text-xs text-slate-400 dark:text-slate-600">v0.5.0 批量处理版 · Made with <i data-lucide="heart" class="w-3.5 h-3.5 inline-block text-red-400"></i> by <a href="https://github.com/PWO-CHINA" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition">PWO-CHINA</a></p>
+                <p class="text-xs text-slate-400 dark:text-slate-600 mt-2"><i data-lucide="star" class="w-3.5 h-3.5 inline-block text-amber-400"></i> 如果这个工具帮到了你，请在 <a href="https://github.com/PWO-CHINA/VidSlide" target="_blank" class="text-slate-600 dark:text-slate-400 hover:underline font-medium">GitHub</a> 或 <a href="https://gitee.com/pwo101/VidSlide" target="_blank" class="text-slate-600 dark:text-slate-400 hover:underline font-medium">Gitee</a> 上给我们一个 Star！</p>
             </div>
         </div>
     </footer>
@@ -463,13 +469,13 @@
     <div id="recycleDrawer" class="recycle-drawer">
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                🗑️ 回收站 <span id="recycleDrawerCount" class="text-sm font-normal text-gray-400"></span>
+                <i data-lucide="trash-2" class="w-4 h-4 inline-block"></i> 回收站 <span id="recycleDrawerCount" class="text-sm font-normal text-gray-400"></span>
             </h3>
             <div class="flex gap-2">
-                <button onclick="restoreAll()" id="btnRestoreAll" class="btn-secondary" style="font-size:.75rem;padding:.375rem .75rem;color:#4f46e5;border-color:#c7d2fe;background:#eef2ff">
-                    ↩️ 全部恢复
+                <button onclick="restoreAll()" id="btnRestoreAll" class="btn-secondary" style="font-size:.75rem;padding:.375rem .75rem;color:#5a7a9e;border-color:#bacce0;background:#eef2f6">
+                    <i data-lucide="undo-2" class="w-3.5 h-3.5 inline-block"></i> 全部恢复
                 </button>
-                <button onclick="closeRecycleBin()" class="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 flex items-center justify-center transition">✕</button>
+                <button onclick="closeRecycleBin()" class="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 flex items-center justify-center transition"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
         </div>
         <div id="recycleList" class="flex-1 overflow-y-auto p-4 space-y-2">
@@ -482,9 +488,9 @@
     <div id="batchVideoRecycleDrawer" class="recycle-drawer">
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
             <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                🗑️ 视频回收站 <span id="batchVideoRecycleCount" class="text-sm font-normal text-gray-400"></span>
+                <i data-lucide="trash-2" class="w-4 h-4 inline-block"></i> 视频回收站 <span id="batchVideoRecycleCount" class="text-sm font-normal text-gray-400"></span>
             </h3>
-            <button onclick="closeVideoRecycleBin()" class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-600 flex items-center justify-center transition">✕</button>
+            <button onclick="closeVideoRecycleBin()" class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-600 flex items-center justify-center transition"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
         <div id="batchVideoRecycleList" class="flex-1 overflow-y-auto p-4 space-y-2">
             <p class="text-center text-gray-400 text-sm py-12">回收站是空的</p>
@@ -493,8 +499,8 @@
 
     <!-- ═══════ 图片预览弹窗 ═══════ -->
     <div id="previewModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center modal-backdrop" onclick="if(event.target===this)hidePreview()">
-        <button onclick="hidePreview()" class="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white text-xl flex items-center justify-center transition">✕</button>
-        <button onclick="deleteInPreview()" id="btnDeletePreview" class="preview-del-btn absolute bottom-6 right-5 z-[60] px-4 py-2 rounded-full bg-red-500/70 hover:bg-red-600/90 text-white text-sm font-medium flex items-center gap-1.5 transition-all shadow-lg backdrop-blur" title="删除当前图片 (Delete)">🗑️ 删除 (Del)</button>
+        <button onclick="hidePreview()" class="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white text-xl flex items-center justify-center transition"><i data-lucide="x" class="w-4 h-4"></i></button>
+        <button onclick="deleteInPreview()" id="btnDeletePreview" class="preview-del-btn absolute bottom-6 right-5 z-[60] px-4 py-2 rounded-full bg-red-500/70 hover:bg-red-600/90 text-white text-sm font-medium flex items-center gap-1.5 transition-all shadow-lg backdrop-blur" title="删除当前图片 (Delete)"><i data-lucide="trash-2" class="w-4 h-4 inline-block"></i> 删除 (Del)</button>
         <button onclick="prevPreview()" id="btnPrevPreview" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/25 text-white text-2xl flex items-center justify-center transition">◀</button>
         <button onclick="nextPreview()" id="btnNextPreview" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/25 text-white text-2xl flex items-center justify-center transition">▶</button>
         <img id="previewImage" class="max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl object-contain select-none" draggable="false">
@@ -511,7 +517,7 @@
                     选择视频文件
                 </h2>
                 <div class="flex flex-col sm:flex-row gap-3 items-stretch">
-                    <button class="btn-primary shrink-0 js-btn-select-video">📁 浏览选择视频文件</button>
+                    <button class="btn-primary shrink-0 js-btn-select-video"><i data-lucide="folder-open" class="w-4 h-4 inline-block"></i> 浏览选择视频文件</button>
                     <div class="relative flex-1">
                         <input type="text" class="js-video-path-input w-full h-full px-4 py-3 text-sm rounded-2xl border-2 border-gray-200 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition bg-gray-50 placeholder-gray-400" placeholder='粘贴路径，支持引号包裹，如 "D:\video\lecture.mp4"'>
                         <button class="js-btn-confirm-path absolute right-2 top-1/2 -translate-y-1/2 text-xs text-white bg-slate-600 hover:bg-slate-700 font-medium px-3 py-1.5 rounded-lg transition shadow-sm">确认 ↵</button>
@@ -519,7 +525,7 @@
                 </div>
                 <div class="js-video-info hidden mt-3 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl">
                     <p class="text-sm text-emerald-800 flex items-center gap-2">
-                        <span class="text-lg">✅</span>
+                        <span class="text-lg"><i data-lucide="check-circle-2" class="w-5 h-5 inline-block text-emerald-600"></i></span>
                         <span class="js-video-path-display font-mono text-xs break-all"></span>
                     </p>
                 </div>
@@ -543,14 +549,14 @@
                     </div>
                     <div class="space-y-2">
                         <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
-                            <input type="checkbox" checked class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-400 js-use-roi">
+                            <input type="checkbox" checked class="ai-switch js-use-roi">
                             PPT 录屏裁剪
                         </label>
                         <p class="text-xs text-gray-400 leading-relaxed">启用后忽略左侧缩略图栏和顶部工具栏</p>
                     </div>
                     <div class="space-y-2">
                         <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
-                            <input type="checkbox" checked class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-400 js-enable-history">
+                            <input type="checkbox" checked class="ai-switch js-enable-history">
                             历史记忆池
                         </label>
                         <p class="text-xs text-gray-400 leading-relaxed">防止 A→B→A 跳页导致重复提取</p>
@@ -563,31 +569,31 @@
                 </div>
                 <div class="mt-4 pt-4 border-t border-gray-100">
                     <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
-                        <input type="checkbox" checked class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-400 js-fast-mode">
-                        ⚡ 快速模式
+                        <input type="checkbox" checked class="ai-switch js-fast-mode">
+                        <i data-lucide="zap" class="w-3.5 h-3.5 inline-block"></i> 快速模式
                     </label>
                     <p class="text-xs text-gray-400 leading-relaxed mt-1">将比较分辨率降至 480p 以加速检测（不影响输出图片质量）</p>
                 </div>
                 <div class="mt-4 pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-start gap-6">
                     <div class="flex-1">
                         <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
-                            <input type="checkbox" checked class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-400 js-use-gpu">
-                            🎮 GPU 硬件加速
+                            <input type="checkbox" checked class="ai-switch js-use-gpu">
+                            <i data-lucide="monitor" class="w-3.5 h-3.5 inline-block"></i> GPU 硬件加速
                         </label>
                         <p class="text-xs text-gray-400 leading-relaxed mt-1">使用显卡加速视频解码（不支持时自动回退 CPU）。如遇花屏/崩溃可关闭此选项</p>
                     </div>
                     <div class="flex-1">
-                        <label class="text-sm font-medium text-gray-700 block mb-1">🎯 运行模式</label>
+                        <label class="text-sm font-medium text-gray-700 block mb-1"><i data-lucide="crosshair" class="w-3.5 h-3.5 inline-block"></i> 运行模式</label>
                         <select class="js-speed-mode w-full px-3 py-2 text-sm rounded-xl border-2 border-gray-200 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition bg-white">
-                            <option value="eco">🍃 后台静默 (Eco)</option>
-                            <option value="fast" selected>🚀 全速狂飙 (Fast)</option>
-                            <option value="turbo">⚡ 极速狂暴 (Turbo)</option>
+                            <option value="eco">后台静默 (Eco)</option>
+                            <option value="fast" selected>全速狂飙 (Fast)</option>
+                            <option value="turbo">极速狂暴 (Turbo)</option>
                         </select>
                         <p class="text-xs text-gray-400 leading-relaxed mt-1">Eco 节省资源；Fast 释放算力；Turbo 极限压榜（2x跳帧+320p对比）</p>
                     </div>
                 </div>
                 <details class=”mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl”>
-                    <summary class=”text-xs text-amber-700 cursor-pointer select-none”>💡 核显用户性能提示（点击展开）</summary>
+                    <summary class=”text-xs text-amber-700 cursor-pointer select-none”><i data-lucide=”lightbulb” class=”w-3.5 h-3.5 inline-block”></i> 核显用户性能提示（点击展开）</summary>
                     <p class=”text-xs text-amber-700 leading-relaxed mt-1.5”>选择 <em>Turbo/Fast</em> + <em>关闭 GPU 加速</em>，让 CPU 负责解码速度更快。核显的 GPU 加速主要优势是”减负”而非”加速”，适合 Eco 模式后台挂机。</p>
                 </details>
                 <!-- 重置按钮由 JS 动态插入 -->
@@ -600,9 +606,9 @@
                     提取幻灯片
                 </h2>
                 <div class="flex items-center gap-3">
-                    <button class="btn-primary js-btn-extract" disabled>▶️ 开始提取幻灯片</button>
-                    <button class="btn-resume hidden js-btn-resume">🔄 继续提取（断点续传）</button>
-                    <button class="btn-danger hidden js-btn-cancel">⏹️ 取消提取</button>
+                    <button class="btn-primary js-btn-extract" disabled><i data-lucide="play" class="w-4 h-4 inline-block"></i> 开始提取幻灯片</button>
+                    <button class="btn-resume hidden js-btn-resume"><i data-lucide="refresh-cw" class="w-4 h-4 inline-block"></i> 继续提取（断点续传）</button>
+                    <button class="btn-danger hidden js-btn-cancel"><i data-lucide="square" class="w-4 h-4 inline-block"></i> 取消提取</button>
                     <span class="text-sm text-gray-500 js-extract-status"></span>
                 </div>
                 <div class="js-progress-section hidden mt-5 space-y-3">
@@ -627,15 +633,15 @@
                     </h2>
                     <div class="flex items-center gap-2 flex-wrap">
                         <button class="btn-secondary text-sm hidden js-btn-recycle-bin">
-                            🗑️ 回收站 <span class="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 ml-1 js-recycle-count"></span>
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5 inline-block"></i> 回收站 <span class="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 ml-1 js-recycle-count"></span>
                         </button>
                     </div>
                 </div>
                 <p class="text-sm text-gray-400 mb-4 flex items-center gap-4">
-                    <span>🖱️ 拖拽调整顺序</span>
-                    <span>🔍 点击预览大图</span>
-                    <span>❌ 悬停显示删除</span>
-                    <span>⌨️ Ctrl+Z 撤销删除</span>
+                    <span><i data-lucide="move" class="w-3.5 h-3.5 inline-block"></i> 拖拽调整顺序</span>
+                    <span><i data-lucide="search" class="w-3.5 h-3.5 inline-block"></i> 点击预览大图</span>
+                    <span><i data-lucide="x" class="w-3.5 h-3.5 inline-block"></i> 悬停显示删除</span>
+                    <span><i data-lucide="keyboard" class="w-3.5 h-3.5 inline-block"></i> Ctrl+Z 撤销删除</span>
                 </p>
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 js-gallery"></div>
             </section>
@@ -649,22 +655,22 @@
                 <p class="text-sm text-gray-500 mb-5">将当前排好序的图片打包下载</p>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <button class="btn-export js-btn-pdf">
-                        <span class="text-3xl">📄</span>
+                        <span class="text-3xl"><i data-lucide="file-text" class="w-8 h-8"></i></span>
                         <span class="text-base font-bold">生成 PDF</span>
                         <span class="text-xs text-gray-400 font-normal">适合打印和阅读</span>
                     </button>
                     <button class="btn-export js-btn-pptx">
-                        <span class="text-3xl">📊</span>
+                        <span class="text-3xl"><i data-lucide="presentation" class="w-8 h-8"></i></span>
                         <span class="text-base font-bold">生成 PPTX</span>
                         <span class="text-xs text-gray-400 font-normal">可编辑的演示文稿</span>
                     </button>
                     <button class="btn-export js-btn-zip">
-                        <span class="text-3xl">📦</span>
+                        <span class="text-3xl"><i data-lucide="archive" class="w-8 h-8"></i></span>
                         <span class="text-base font-bold">打包 ZIP</span>
                         <span class="text-xs text-gray-400 font-normal">原图打包压缩</span>
                     </button>
                 </div>
-                <p class="text-xs text-gray-400 mt-3">💡 导出的文件会保存到浏览器的默认<b>下载文件夹</b>中</p>
+                <p class="text-xs text-gray-400 mt-3"><i data-lucide="lightbulb" class="w-3.5 h-3.5 inline-block"></i> 导出的文件会保存到浏览器的默认<b>下载文件夹</b>中</p>
 
                 <!-- 打包进度条（SSE 驱动，异步打包时显示） -->
                 <div class="hidden mt-5 space-y-2 js-pkg-progress-section">
@@ -692,18 +698,18 @@
             <!-- 头部 -->
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
                 <div class="flex items-center gap-3 min-w-0">
-                    <span class="text-lg">🎬</span>
+                    <span class="text-lg"><i data-lucide="film" class="w-5 h-5"></i></span>
                     <h3 class="text-sm font-semibold truncate" id="batchDetailTitle">视频详情</h3>
                     <span class="text-xs text-slate-400" id="batchDetailCount"></span>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                    <button id="batchDetailRecycleBtn" onclick="_openBatchDetailRecycleBin()" class="btn-ghost text-xs" style="display:none" title="查看已删除图片">🗑 回收站</button>
+                    <button id="batchDetailRecycleBtn" onclick="_openBatchDetailRecycleBin()" class="btn-ghost text-xs" style="display:none" title="查看已删除图片"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline-block"></i> 回收站 <span id="batchDetailRecycleCount"></span></button>
                     <div id="batchDetailExportBar" class="flex items-center gap-2">
-                        <button onclick="_batchDetailExport('zip')" class="btn-ghost text-xs" title="导出 ZIP">导出 ZIP</button>
-                        <button onclick="_batchDetailExport('pdf')" class="btn-ghost text-xs" title="导出 PDF">导出 PDF</button>
-                        <button onclick="_batchDetailExport('pptx')" class="btn-ghost text-xs" title="导出 PPTX">导出 PPTX</button>
+                        <button onclick="_batchDetailExport('zip')" class="btn-ghost text-xs" title="导出 ZIP"><i data-lucide="archive" class="w-3.5 h-3.5 inline-block"></i> ZIP</button>
+                        <button onclick="_batchDetailExport('pdf')" class="btn-ghost text-xs" title="导出 PDF"><i data-lucide="file-text" class="w-3.5 h-3.5 inline-block"></i> PDF</button>
+                        <button onclick="_batchDetailExport('pptx')" class="btn-ghost text-xs" title="导出 PPTX"><i data-lucide="presentation" class="w-3.5 h-3.5 inline-block"></i> PPTX</button>
                     </div>
-                    <button onclick="closeBatchDetail()" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 flex items-center justify-center transition">✕</button>
+                    <button onclick="closeBatchDetail()" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 flex items-center justify-center transition"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
             </div>
             <!-- 画廊 -->
@@ -712,7 +718,7 @@
                 <!-- 图片回收站面板（内嵌） -->
                 <div id="batchDetailRecyclePanel" class="mt-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700" style="display:none">
                     <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-xs font-semibold text-slate-600 dark:text-slate-300">🗑 已删除的图片</h4>
+                        <h4 class="text-xs font-semibold text-slate-600 dark:text-slate-300"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline-block"></i> 已删除的图片</h4>
                         <button onclick="_closeBatchDetailRecycleBin()" class="text-xs text-slate-400 hover:text-slate-600">收起</button>
                     </div>
                     <div id="batchDetailRecycleList" class="space-y-2 max-h-48 overflow-y-auto"></div>
@@ -726,15 +732,16 @@
         </div>
     </div>
 
-    <script src="/static/js/main.js?v=0.5.3"></script>
+    <script src="/static/js/main.js?v=0.6.0"></script>
     <!-- 批量模块（三区域架构） -->
-    <script src="/static/js/batch/core.js?v=0.5.3"></script>
-    <script src="/static/js/batch/zones.js?v=0.5.3"></script>
-    <script src="/static/js/batch/select.js?v=0.5.3"></script>
-    <script src="/static/js/batch/controls.js?v=0.5.3"></script>
-    <script src="/static/js/batch/detail.js?v=0.5.3"></script>
-    <script src="/static/js/batch/naming.js?v=0.5.3"></script>
-    <script src="/static/js/batch/export.js?v=0.5.3"></script>
-    <script src="/static/js/batch/recycle.js?v=0.5.3"></script>
+    <script src="/static/js/batch/core.js?v=0.6.0"></script>
+    <script src="/static/js/batch/zones.js?v=0.6.0"></script>
+    <script src="/static/js/batch/select.js?v=0.6.0"></script>
+    <script src="/static/js/batch/controls.js?v=0.6.0"></script>
+    <script src="/static/js/batch/detail.js?v=0.6.0"></script>
+    <script src="/static/js/batch/naming.js?v=0.6.0"></script>
+    <script src="/static/js/batch/export.js?v=0.6.0"></script>
+    <script src="/static/js/batch/recycle.js?v=0.6.0"></script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 /**
- * VidSlide v0.5.3 - 控制模块
+ * VidSlide v0.6.0 - 控制模块
  * ============================
  * 开始/暂停、移入队列/移回、重试、SortableJS
  */
@@ -106,16 +106,17 @@ function _updateBatchControls() {
     const btnStartPause = el('btnStartOrPause');
     if (btnStartPause) {
         if (s === 'processing') {
-            btnStartPause.textContent = '⏸ 处理完当前视频后暂停';
+            btnStartPause.innerHTML = '<i data-lucide="pause" class="w-3.5 h-3.5 inline-block"></i> 处理完当前视频后暂停';
             btnStartPause.className = 'btn-secondary text-xs';
             btnStartPause.disabled = false;
             btnStartPause.onclick = pauseAfterCurrent;
         } else {
-            btnStartPause.textContent = '▶ 开始处理';
+            btnStartPause.innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5 inline-block"></i> 开始处理';
             btnStartPause.className = 'btn-primary text-xs';
             btnStartPause.disabled = !hasWaiting;
             btnStartPause.onclick = startProcessing;
         }
+        refreshIcons(btnStartPause);
     }
 
     // 移入队列按钮
