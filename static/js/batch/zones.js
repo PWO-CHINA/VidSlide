@@ -1,5 +1,5 @@
 /**
- * VidSlide v0.6.0 - 三区域渲染模块
+ * VidSlide v0.6.1 - 三区域渲染模块
  * ===================================
  * 未选中 / 处理队列 / 已完成 三区域的视频卡片渲染
  */
@@ -100,9 +100,11 @@ function _createZoneVideoItem(task, zone) {
         nameClickable = true;
         showDragHandle = true;
         showCheckbox = true;
-        // 预估处理时间
+        // 编码标签 + 预估处理时间
+        const codec = task.codec ? task.codec.toUpperCase() : '';
+        const codecTag = codec ? '<span class="text-xs font-mono px-1 rounded" style="background:var(--bg-muted);color:var(--text-muted)">' + codec + '</span> ' : '';
         const est = task.estimatedTime;
-        infoHtml = est > 0 ? '预估处理时间: ' + _formatDuration(est) : '';
+        infoHtml = codecTag + (est > 0 ? '预估处理时间: ' + _formatDuration(est) : '');
         actionsHtml =
             '<button onclick="_removeFromUnselected(\'' + task.vid + '\')" class="btn-ghost-danger text-xs" title="从列表移除"><i data-lucide="x" class="w-3 h-3"></i></button>';
 

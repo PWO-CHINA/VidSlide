@@ -1,5 +1,5 @@
 /**
- * VidSlide v0.6.0 - 控制模块
+ * VidSlide v0.6.1 - 控制模块
  * ============================
  * 开始/暂停、移入队列/移回、重试、SortableJS
  */
@@ -160,7 +160,11 @@ async function startProcessing() {
     _saveBatchPrefs(G.batch.params);
     G.batch.maxWorkers = parseInt(document.getElementById('batchWorkerCount').value) || 1;
     try {
-        const res = await api('/api/batch/' + G.batch.bid + '/start', { method: 'POST' });
+        const res = await api('/api/batch/' + G.batch.bid + '/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ params: G.batch.params })
+        });
         if (res.success) {
             G.batch.status = 'processing';
             G.batch._startTime = Date.now();

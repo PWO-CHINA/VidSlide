@@ -1,5 +1,5 @@
 """
-影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.4.1)
+影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.6.1)
 =====================================================
 基于 Flask 的本地 Web 应用，提供可视化界面来提取、管理和打包 PPT 幻灯片。
 支持同时对多个视频进行提取（最多 3 个并行标签页）。
@@ -19,7 +19,7 @@ v0.4.0 新特性：
     pip install flask opencv-python numpy pillow python-pptx psutil
 
 作者: PWO-CHINA
-版本: v0.4.0
+版本: v0.6.1
 """
 
 import cv2
@@ -40,7 +40,7 @@ from flask import (Flask, request, jsonify, send_file,
                    send_from_directory, render_template, Response)
 
 # 导入拆分后的功能模块
-from extractor import extract_slides
+from extractor import extract_slides, probe_gpu
 from exporter import package_images
 
 # ============================================================
@@ -1013,6 +1013,12 @@ def start_extraction(sid):
     fast_mode = bool(data.get('fast_mode', True))
     use_gpu = bool(data.get('use_gpu', True))
     speed_mode = data.get('speed_mode', 'fast')  # 'eco' | 'fast' | 'turbo'
+    # 三模式：'ppt' | 'hybrid' | 'blackboard'（向后兼容旧 classroom_mode 布尔值）
+    classroom_mode = data.get('classroom_mode', 'ppt')
+    if data.get('classroom_mode') is True and classroom_mode == 'ppt':
+        classroom_mode = 'blackboard'  # 旧客户端兼容
+    if classroom_mode not in ('ppt', 'blackboard', 'hybrid'):
+        classroom_mode = 'ppt'
 
     if not video_path:
         return jsonify(success=False, message='未提供视频路径')
@@ -1070,7 +1076,7 @@ def start_extraction(sid):
 
     threading.Thread(
         target=_extraction_worker,
-        args=(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu, speed_mode),
+        args=(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu, speed_mode, classroom_mode),
         daemon=True,
     ).start()
 
@@ -1106,6 +1112,12 @@ def resume_extraction(sid):
     fast_mode = sess.get('fast_mode', meta.get('fast_mode', True))
     use_gpu = sess.get('use_gpu', meta.get('use_gpu', True))
     speed_mode = sess.get('speed_mode', meta.get('speed_mode', 'fast'))
+    classroom_mode = sess.get('classroom_mode', meta.get('classroom_mode', 'ppt'))
+    # 旧 session 兼容：blackboard_mode=True → classroom_mode='blackboard'
+    if classroom_mode is True:
+        classroom_mode = 'blackboard'
+    elif classroom_mode is False or classroom_mode not in ('ppt', 'blackboard', 'hybrid'):
+        classroom_mode = 'ppt'
 
     cache_dir = sess['cache_dir']
     video_name = Path(video_path).stem or '未命名视频'
@@ -1118,13 +1130,13 @@ def resume_extraction(sid):
 
     threading.Thread(
         target=_extraction_worker,
-        args=(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu, speed_mode),
+        args=(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu, speed_mode, classroom_mode),
         kwargs={'start_frame': last_frame, 'saved_offset': saved_count},
         daemon=True,
     ).start()
 
     return jsonify(success=True, resumed_from_frame=last_frame, existing_images=saved_count)
-def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu=True, speed_mode='fast', start_frame=0, saved_offset=0):
+def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode, use_gpu=True, speed_mode='fast', classroom_mode=False, start_frame=0, saved_offset=0):
     """中间层：将 extractor 的回调桥接到会话管理 + SSE 事件"""
 
     _last_meta_save = [time.time()]  # 用列表以便闭包修改
@@ -1166,14 +1178,14 @@ def _extraction_worker(sid, video_path, cache_dir, threshold, enable_history, ma
         _update_session(sid,
             threshold=threshold, enable_history=enable_history,
             max_history=max_history, use_roi=use_roi, fast_mode=fast_mode,
-            use_gpu=use_gpu, speed_mode=speed_mode,
+            use_gpu=use_gpu, speed_mode=speed_mode, classroom_mode=classroom_mode,
         )
         # 提取开始时立即保存元数据
         _save_session_meta(sid)
 
         status, message, saved_count = extract_slides(
             video_path, cache_dir, threshold, enable_history, max_history, use_roi, fast_mode,
-            use_gpu=use_gpu, speed_mode=speed_mode,
+            use_gpu=use_gpu, speed_mode=speed_mode, classroom_mode=classroom_mode,
             on_progress=on_progress, should_cancel=should_cancel,
             start_frame=start_frame, saved_offset=saved_offset,
         )
@@ -1418,6 +1430,15 @@ def cleanup_all():
     except Exception:
         pass
     return jsonify(success=True)
+
+
+# ============================================================
+#  路由 — GPU 硬件加速探测
+# ============================================================
+@app.route('/api/gpu-info')
+def gpu_info():
+    """返回启动时缓存的 GPU 硬件加速探测结果"""
+    return jsonify(probe_gpu())
 
 
 # ============================================================
@@ -1675,6 +1696,11 @@ def batch_start(bid):
     warning = _check_resource_warning()
     if warning:
         return jsonify(success=False, message=f'系统资源不足：{warning}')
+    # 同步最新 UI 参数到 batch（用户可能在创建后修改了参数）
+    data = request.get_json(silent=True) or {}
+    params = data.get('params')
+    if params and isinstance(params, dict):
+        _bm.update_batch_params(bid, params)
     ok, msg = _bm.start_processing(bid)
     return jsonify(success=ok, message=msg)
 
@@ -2057,7 +2083,7 @@ if __name__ == '__main__':
 
         print()
         print('=' * 60)
-        print('  影幻智提 (VidSlide) v0.4.1 - 细节优化版')
+        print('  影幻智提 (VidSlide) v0.6.1 - PyAV 加速版')
         print(f'  访问地址: {url}')
         if args.no_browser:
             print('  （已禁用自动打开浏览器，请手动访问上方地址）')
@@ -2068,6 +2094,10 @@ if __name__ == '__main__':
             print(f'  📂 已从磁盘恢复 {recovered} 个会话')
         print('  按 Ctrl+C 手动停止 | python app.py --help 查看命令行选项')
         print('=' * 60)
+
+        # 启动时探测 GPU 硬件加速能力（结果缓存，供提取时直接使用）
+        _gpu = probe_gpu()
+        print(f'  🖥️ {_gpu["summary"]}')
         print()
 
         import atexit

@@ -1,5 +1,5 @@
 /**
- * 影幻智提 (VidSlide) v0.6.0 - 前端主逻辑
+ * 影幻智提 (VidSlide) v0.6.1 - 前端主逻辑
  * ==========================================
  * 通信方式：SSE（Server-Sent Events）服务器推送
  * 打包导出：异步后台处理 + SSE 进度推送
@@ -101,6 +101,9 @@ function _applyPrefsToPane(pane) {
     }
     if (p.max_history != null) pane.querySelector('.js-max-history').value = p.max_history;
     if (p.speed_mode) pane.querySelector('.js-speed-mode').value = p.speed_mode;
+    // 旧偏好迁移：blackboard_mode: true → classroom_mode: 'blackboard'
+    if (p.blackboard_mode === true && !p.classroom_mode) p.classroom_mode = 'blackboard';
+    if (p.classroom_mode) pane.querySelector('.js-classroom-mode').value = p.classroom_mode;
 }
 const _PREF_DEFAULTS = {
     threshold: 5,
@@ -110,6 +113,7 @@ const _PREF_DEFAULTS = {
     enable_history: true,
     max_history: 5,
     speed_mode: 'fast',
+    classroom_mode: 'ppt',
 };
 function _resetPrefs(pane) {
     try { localStorage.removeItem(_PREF_KEY); } catch { }
@@ -124,6 +128,7 @@ function _resetPrefs(pane) {
         pane.querySelector('.js-max-history-group').style.display = 'flex';
         pane.querySelector('.js-max-history').value = _PREF_DEFAULTS.max_history;
         pane.querySelector('.js-speed-mode').value = _PREF_DEFAULTS.speed_mode;
+        pane.querySelector('.js-classroom-mode').value = _PREF_DEFAULTS.classroom_mode;
         showToast('已重置为默认参数', 'success', 2000);
     } catch (e) {
         console.error('[重置参数] 失败:', e);
@@ -139,6 +144,7 @@ function _watchPrefs(pane) {
         enable_history: pane.querySelector('.js-enable-history').checked,
         max_history: parseInt(pane.querySelector('.js-max-history').value),
         speed_mode: pane.querySelector('.js-speed-mode').value,
+        classroom_mode: pane.querySelector('.js-classroom-mode').value,
     });
     pane.querySelector('.js-threshold').addEventListener('change', save);
     pane.querySelector('.js-fast-mode').addEventListener('change', save);
@@ -147,6 +153,7 @@ function _watchPrefs(pane) {
     pane.querySelector('.js-enable-history').addEventListener('change', save);
     pane.querySelector('.js-max-history').addEventListener('change', save);
     pane.querySelector('.js-speed-mode').addEventListener('change', save);
+    pane.querySelector('.js-classroom-mode').addEventListener('change', save);
 }
 
 // ============================================================
@@ -801,6 +808,7 @@ async function startExtraction(sid) {
             fast_mode: pane.querySelector('.js-fast-mode').checked,
             use_gpu: pane.querySelector('.js-use-gpu').checked,
             speed_mode: pane.querySelector('.js-speed-mode').value,
+            classroom_mode: pane.querySelector('.js-classroom-mode').value,
         }),
     });
 
@@ -1648,6 +1656,22 @@ window.addEventListener('pagehide', () => {
     // 如果是强制打开的，提示用户
     if (_forceOpen) {
         showToast('已强制打开，注意其他标签页可能仍在运行', 'warning', 5000);
+    }
+
+    // 第零.五步：获取 GPU 硬件加速探测结果
+    try {
+        const gpuData = await api('/api/gpu-info');
+        if (gpuData && gpuData.summary) {
+            const infoEl = document.getElementById('gpuProbeInfo');
+            const textEl = document.getElementById('gpuProbeText');
+            const infoElB = document.getElementById('gpuProbeInfoBatch');
+            const textElB = document.getElementById('gpuProbeTextBatch');
+            if (infoEl && textEl) { textEl.textContent = gpuData.summary; infoEl.classList.remove('hidden'); }
+            if (infoElB && textElB) { textElB.textContent = gpuData.summary; infoElB.classList.remove('hidden'); }
+            refreshIcons(infoEl); if (infoElB) refreshIcons(infoElB);
+        }
+    } catch (e) {
+        console.warn('[GPU] 探测请求失败:', e);
     }
 
     // 第一步：清理后端孤儿会话（空闲且无 SSE 连接的残留会话）

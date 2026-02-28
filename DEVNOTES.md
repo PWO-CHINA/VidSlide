@@ -11,7 +11,7 @@
 
 ## ⚡ QUICK REFERENCE（AI 快速定向，每次大任务先读这里）
 
-**项目状态**：后端 v0.5.3 三区域架构 + 前端 v0.6.0 视觉重构 | Flask 本地服务 + 原生 JS（无框架、无构建步骤）
+**项目状态**：后端 v0.6.1 实体课堂模式 + 前端 v0.6.0 视觉重构 | Flask 本地服务 + 原生 JS（无框架、无构建步骤）
 
 **关键文件速查**：
 
@@ -19,7 +19,7 @@
 |------|-----------|
 | `app.py` | 路由 + 会话 + SSE + GPU 监控（148-280 行最复杂，改前务必读 §1） |
 | `batch_manager.py` | 批量队列状态机（完全独立于标签页会话系统） |
-| `extractor.py` | 帧差检测核心（三档速度模式） |
+| `extractor.py` | 帧差检测核心（三档速度模式 + MOG2 实体课堂模式） |
 | `exporter.py` | PDF / PPTX / ZIP 打包 |
 | `static/js/main.js` | 标签页前端核心 + 全局工具函数（`api` / `showToast` / `refreshIcons`）+ `G` 对象 |
 | `static/js/batch/*.js` | 批量前端（8 个模块），共享 `main.js` 全局作用域 |
@@ -42,7 +42,7 @@
 | 标签页模式 UI / 逻辑 | `main.js`, `index.html`, `style.css` | §3 配置记忆, §17 template 陷阱 |
 | 批量处理逻辑 / 新功能 | `batch_manager.py`, `app.py` batch 路由, `batch/*.js` | §7 批量系统, §22–40 |
 | 前端样式 / 新组件 | `style.css`, `index.html` | §41–43 Lucide/CSS 规范 |
-| 视频提取算法 | `extractor.py` | §2 三档速度模式 |
+| 视频提取算法 | `extractor.py` | §2 三档速度模式, §45 实体课堂模式 |
 | GPU / 资源监控 | `app.py` 148–280 行 | **§1（务必先读！）** |
 | 打包 exe | `build.bat`, `version.txt` | §打包方式, §版本号更新清单 |
 
@@ -71,6 +71,7 @@
 - [v0.4.1 新增设计决策](#v041-新增设计决策)（§13–21）
 - [v0.5.1 批量队列交互修复](#v051-批量队列交互修复)（§22–40）
 - [v0.6.0 视觉风格重构](#v060-视觉风格重构极简毛玻璃-ai-风)（§41–44）
+- [v0.6.1 实体课堂模式](#v061-实体课堂模式-blackboard-mode)（§45）
 
 ---
 
@@ -701,4 +702,63 @@ queued → skipped（用户跳过）→ queued（重新排队）
 **方案**：移除原内联 SVG Emoji `data:` URI，改用 `static/favicon.svg`（项目自定义图标），`<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">`。
 
 **注意**：`static/favicon.svg` 是较大的矢量文件（~95KB），不适合内联到 HTML。打包时已通过 `--add-data "static;static"` 一并打入 exe。
+
+---
+
+## v0.6.1 实体课堂模式 (Blackboard Mode)
+
+### 45. 实体课堂模式 — MOG2 背景建模
+
+**需求背景**：固定机位拍摄黑板的实体课堂视频（如宋浩老师），画面中讲课的老师不断走动，导致原有全帧 `cv2.absdiff` 大量误判翻页，同时密集的 `cv2.imwrite` I/O 阻塞让 CPU 跑不满却极慢。
+
+**技术选型：MOG2 而非深度学习**
+
+使用 OpenCV 内置的 `cv2.createBackgroundSubtractorMOG2` 传统统计算法：
+- 极度轻量，纯 CPU 在 320p 灰度图上可跑到上百 FPS，不会成为性能瓶颈
+- 无模型文件，不增加 exe 打包体积（当前 ~72MB）
+- 随开随用，初始化毫秒级，无需显存
+
+**核心算法变更（`extractor.py` → `extract_slides()`）**：
+
+1. **函数签名**新增 `blackboard_mode=False`，默认关闭
+2. **初始化**：开启时创建 `backSub = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=25, detectShadows=False)`
+3. **外层循环差异计算**：
+   - 原逻辑：`mean_diff = np.mean(cv2.absdiff(curr_gray, prev_gray))` 全帧比较
+   - Blackboard 模式：先 `backSub.apply(curr_gray)` 获取前景掩码 → 膨胀 → 反转得背景掩码 → **交集掩码** `combined_bg = bitwise_and(bg_mask, prev_bg_mask)` 同时排除人物现在和之前的位置 → 仅在交集区域计算差异均值
+   - 若有效背景像素 < 总像素 10%（人挡住大部分画面），`mean_diff = 0` 跳过
+4. **黑板模式完全跳过内层稳定帧循环**：直接用当前帧作为 settled_frame。PPT 模式内层循环保持原有逻辑不变
+5. ~~保存后 10 秒冷却跳帧~~：已移除，10 秒步长本身已提供足够间隔
+
+**致命陷阱 1：内层循环对黑板视频是性能杀手**
+
+内层「稳定帧检测」循环的设计初衷是等 PPT 翻页动画播完。但黑板内容是连续渐变的，老师一直在写字走动，画面永远不会"稳定"。内层循环每次最多解码 210 帧（30 轮 × 7 帧/轮），将 Turbo 的 2 秒跳帧优势完全摧毁。解决方案：**黑板模式直接跳过内层循环**，`mean_diff > threshold` 时直接用当前帧。
+
+**致命陷阱 2：残影陷阱 — 必须使用交集掩码**
+
+当老师从位置 A 移动到位置 B 时，当前帧的 MOG2 掩码只遮住了位置 B，但位置 A 处刚露出的黑板与上一帧（老师还在 A）存在巨大像素差。解决方案：**双重交集掩码** `combined = bitwise_and(bg_mask_current, bg_mask_previous)`，同时排除人物"现在"和"之前"的位置。外层用 `prev_bg_mask` 追踪。
+
+**性能优化**（解决"CPU 跑不满但很慢"）：
+
+1. **PyAV 关键帧快速迭代（最大提速点）**：`skip_frame = 'NONKEY'` 让解码器跳过所有 P/B 帧，仅输出 I 帧（关键帧）。47 分钟 AV1 视频约 567 个关键帧（~5 秒间隔），全部解码仅需 **3.4 秒**（vs seek 方案需数分钟）。`_advance()` 使用 `next(keyframe_iter)` 迭代而非 seek，帧号通过 PTS 精确计算。PyAV 未安装时回退到 OpenCV 10 秒步长 seek
+2. **10 秒步长采样（无 PyAV 备选）**：无 PyAV 时 OpenCV 每次 seek ~3-4s，10 秒步长减少总 decode 次数。PPT 模式保持 Turbo=2s/Fast=1s 不变
+3. **seek 多级回退**：`_advance()` 优先级：PyAV NONKEY 迭代 → OpenCV seek → 顺序 grab（兼容所有后端）
+4. **尾帧保护**：主循环因 `_advance()` 到达视频末尾而 break 时，最后一段板书可能被跳过。循环结束后主动 seek 到视频最后一帧，与 `prev_gray` 做 MOG2 交集掩码对比，差异超过阈值则保存。确保完整板书的最终状态不会丢失
+5. **JPEG 质量降至 85**：黑板内容对 quality 95 收益极小。`_JPEG_QUALITY = 85 if blackboard_mode else 95`
+6. **异步保存（ThreadPoolExecutor）**：`imencode + tofile` 移至 2 个 worker 线程。`settled_frame.copy()` 必须复制帧数据。`finally` 块等待所有 future 完成
+7. **无冷却机制**：关键帧间隔 ~5 秒已提供足够间隔，不需要保存后的额外冷却跳帧
+8. **硬件加速实测无提升**：d3d11va/dxva2 在 NONKEY 模式下与软解 (dav1d) 耗时几乎相同（3.35s vs 3.41s），因为仅解码 I 帧时解码本身不是瓶颈
+
+**参数透传链路**：
+```
+index.html (.ai-switch / #batchBlackboardMode)
+  → main.js (_PREF_DEFAULTS / _watchPrefs / startExtraction)
+  → batch/core.js (_readBatchParams / _applyBatchPrefsToUI / _initBatch)
+  → app.py (start_extraction / _extraction_worker / resume_extraction)
+  → batch_manager.py (_video_worker)
+  → extractor.py (extract_slides)
+```
+
+**正交兼容**：`blackboard_mode` 与三档速度模式（eco/fast/turbo）、ROI 裁剪、历史记忆池均独立，互不影响。MOG2 直接在 `_to_gray()` 输出的缩小灰度图（320p/480p）上运行。
+
+**localStorage 键**：`vidslide_prefs`（标签页）/ `vidslide_batch_prefs`（批量），字段 `blackboard_mode`，默认 `false`。
 

@@ -49,6 +49,8 @@ pyinstaller --onefile --noconsole ^
     --hidden-import extractor ^
     --hidden-import exporter ^
     --hidden-import batch_manager ^
+    --hidden-import av ^
+    --collect-all av ^
     --name "VidSlide" ^
     app.py
 

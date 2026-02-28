@@ -1,5 +1,5 @@
 /**
- * 影幻智提 (VidSlide) v0.6.0 - 批量处理核心模块
+ * 影幻智提 (VidSlide) v0.6.1 - 批量处理核心模块
  * ================================================
  * 状态模型、SSE、初始化、恢复、工具函数
  * 依赖 main.js 中的 G, api(), showToast(), formatTime()
@@ -133,6 +133,7 @@ function _applyBatchPrefsToUI() {
     el('batchEnableHistory').checked = p.enable_history ?? true;
     el('batchMaxHistory').value = p.max_history ?? 5;
     el('batchSpeedMode').value = p.speed_mode ?? 'fast';
+    el('batchClassroomMode').value = p.classroom_mode ?? 'ppt';
 }
 
 function _readBatchParams() {
@@ -145,6 +146,7 @@ function _readBatchParams() {
         enable_history: el('batchEnableHistory').checked,
         max_history: parseInt(el('batchMaxHistory').value),
         speed_mode: el('batchSpeedMode').value,
+        classroom_mode: el('batchClassroomMode').value,
     };
 }
 
@@ -163,6 +165,7 @@ async function _initBatch() {
         enable_history: prefs.enable_history ?? true,
         max_history: prefs.max_history ?? 5,
         speed_mode: prefs.speed_mode ?? 'fast',
+        classroom_mode: prefs.classroom_mode ?? 'ppt',
     };
     try {
         const res = await api('/api/batch/create', {
@@ -316,6 +319,7 @@ function _mapTask(t) {
         totalFrames: t.total_frames,
         fps: t.fps || 0,
         resolution: t.resolution || [0, 0],
+        codec: t.codec || '',
         estimatedTime: t.estimated_time || -1,
         selected: false,
     };

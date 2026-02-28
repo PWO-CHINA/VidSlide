@@ -5,7 +5,7 @@
 回收站：半处理/已完成视频的暂存区，支持断点续传
 
 作者: PWO-CHINA
-版本: v0.6.0
+版本: v0.6.1
 """
 
 import cv2
@@ -83,6 +83,7 @@ def _new_video_task(video_path, display_name, output_dir):
         'total_frames': 0,
         'fps': 0,
         'resolution': (0, 0),     # (width, height)
+        'codec': '',              # 编码格式（av1/h264/hevc 等）
         'last_frame_index': 0,
         'resume_from_breakpoint': False,  # 断点续传标记
         # 目录
@@ -187,6 +188,7 @@ def _task_snapshot(t):
         'total_frames': t['total_frames'],
         'fps': t.get('fps', 0),
         'resolution': t.get('resolution', (0, 0)),
+        'codec': t.get('codec', ''),
         'estimated_time': estimate_processing_time(t),
     }
 
@@ -211,20 +213,34 @@ def _find_task_in_trash(batch, vid):
 #  视频元数据采集
 # ============================================================
 def get_video_metadata(video_path):
-    """用 cv2 提取视频的 fps/resolution/total_frames"""
+    """用 cv2/PyAV 提取视频的 fps/resolution/total_frames/codec"""
+    codec_name = ''
+    # 优先用 PyAV 检测编码（更准确）
+    try:
+        import av as _av
+        _c = _av.open(video_path)
+        _s = _c.streams.video[0]
+        codec_name = _s.codec_context.name or ''
+        _c.close()
+    except Exception:
+        pass
     try:
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
             cap.release()
-            return 0, (0, 0), 0
+            return 0, (0, 0), 0, codec_name
         fps = cap.get(cv2.CAP_PROP_FPS) or 25
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        # PyAV 检测失败时用 OpenCV fourcc 作为备选
+        if not codec_name:
+            fourcc_int = int(cap.get(cv2.CAP_PROP_FOURCC))
+            codec_name = ''.join(chr((fourcc_int >> (8 * i)) & 0xFF) for i in range(4)).strip('\x00')
         cap.release()
-        return fps, (w, h), total_frames
+        return fps, (w, h), total_frames, codec_name
     except Exception:
-        return 0, (0, 0), 0
+        return 0, (0, 0), 0, codec_name
 
 
 def estimate_processing_time(task, speed_mode=None):
@@ -283,11 +299,13 @@ def add_videos(bid, entries):
         with batch['lock']:
             task = _find_task(batch, info['id'])
         if task:
-            fps, resolution, total_frames = get_video_metadata(entry['path'])
+            fps, resolution, total_frames, codec = get_video_metadata(entry['path'])
             with batch['lock']:
                 task['fps'] = fps
                 task['resolution'] = resolution
                 task['total_frames'] = total_frames
+                task['codec'] = codec
+            info['codec'] = codec
             thumb_path = os.path.join(task['output_dir'], 'thumbnail.jpg')
             _generate_thumbnail(entry['path'], thumb_path)
 
@@ -562,6 +580,15 @@ def compute_max_batch_workers():
 # ============================================================
 #  调度器 & Worker（三区域模型）
 # ============================================================
+def update_batch_params(bid, params):
+    """更新批量队列的全局参数（开始处理前同步最新 UI 设置）。"""
+    batch = get_batch(bid)
+    if not batch:
+        return
+    with batch['lock']:
+        batch['params'].update(params)
+
+
 def start_processing(bid):
     """
     启动处理队列。
@@ -868,6 +895,7 @@ def _video_worker(bid, vid):
             fast_mode=bool(params.get('fast_mode', True)),
             use_gpu=bool(params.get('use_gpu', True)),
             speed_mode=params.get('speed_mode', 'fast'),
+            classroom_mode=params.get('classroom_mode', 'ppt'),
             on_progress=on_progress,
             should_cancel=should_cancel,
             start_frame=start_frame,
