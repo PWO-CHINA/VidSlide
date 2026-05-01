@@ -68,6 +68,7 @@
         try {
             const res = await api('/api/diagnostics/status');
             if (!res.success) throw new Error(res.message || 'diagnostics failed');
+            renderFfmpegCandidates(res.ffmpeg || {});
             const cdn = res.external_asset_refs?.length ? res.external_asset_refs.join(', ') : '无';
             box.innerHTML = 'ffmpeg：' + (res.ffmpeg.available ? '可用' : '未找到') + (res.ffmpeg.path ? ' · ' + _escHtml(res.ffmpeg.path) : '') + '<br>' +
                 '登录：' + _escHtml(res.login.last_status || 'unknown') + '<br>' +
@@ -78,6 +79,31 @@
             box.textContent = '诊断失败：' + e.message;
         }
     };
+
+    function renderFfmpegCandidates(ffmpeg) {
+        const box = $('settingsFfmpegCandidates');
+        if (!box) return;
+        const candidates = ffmpeg.candidates || [];
+        if (!candidates.length) {
+            box.textContent = '未发现 ffmpeg 候选。可手动填写完整路径。';
+            return;
+        }
+        box.innerHTML = '<div class="settings-mini-title">检测到的 ffmpeg 候选</div>' + candidates.map((item, index) =>
+            '<button type="button" class="candidate-btn" data-index="' + index + '">' +
+                '<span>' + _escHtml(item.source || 'candidate') + '</span>' +
+                '<code>' + _escHtml(item.path || '') + '</code>' +
+            '</button>'
+        ).join('');
+        box.querySelectorAll('.candidate-btn').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const item = candidates[Number(btn.dataset.index)];
+                if (!item?.path) return;
+                $('settingFfmpegPath').value = item.path;
+                await saveSettingsDrawer();
+                await loadDiagnostics();
+            });
+        });
+    }
 
     window.saveSettingsDrawer = async function () {
         try {

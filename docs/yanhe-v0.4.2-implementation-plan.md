@@ -139,18 +139,19 @@ handoff without losing decisions.
   - Default first screen is the Yanhe course workspace; single-video sessions are created lazily only when entering the single-video workspace.
   - `static/js/yanhe.js` loads real Yanhe course lists, defaults to no selected recordings, and checks ffmpeg before creating download jobs.
   - `static/js/settings.js` adds the settings drawer wiring, storage/diagnostics display, login checks, and manual ffmpeg path setting.
+  - Diagnostics now returns ffmpeg candidates, including read-only `getvideo` development candidates when present; the settings drawer can fill a candidate path into settings.
   - `static/js/batch/core.js` now hides/shows the three workspaces cleanly and initializes batch only on demand.
   - Runtime CDN usage was removed from app templates; Sortable, Lucide, and generated Tailwind CSS are under `static/vendor/`.
 - M7/M8 validation has started:
   - Real course smoke target: `https://www.yanhekt.cn/course/67968`.
   - Course load succeeds for course `67968` / `生物仪器分析`, returning 16 recordings with the existing getvideo profile.
   - Dry-run download job succeeds for session `853828`, validating signing and HLS size estimation without writing video; estimated size was about `774.3 MB` across 297 segments.
-  - Actual download was not run because the machine currently has low workspace-disk free space and no configured product ffmpeg path; the existing getvideo ffmpeg was found only as a local development candidate.
+  - Actual download was not run because the machine currently has low workspace-disk free space and no configured product ffmpeg path; the existing getvideo ffmpeg is surfaced only as a local development candidate.
   - Download job preflight now blocks missing ffmpeg before creating a job; real downloads also check estimated HLS size against disk free space plus a 512 MB reserve.
   - Added `tests/test_yanhe_branch.py` for workspace guards, settings round trip, downloader helpers, and dry-run preflight.
   - `python -m unittest discover -s tests`, `py_compile`, JS `node --check`, and CDN scans pass.
 - Next immediate steps:
   - Commit and push the frontend/workspace milestone.
-  - Add a proper ffmpeg chooser/candidate picker instead of only a manual path field.
+  - Add a native file picker for ffmpeg and download directories; current candidate buttons are enough for development but not the final product feel.
   - Continue UI polish for batch downloaded-to-unselected feedback and mobile screenshots.
   - Add README/DEVNOTES updates for this branch workflow, privacy boundaries, and the 67968 smoke-test path.

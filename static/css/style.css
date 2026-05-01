@@ -329,6 +329,40 @@ body {
     line-height: 1.55;
     word-break: break-word;
 }
+.settings-mini-title {
+    margin-bottom: .5rem;
+    color: var(--text-muted);
+    font-size: .72rem;
+    font-weight: 700;
+}
+.candidate-btn {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    margin-top: .45rem;
+    padding: .55rem .65rem;
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    text-align: left;
+    transition: border-color .16s ease, transform .16s ease;
+}
+.candidate-btn:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+}
+.candidate-btn span {
+    color: var(--text-primary);
+    font-size: .76rem;
+    font-weight: 700;
+}
+.candidate-btn code {
+    font-size: .72rem;
+    color: var(--text-muted);
+    white-space: normal;
+}
 .settings-section.muted {
     color: var(--text-muted);
     font-size: .78rem;

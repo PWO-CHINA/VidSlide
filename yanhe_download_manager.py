@@ -182,6 +182,42 @@ def clear_vidslide_login_profile() -> dict[str, Any]:
     return storage.clear_managed_dir("chrome-profile")
 
 
+def ffmpeg_candidates(user_path: str | None = None) -> list[dict[str, str]]:
+    candidates: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    def add(path: Path | str | None, source: str) -> None:
+        if not path:
+            return
+        p = Path(path).expanduser()
+        if not p.exists() or not p.is_file():
+            return
+        resolved = str(p.resolve())
+        key = resolved.casefold()
+        if key in seen:
+            return
+        seen.add(key)
+        candidates.append({"path": resolved, "source": source})
+
+    add(user_path, "configured")
+    for root in core.resource_dirs():
+        add(root / "ffmpeg.exe", "app")
+        for candidate in sorted(root.glob("ffmpeg-*full_build/bin/ffmpeg.exe"), reverse=True):
+            add(candidate, "app")
+
+    found = shutil.which("ffmpeg")
+    add(found, "PATH")
+
+    project_parent = Path(__file__).resolve().parent.parent
+    getvideo_dir = project_parent / "getvideo"
+    add(getvideo_dir / "ffmpeg.exe", "getvideo")
+    add(getvideo_dir / "build" / "release" / "payload" / "ffmpeg.exe", "getvideo")
+    for candidate in sorted(getvideo_dir.glob("ffmpeg-*full_build/bin/ffmpeg.exe"), reverse=True):
+        add(candidate, "getvideo")
+
+    return candidates
+
+
 def load_course(course_input: str, output_dir: str | None = None) -> dict[str, Any]:
     proc = None
     cdp = None
@@ -213,12 +249,14 @@ def load_course(course_input: str, output_dir: str | None = None) -> dict[str, A
 
 
 def ffmpeg_status(user_path: str | None = None) -> dict[str, Any]:
+    settings = settings_store.load_settings()
+    configured = user_path or settings.get("download", {}).get("ffmpeg_path") or None
+    candidates = ffmpeg_candidates(configured)
     try:
-        settings = settings_store.load_settings()
-        path = core.find_ffmpeg(user_path or settings.get("download", {}).get("ffmpeg_path") or None)
-        return {"available": True, "path": path}
+        path = core.find_ffmpeg(configured)
+        return {"available": True, "path": path, "candidates": candidates}
     except Exception as exc:
-        return {"available": False, "message": str(exc)}
+        return {"available": False, "message": str(exc), "candidates": candidates}
 
 
 def download_preflight(payload: dict[str, Any]) -> dict[str, Any]:
