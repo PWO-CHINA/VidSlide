@@ -2,6 +2,8 @@
 
 > 从延河课堂录屏视频中，一键智能提取 PPT 幻灯片 — 告别截图，告别手动整理。
 
+> 分支说明：当前工作目录是 `yanhe/v0.4.2-batch` 的延河课堂批量实验分支。它和 `main` 分开维护，只关注延河课堂屏幕录屏下载与 PPT 提取。分支实施细节见 [DEVNOTES-yanhe-v0.4.2.md](DEVNOTES-yanhe-v0.4.2.md)。
+
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-Web_UI-green?logo=flask)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
