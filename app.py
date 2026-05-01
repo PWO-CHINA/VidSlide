@@ -46,6 +46,8 @@ from flask import (Flask, request, jsonify, send_file,
 # 导入拆分后的功能模块
 from extractor import extract_slides
 from exporter import package_images
+import settings_store
+import storage
 
 # ============================================================
 #  无控制台模式兼容
@@ -91,7 +93,8 @@ if _is_frozen():
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-SESSIONS_ROOT = os.path.join(BASE_DIR, '.vidslide_sessions')
+storage.ensure_workspace()
+SESSIONS_ROOT = str(storage.sessions_dir())
 
 # ── 根据机器配置动态计算最大标签页数量 ──
 def _compute_max_sessions():
@@ -132,7 +135,7 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # 开发阶段禁用静态文件缓
 def after_request(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PATCH, OPTIONS'
     return response
 
 
@@ -675,6 +678,60 @@ HEARTBEAT_TIMEOUT = 300  # 5 分钟：浏览器后台标签页会大幅节流 se
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+# ============================================================
+#  Routes - managed workspace and persistent settings
+# ============================================================
+@app.route('/api/settings', methods=['GET'])
+def api_get_settings():
+    return jsonify(success=True, settings=settings_store.load_settings())
+
+
+@app.route('/api/settings', methods=['PATCH'])
+def api_patch_settings():
+    data = request.get_json(silent=True) or {}
+    try:
+        settings = settings_store.update_settings(data)
+        return jsonify(success=True, settings=settings)
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 400
+
+
+@app.route('/api/storage/status', methods=['GET'])
+def api_storage_status():
+    try:
+        return jsonify(success=True, **storage.storage_status())
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 500
+
+
+@app.route('/api/storage/open', methods=['POST'])
+def api_storage_open():
+    data = request.get_json(silent=True) or {}
+    kind = data.get('kind', 'workspace')
+    try:
+        path = storage.open_path(kind)
+        return jsonify(success=True, path=str(path))
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 400
+
+
+@app.route('/api/storage/cleanup', methods=['POST'])
+def api_storage_cleanup():
+    data = request.get_json(silent=True) or {}
+    target = data.get('target', '')
+    try:
+        if target == 'reset-all':
+            result = storage.reset_all()
+            settings_store.save_settings({})
+        elif target == 'settings':
+            result = {'target': 'settings', 'settings': settings_store.reset_settings()}
+        else:
+            result = storage.clear_managed_dir(target)
+        return jsonify(success=True, result=result, status=storage.storage_status())
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 400
 
 
 # ============================================================
