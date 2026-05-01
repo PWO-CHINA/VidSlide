@@ -128,7 +128,13 @@ handoff without losing decisions.
   - runtime data ignores added to `.gitignore`.
   - `py_compile` passed for current backend modules.
   - Flask test client passed settings/storage smoke checks.
+- M3/M4 backend integration is in progress:
+  - `yanhe_downloader_core.py` copied/adapted from getvideo.
+  - `yanhe_download_manager.py` added.
+  - Yanhe login/course/download/import/diagnostics API routes added.
+  - `py_compile` passed after these additions.
+  - `/api/yanhe/login/status` verified usable with the existing getvideo profile.
 - Next immediate steps:
-  - Commit and push the storage/settings milestone.
-  - Add Yanhe downloader core module.
-  - Add download job manager and Yanhe APIs.
+  - Commit and push the Yanhe backend API milestone.
+  - Wire frontend workspace controls to these APIs.
+  - Add local vendor assets and remove CDN dependencies.

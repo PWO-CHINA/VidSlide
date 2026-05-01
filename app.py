@@ -48,6 +48,7 @@ from extractor import extract_slides
 from exporter import package_images
 import settings_store
 import storage
+import yanhe_download_manager as _ydm
 
 # ============================================================
 #  无控制台模式兼容
@@ -732,6 +733,136 @@ def api_storage_cleanup():
         return jsonify(success=True, result=result, status=storage.storage_status())
     except Exception as e:
         return jsonify(success=False, message=str(e)), 400
+
+
+# ============================================================
+#  Routes - Yanhe login, course loading, downloads, imports
+# ============================================================
+@app.route('/api/yanhe/login/status', methods=['GET'])
+def api_yanhe_login_status():
+    status = _ydm.check_login_status(headless=True)
+    return jsonify(success=True, login=status)
+
+
+@app.route('/api/yanhe/login/start', methods=['POST'])
+def api_yanhe_login_start():
+    try:
+        return jsonify(success=True, login=_ydm.start_login_browser())
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 400
+
+
+@app.route('/api/yanhe/login/use-getvideo-profile', methods=['POST'])
+def api_yanhe_use_getvideo_profile():
+    result = _ydm.use_getvideo_profile()
+    return jsonify(result), (200 if result.get('success') else 404)
+
+
+@app.route('/api/yanhe/login/clear', methods=['POST'])
+def api_yanhe_login_clear():
+    try:
+        return jsonify(success=True, result=_ydm.clear_vidslide_login_profile())
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 400
+
+
+@app.route('/api/yanhe/course/load', methods=['POST'])
+def api_yanhe_course_load():
+    data = request.get_json(silent=True) or {}
+    course_input = data.get('course_input') or data.get('course_url') or data.get('course_id') or ''
+    if not str(course_input).strip():
+        return jsonify(success=False, message='course input is required'), 400
+    try:
+        payload = _ydm.load_course(str(course_input), data.get('output_dir'))
+        ok = payload.get('login_status') in (None, 'usable') and 'error' not in payload
+        return jsonify(success=ok, course=payload, message=payload.get('error', ''))
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 500
+
+
+@app.route('/api/yanhe/download-jobs', methods=['POST'])
+def api_yanhe_download_jobs():
+    data = request.get_json(silent=True) or {}
+    if not (data.get('course_input') or data.get('course_url') or data.get('course_id')):
+        return jsonify(success=False, message='course input is required'), 400
+    job = _ydm.create_download_job(data, SESSIONS_ROOT)
+    return jsonify(success=True, job=job)
+
+
+@app.route('/api/yanhe/download-jobs/<job_id>', methods=['GET'])
+def api_yanhe_download_job(job_id):
+    job = _ydm.get_job(job_id)
+    if not job:
+        return jsonify(success=False, message='job not found'), 404
+    return jsonify(success=True, job=job)
+
+
+@app.route('/api/yanhe/download-jobs/<job_id>/events', methods=['GET'])
+def api_yanhe_download_job_events(job_id):
+    gen_factory = _ydm.generate_job_sse(job_id)
+    if not gen_factory:
+        return jsonify(success=False, message='job not found'), 404
+    resp = Response(gen_factory(), mimetype='text/event-stream')
+    resp.headers['Cache-Control'] = 'no-cache'
+    resp.headers['X-Accel-Buffering'] = 'no'
+    return resp
+
+
+@app.route('/api/yanhe/download-jobs/<job_id>/cancel', methods=['POST'])
+def api_yanhe_download_job_cancel(job_id):
+    ok = _ydm.cancel_job(job_id)
+    return jsonify(success=ok, message='ok' if ok else 'job not found'), (200 if ok else 404)
+
+
+@app.route('/api/import-video', methods=['POST'])
+def api_import_video():
+    upload = request.files.get('file')
+    if not upload or not upload.filename:
+        return jsonify(success=False, message='file is required'), 400
+    original = Path(upload.filename).name
+    ext = Path(original).suffix.lower()
+    if ext not in _bm.VIDEO_EXTENSIONS:
+        return jsonify(success=False, message='unsupported video type'), 400
+    safe_stem = ''.join(c if c not in '<>:"/\\|?*\x00' else '_' for c in Path(original).stem).strip() or 'video'
+    target_dir = storage.imports_dir()
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / f'{safe_stem}{ext}'
+    i = 1
+    while target.exists():
+        target = target_dir / f'{safe_stem}_{i}{ext}'
+        i += 1
+    upload.save(str(target))
+    result = {'path': str(target), 'name': safe_stem, 'size': target.stat().st_size}
+    batch_id = request.form.get('batch_id') or request.args.get('batch_id')
+    if batch_id:
+        added = _bm.add_videos(batch_id, [{'path': str(target), 'name': safe_stem}])
+        result['batch_id'] = batch_id
+        result['added'] = added
+    return jsonify(success=True, imported=result)
+
+
+@app.route('/api/diagnostics/status', methods=['GET'])
+def api_diagnostics_status():
+    settings = settings_store.load_settings()
+    asset_refs = []
+    for rel in ['templates/index.html', 'static/js/main.js', 'static/css/style.css']:
+        path = Path(BASE_DIR) / rel
+        if path.exists():
+            text = path.read_text(encoding='utf-8', errors='ignore')
+            if 'https://cdn' in text or 'cdn.jsdelivr' in text or 'cdn.tailwindcss' in text:
+                asset_refs.append(rel)
+    return jsonify(
+        success=True,
+        storage=storage.storage_status(),
+        ffmpeg=_ydm.ffmpeg_status(),
+        login={
+            'last_status': settings.get('yanhe', {}).get('last_login_status'),
+            'last_checked_at': settings.get('yanhe', {}).get('last_login_check_at'),
+            'profile': str(_ydm.selected_profile_dir(settings)),
+        },
+        external_asset_refs=asset_refs,
+        max_batch_workers=_bm.compute_max_batch_workers(),
+    )
 
 
 # ============================================================
