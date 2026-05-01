@@ -29,8 +29,8 @@
         try {
             const diag = await api('/api/diagnostics/status');
             if (diag.success) {
-                const free = diag.storage?.disk?.free_bytes;
-                setText('yanheWorkspaceStatus', '空间：' + fmtBytes(free));
+                const free = (diag.storage?.download_disk || diag.storage?.disk || {}).free_bytes;
+                setText('yanheWorkspaceStatus', '下载盘：' + fmtBytes(free));
                 setText('yanheFfmpegStatus', diag.ffmpeg?.available ? 'ffmpeg：可用' : 'ffmpeg：未找到');
             }
             const login = await api('/api/yanhe/login/status');

@@ -56,12 +56,21 @@ if not defined NUITKA_CACHE_DIR (
     set "NUITKA_CACHE_DIR=%USERPROFILE%\NuitkaCache"
 )
 
+set "FFMPEG_ARGS="
+if exist "bin\ffmpeg.exe" (
+    echo [INFO] 检测到 bin\ffmpeg.exe，将作为内置 ffmpeg 打包。
+    set "FFMPEG_ARGS=--include-data-file=bin\ffmpeg.exe=bin\ffmpeg.exe"
+) else (
+    echo [INFO] 未检测到 bin\ffmpeg.exe，打包产物将依赖用户配置 ffmpeg。
+)
+
 python -m nuitka ^
     --onefile ^
     --windows-console-mode=disable ^
     --windows-icon-from-ico=logo.ico ^
     --include-data-dir=templates=templates ^
     --include-data-dir=static=static ^
+    %FFMPEG_ARGS% ^
     --enable-plugin=tk-inter ^
     --assume-yes-for-downloads ^
     --output-dir=dist ^

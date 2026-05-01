@@ -34,11 +34,20 @@ if errorlevel 1 (
 echo [2/2] 正在打包为 .exe（这可能需要 1~3 分钟）...
 echo.
 
+set "FFMPEG_ARGS="
+if exist "bin\ffmpeg.exe" (
+    echo [INFO] 检测到 bin\ffmpeg.exe，将作为内置 ffmpeg 打包。
+    set "FFMPEG_ARGS=--add-binary bin\ffmpeg.exe;bin"
+) else (
+    echo [INFO] 未检测到 bin\ffmpeg.exe，打包产物将依赖用户配置 ffmpeg。
+)
+
 pyinstaller --onefile --noconsole ^
     --icon="logo.ico" ^
     --version-file="version.txt" ^
     --add-data "templates;templates" ^
     --add-data "static;static" ^
+    %FFMPEG_ARGS% ^
     --hidden-import extractor ^
     --hidden-import exporter ^
     --hidden-import batch_manager ^

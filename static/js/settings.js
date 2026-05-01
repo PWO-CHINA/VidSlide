@@ -34,6 +34,7 @@
             if (!res.success) return;
             currentSettings = res.settings;
             $('settingFfmpegPath').value = currentSettings.download.ffmpeg_path || '';
+            $('settingDownloadDir').value = currentSettings.download.download_dir || '';
             $('settingUseGetvideoProfile').checked = !!currentSettings.download.use_getvideo_profile_for_dev;
             $('settingCleanSource').checked = !!currentSettings.download.clean_source_after_successful_extraction;
             $('settingThreshold').value = currentSettings.extraction.threshold;
@@ -54,9 +55,11 @@
         try {
             const res = await api('/api/storage/status');
             if (!res.success) throw new Error(res.message || 'storage failed');
+            const downloadDisk = res.download_disk || res.disk || {};
             box.innerHTML = '工作区：' + _escHtml(res.workspace) + '<br>' +
-                '磁盘剩余：' + bytes(res.disk.free_bytes) + '<br>' +
-                '下载目录：' + bytes(res.dirs.downloads.size_bytes) + ' · imports：' + bytes(res.dirs.imports.size_bytes);
+                '下载目录：' + _escHtml(res.dirs.downloads.path) + '<br>' +
+                '下载盘剩余：' + bytes(downloadDisk.free_bytes) + '<br>' +
+                '下载目录占用：' + bytes(res.dirs.downloads.size_bytes) + ' · imports：' + bytes(res.dirs.imports.size_bytes);
         } catch (e) {
             box.textContent = '存储状态读取失败：' + e.message;
         }
@@ -110,6 +113,7 @@
             const patch = {
                 download: {
                     ffmpeg_path: $('settingFfmpegPath').value.trim(),
+                    download_dir: $('settingDownloadDir').value.trim(),
                     use_getvideo_profile_for_dev: $('settingUseGetvideoProfile').checked,
                     clean_source_after_successful_extraction: $('settingCleanSource').checked,
                 },

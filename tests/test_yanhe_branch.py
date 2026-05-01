@@ -42,6 +42,8 @@ class YanheBranchTests(unittest.TestCase):
         self.assertEqual(core.parse_session_ids("1, 2;3\n4"), {"1", "2", "3", "4"})
         self.assertNotIn(":", core.sanitize_filename("bad:name?.mp4"))
         self.assertTrue(core.filename_for({"title": "第1周", "course_name": "生物仪器分析"}, 1).endswith("_课堂录屏.mp4"))
+        with self.assertRaises(FileNotFoundError):
+            core.find_ffmpeg(str(Path(self.tmp.name) / "missing-ffmpeg.exe"))
 
     def test_dry_run_preflight_does_not_require_ffmpeg(self):
         result = ydm.download_preflight({"dry_run": True})

@@ -73,7 +73,9 @@ def _deep_merge(base: dict[str, Any], patch: dict[str, Any]) -> dict[str, Any]:
 
 def _normalize_settings(data: dict[str, Any]) -> dict[str, Any]:
     settings = _deep_merge(DEFAULT_SETTINGS, data or {})
-    if not settings["download"].get("download_dir"):
+    legacy_download_dir = str(storage.workspace_root() / "downloads")
+    current_download_dir = str(settings["download"].get("download_dir") or "")
+    if not current_download_dir or current_download_dir == legacy_download_dir:
         settings["download"]["download_dir"] = str(storage.downloads_dir())
     if not settings["yanhe"].get("chrome_profile_dir"):
         settings["yanhe"]["chrome_profile_dir"] = str(storage.chrome_profile_dir())

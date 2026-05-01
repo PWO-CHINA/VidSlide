@@ -7,6 +7,9 @@ venv/
 build/
 dist/
 *.spec
+bin/ffmpeg.exe
+bin/ffprobe.exe
+bin/*.dll
 
 # Backups
 *_backup.py

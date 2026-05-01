@@ -12,6 +12,12 @@ Runtime data is managed under:
 
 `%LOCALAPPDATA%\VidSlide\yanhe-batch-v0.4.2\`
 
+Large Yanhe downloads default to:
+
+`F:\VidSlide\yanhe-batch-v0.4.2\downloads`
+
+If F: is unavailable, downloads fall back to the managed LocalAppData workspace.
+
 Important subdirectories:
 
 - `downloads/`: managed Yanhe downloads.
@@ -63,6 +69,14 @@ The dry run validates course loading, URL signing, HLS playlist parsing, and siz
 estimation without writing a video or adding anything to a batch. A recent dry
 run for session `853828` estimated about `774.3 MB` and `297` segments.
 
+Real download smoke result:
+
+- Session: `853828`
+- Output: `F:\VidSlide\yanhe-batch-v0.4.2\downloads\生物仪器分析_第7周_星期二_第4大节_课堂录屏.mp4`
+- Size: about `759.5 MB`
+- ffmpeg read: `1920x1080`, H.264 video, AAC audio, duration about `01:38:57`
+- Batch behavior: added to batch unselected zone, batch remains `idle`
+
 ## ffmpeg
 
 Real downloads require ffmpeg. The app now:
@@ -71,12 +85,15 @@ Real downloads require ffmpeg. The app now:
 - Allows dry-run jobs without ffmpeg.
 - Reports ffmpeg candidates in `/api/diagnostics/status`.
 - Shows candidate buttons in the settings drawer.
+- Prefers local sidecar `bin\ffmpeg.exe` when present.
+- Validates configured ffmpeg paths before reporting them usable.
 
-Development candidate currently found:
+Local sidecar currently used during development:
 
-`D:\the lab for html\getvideo\ffmpeg-2025-11-10-git-133a0bcb13-full_build\bin\ffmpeg.exe`
+`D:\the lab for html\VidSlide-v0.4.2-yanhe-batch\bin\ffmpeg.exe`
 
-Do not commit ffmpeg binaries to this branch.
+Do not commit ffmpeg binaries to this branch. The build scripts include
+`bin\ffmpeg.exe` when it exists, so release artifacts can still be self-contained.
 
 ## Verification
 

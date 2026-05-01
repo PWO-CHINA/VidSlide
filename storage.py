@@ -9,6 +9,7 @@ from typing import Iterable
 
 APP_NAME = "VidSlide"
 BRANCH_NAME = "yanhe-batch-v0.4.2"
+DOWNLOAD_ENV = "VIDSLIDE_YANHE_DOWNLOAD_ROOT"
 
 
 def _local_app_data() -> Path:
@@ -24,8 +25,17 @@ def workspace_root() -> Path:
     return _local_app_data() / APP_NAME / BRANCH_NAME
 
 
+def download_workspace_root() -> Path:
+    configured = os.environ.get(DOWNLOAD_ENV)
+    if configured:
+        return Path(configured).expanduser()
+    if os.name == "nt" and Path("F:/").exists():
+        return Path("F:/VidSlide") / BRANCH_NAME
+    return workspace_root()
+
+
 def downloads_dir() -> Path:
-    return workspace_root() / "downloads"
+    return download_workspace_root() / "downloads"
 
 
 def imports_dir() -> Path:
@@ -60,6 +70,22 @@ def managed_dirs() -> dict[str, Path]:
     }
 
 
+def managed_roots() -> list[Path]:
+    roots = [workspace_root(), downloads_dir()]
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for root in roots:
+        try:
+            resolved = root.expanduser().resolve()
+        except OSError:
+            resolved = root.expanduser().absolute()
+        key = str(resolved).casefold()
+        if key not in seen:
+            seen.add(key)
+            unique.append(resolved)
+    return unique
+
+
 def ensure_workspace() -> Path:
     root = workspace_root()
     for path in managed_dirs().values():
@@ -70,10 +96,11 @@ def ensure_workspace() -> Path:
 def resolve_managed_path(path: str | Path) -> Path:
     ensure_workspace()
     resolved = Path(path).expanduser().resolve()
-    root = workspace_root().resolve()
-    if resolved != root and root not in resolved.parents:
+    for root in managed_roots():
+        if resolved == root or root in resolved.parents:
+            return resolved
+    else:
         raise ValueError(f"path is outside VidSlide managed workspace: {resolved}")
-    return resolved
 
 
 def is_managed_path(path: str | Path) -> bool:
@@ -101,22 +128,31 @@ def dir_size(path: Path) -> int:
 def storage_status() -> dict:
     ensure_workspace()
     root = workspace_root()
-    usage = shutil.disk_usage(root)
+    workspace_usage = shutil.disk_usage(root)
+    download_usage = shutil.disk_usage(downloads_dir())
     dirs = {}
     for key, path in managed_dirs().items():
+        usage = shutil.disk_usage(path)
         dirs[key] = {
             "path": str(path),
             "exists": path.exists(),
             "size_bytes": dir_size(path),
             "managed": True,
+            "disk_free_bytes": usage.free,
         }
     return {
         "workspace": str(root),
         "disk": {
-            "total_bytes": usage.total,
-            "used_bytes": usage.used,
-            "free_bytes": usage.free,
-            "percent": round((usage.used / usage.total) * 100, 1) if usage.total else 0,
+            "total_bytes": workspace_usage.total,
+            "used_bytes": workspace_usage.used,
+            "free_bytes": workspace_usage.free,
+            "percent": round((workspace_usage.used / workspace_usage.total) * 100, 1) if workspace_usage.total else 0,
+        },
+        "download_disk": {
+            "total_bytes": download_usage.total,
+            "used_bytes": download_usage.used,
+            "free_bytes": download_usage.free,
+            "percent": round((download_usage.used / download_usage.total) * 100, 1) if download_usage.total else 0,
         },
         "dirs": dirs,
     }
@@ -159,9 +195,11 @@ def clear_managed_dir(kind: str) -> dict:
 
 def reset_all() -> dict:
     root = resolve_managed_path(workspace_root())
-    removed = root.exists()
+    download_root = resolve_managed_path(downloads_dir())
+    removed = root.exists() or download_root.exists()
+    if download_root.exists() and download_root != root and root not in download_root.parents:
+        shutil.rmtree(download_root, ignore_errors=True)
     if root.exists():
         shutil.rmtree(root, ignore_errors=True)
     ensure_workspace()
-    return {"target": "workspace", "path": str(root), "removed": removed}
-
+    return {"target": "workspace", "path": str(root), "download_path": str(download_root), "removed": removed}

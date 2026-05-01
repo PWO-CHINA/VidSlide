@@ -142,16 +142,22 @@ handoff without losing decisions.
   - Diagnostics now returns ffmpeg candidates, including read-only `getvideo` development candidates when present; the settings drawer can fill a candidate path into settings.
   - `static/js/batch/core.js` now hides/shows the three workspaces cleanly and initializes batch only on demand.
   - Runtime CDN usage was removed from app templates; Sortable, Lucide, and generated Tailwind CSS are under `static/vendor/`.
+- M6/M7 download reliability update:
+  - Default managed download directory now moves to `F:\VidSlide\yanhe-batch-v0.4.2\downloads` when F: exists, while config/sessions/profile stay under `%LOCALAPPDATA%`.
+  - A local sidecar `bin\ffmpeg.exe` is supported and preferred as bundled ffmpeg; the binary is ignored by Git and should be supplied in local/release artifacts.
+  - `find_ffmpeg()` now validates configured paths instead of returning nonexistent paths as usable.
+  - Build scripts include `bin\ffmpeg.exe` when it exists, so release builds can be made self-contained without committing the binary.
 - M7/M8 validation has started:
   - Real course smoke target: `https://www.yanhekt.cn/course/67968`.
   - Course load succeeds for course `67968` / `生物仪器分析`, returning 16 recordings with the existing getvideo profile.
   - Dry-run download job succeeds for session `853828`, validating signing and HLS size estimation without writing video; estimated size was about `774.3 MB` across 297 segments.
-  - Actual download was not run because the machine currently has low workspace-disk free space and no configured product ffmpeg path; the existing getvideo ffmpeg is surfaced only as a local development candidate.
+  - Real download now succeeds for session `853828`; output file was written to `F:\VidSlide\yanhe-batch-v0.4.2\downloads`, about `759.5 MB`, readable by ffmpeg as 1080p H.264/AAC.
+  - Download completion adds the video to batch unselected zone in batch `6e912dd6`; batch status remains `idle`, proving download does not auto-start extraction.
   - Download job preflight now blocks missing ffmpeg before creating a job; real downloads also check estimated HLS size against disk free space plus a 512 MB reserve.
   - Added `tests/test_yanhe_branch.py` for workspace guards, settings round trip, downloader helpers, and dry-run preflight.
   - `python -m unittest discover -s tests`, `py_compile`, JS `node --check`, and CDN scans pass.
 - Next immediate steps:
-  - Commit and push the frontend/workspace milestone.
-  - Add a native file picker for ffmpeg and download directories; current candidate buttons are enough for development but not the final product feel.
-  - Continue UI polish for batch downloaded-to-unselected feedback and mobile screenshots.
-  - Add README/DEVNOTES updates for this branch workflow, privacy boundaries, and the 67968 smoke-test path.
+  - Commit and push the F-drive/sidecar ffmpeg/download reliability milestone.
+  - Productize the first-screen copy and settings diagnostics using early task-doc guidance.
+  - Add a native file picker for ffmpeg and download directories; current text inputs/candidate buttons work but are not final product feel.
+  - Verify a short extraction smoke test on the downloaded MP4 without changing extraction principles.

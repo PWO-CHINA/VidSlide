@@ -202,6 +202,7 @@ def ffmpeg_candidates(user_path: str | None = None) -> list[dict[str, str]]:
     add(user_path, "configured")
     for root in core.resource_dirs():
         add(root / "ffmpeg.exe", "app")
+        add(root / "bin" / "ffmpeg.exe", "bundled")
         for candidate in sorted(root.glob("ffmpeg-*full_build/bin/ffmpeg.exe"), reverse=True):
             add(candidate, "app")
 

@@ -640,11 +640,17 @@ def filename_for(item: dict[str, Any], index: int) -> str:
 
 def find_ffmpeg(user_path: str | None) -> str:
     if user_path:
-        return str(Path(user_path))
+        configured = Path(user_path).expanduser()
+        if configured.exists() and configured.is_file():
+            return str(configured.resolve())
+        raise FileNotFoundError(f"configured ffmpeg path does not exist: {configured}")
     for root in resource_dirs():
         bundled = root / "ffmpeg.exe"
         if bundled.exists():
             return str(bundled)
+        sidecar = root / "bin" / "ffmpeg.exe"
+        if sidecar.exists():
+            return str(sidecar)
         candidates = sorted(root.glob("ffmpeg-*full_build/bin/ffmpeg.exe"))
         if candidates:
             return str(candidates[-1])
