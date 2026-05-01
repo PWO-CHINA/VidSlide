@@ -785,6 +785,9 @@ def api_yanhe_download_jobs():
     data = request.get_json(silent=True) or {}
     if not (data.get('course_input') or data.get('course_url') or data.get('course_id')):
         return jsonify(success=False, message='course input is required'), 400
+    preflight = _ydm.download_preflight(data)
+    if not preflight.get('ok'):
+        return jsonify(success=False, message=preflight.get('message', 'download preflight failed'), preflight=preflight), 400
     job = _ydm.create_download_job(data, SESSIONS_ROOT)
     return jsonify(success=True, job=job)
 

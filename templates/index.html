@@ -5,26 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>影幻智提 (VidSlide) v0.4.2 - 延河课堂批量版</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { 50: '#f6f8fa', 100: '#eef2f6', 200: '#dce4ed', 300: '#bacce0', 400: '#94b0cf', 500: '#7394b8', 600: '#5a7a9e', 700: '#486180', 800: '#3e5169', 900: '#354457', 950: '#232d3b' },
-                        soft: { success: '#34d399', warning: '#fbbf24', error: '#fb7185' }
-                    },
-                    boxShadow: {
-                        'ai-sm': '0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.03)',
-                        'ai-md': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03)',
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="/static/vendor/tailwind/tailwind.generated.css?v=0.4.2">
+    <script src="/static/vendor/sortable/Sortable.min.js?v=1.15.6"></script>
+    <script src="/static/vendor/lucide/lucide.min.js?v=0.460.0"></script>
     <link rel="stylesheet" href="/static/css/style.css?v=0.4.2">
     <script>
         // 在页面渲染前立即应用主题，避免闪烁
@@ -76,11 +59,22 @@
                 </div>
             </div>
             <nav class="flex gap-2 items-center flex-shrink-0">
+                <div class="workspace-switch" role="tablist" aria-label="工作区切换">
+                    <button id="btnWorkspaceYanhe" class="workspace-switch-btn active" onclick="switchWorkspace('yanhe')" role="tab" aria-selected="true">
+                        <i data-lucide="graduation-cap" class="w-4 h-4"></i> 延河课程
+                    </button>
+                    <button id="btnToggleMode" class="workspace-switch-btn" onclick="switchWorkspace('batch')" role="tab" aria-selected="false">
+                        <i data-lucide="layers" class="w-4 h-4"></i> 批量提取
+                    </button>
+                    <button id="btnWorkspaceSingle" class="workspace-switch-btn" onclick="switchWorkspace('single')" role="tab" aria-selected="false">
+                        <i data-lucide="file-video" class="w-4 h-4"></i> 单视频
+                    </button>
+                </div>
                 <button onclick="toggleTheme()" class="theme-toggle" title="切换深色/浅色模式">
                     <span class="icon" id="themeIcon"><i data-lucide="moon" class="w-4 h-4"></i></span>
                 </button>
-                <button onclick="toggleBatchMode()" class="btn-ghost text-xs" id="btnToggleMode" title="切换批量处理模式">
-                    <i data-lucide="layers" class="w-4 h-4 inline-block"></i> 批量模式
+                <button onclick="openSettingsDrawer()" class="btn-ghost text-xs" id="btnSettings" title="设置与诊断">
+                    <i data-lucide="settings" class="w-4 h-4 inline-block"></i> 设置
                 </button>
                 <button onclick="cleanupAll()" class="btn-ghost text-xs" title="清空所有模式的全部缓存">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5 inline-block"></i> 全部清空
@@ -124,7 +118,40 @@
     <div class="resource-warning-banner" id="resourceWarning"></div>
 
     <!-- ═══════ 主区域 ═══════ -->
-    <main class="max-w-7xl mx-auto px-6 py-6">
+        <section id="yanheWorkspace" class="yanhe-workspace max-w-7xl mx-auto px-6 py-6">
+        <div class="yanhe-shell">
+            <div class="yanhe-head">
+                <div>
+                    <p class="eyebrow">Yanhe Course</p>
+                    <h2>延河课程下载与批量提取</h2>
+                    <p>粘贴课程链接，读取可下载录屏，下载后自动进入批量未选中区。</p>
+                </div>
+                <div class="yanhe-status-row">
+                    <span class="status-pill" id="yanheLoginStatus">登录状态：检测中</span>
+                    <span class="status-pill" id="yanheFfmpegStatus">ffmpeg：检测中</span>
+                    <span class="status-pill" id="yanheWorkspaceStatus">空间：检测中</span>
+                </div>
+            </div>
+            <div class="yanhe-command-row">
+                <input id="yanheCourseInput" class="yanhe-input" placeholder="https://www.yanhekt.cn/course/12345 或课程 ID" autocomplete="off">
+                <button id="btnYanheLoad" class="btn-primary" onclick="loadYanheCourse()"><i data-lucide="search" class="w-4 h-4"></i> 读取课程</button>
+                <button id="btnYanheLogin" class="btn-secondary" onclick="startYanheLogin()"><i data-lucide="log-in" class="w-4 h-4"></i> 登录</button>
+            </div>
+            <div id="yanheCourseSummary" class="yanhe-summary" style="display:none"></div>
+            <div class="yanhe-toolbar" id="yanheToolbar" style="display:none">
+                <input id="yanheSearch" class="yanhe-search" placeholder="筛选课堂标题" oninput="renderYanheSessions()">
+                <button class="btn-secondary" onclick="selectAllYanheSessions(true)">全选</button>
+                <button class="btn-secondary" onclick="selectAllYanheSessions(false)">清空</button>
+                <button id="btnYanheDownload" class="btn-primary" onclick="startYanheDownload()" disabled><i data-lucide="download" class="w-4 h-4"></i> 下载选中</button>
+            </div>
+            <div id="yanheDownloadProgress" class="yanhe-progress" style="display:none">
+                <div class="progress-bar"><div id="yanheDownloadBar" class="progress-fill" style="width:0%"></div></div>
+                <p id="yanheDownloadText">等待下载</p>
+            </div>
+            <div id="yanheSessionList" class="yanhe-session-list"></div>
+        </div>
+    </section>
+<main class="max-w-7xl mx-auto px-6 py-6" style="display:none">
 
         <!-- 标签栏 -->
         <div class="tab-bar" id="tabBar">
@@ -746,7 +773,50 @@
         </div>
     </div>
 
-    <script src="/static/js/main.js?v=0.4.2"></script>
+        <div id="settingsBackdrop" class="settings-backdrop" onclick="closeSettingsDrawer()"></div>
+    <aside id="settingsDrawer" class="settings-drawer" aria-hidden="true">
+        <div class="settings-drawer-head">
+            <div>
+                <p class="eyebrow">Settings</p>
+                <h2>设置与诊断</h2>
+            </div>
+            <button class="drawer-close" onclick="closeSettingsDrawer()" title="关闭"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <div class="settings-section">
+            <h3>下载</h3>
+            <label>ffmpeg.exe 路径 <input id="settingFfmpegPath" type="text" class="setting-input" placeholder="D:\path\to\ffmpeg.exe"></label>
+            <label class="setting-line"><input type="checkbox" id="settingUseGetvideoProfile"> 临时复用 getvideo 登录状态</label>
+            <label class="setting-line"><input type="checkbox" id="settingCleanSource"> 成功提取后清理受管源视频</label>
+            <button class="btn-primary" onclick="saveSettingsDrawer()">保存下载设置</button>
+            <button class="btn-secondary" onclick="checkYanheLogin()">检查登录状态</button>
+            <button class="btn-secondary" onclick="startYanheLogin()">打开登录窗口</button>
+        </div>
+        <div class="settings-section">
+            <h3>提取参数</h3>
+            <label>默认阈值 <input id="settingThreshold" type="number" min="1" max="15" step="0.5" class="setting-input"></label>
+            <label class="setting-line"><input type="checkbox" id="settingUseRoi"> PPT 录屏裁剪</label>
+            <label class="setting-line"><input type="checkbox" id="settingFastMode"> 快速模式</label>
+            <label class="setting-line"><input type="checkbox" id="settingUseGpu"> 请求 GPU 解码</label>
+            <label>速度模式 <select id="settingSpeedMode" class="setting-input"><option value="eco">省电</option><option value="fast">均衡</option><option value="turbo">极速</option></select></label>
+            <button class="btn-primary" onclick="saveSettingsDrawer()">保存设置</button>
+        </div>
+        <div class="settings-section">
+            <h3>存储</h3>
+            <div id="settingsStorageInfo" class="settings-info">加载中</div>
+            <button class="btn-secondary" onclick="openManagedStorage('workspace')">打开工作区</button>
+            <button class="btn-secondary" onclick="openManagedStorage('downloads')">打开下载目录</button>
+        </div>
+        <div class="settings-section">
+            <h3>诊断</h3>
+            <div id="settingsDiagnostics" class="settings-info">等待检测</div>
+            <button class="btn-secondary" onclick="loadDiagnostics()">刷新诊断</button>
+        </div>
+        <div class="settings-section muted">
+            <p>所有课程数据保存在本机。不会保存账号、密码、token 或签名 URL。</p>
+            <p>分支：yanhe/v0.4.2-batch</p>
+        </div>
+    </aside>
+<script src="/static/js/main.js?v=0.4.2"></script>
     <!-- 批量模块（三区域架构） -->
     <script src="/static/js/batch/core.js?v=0.4.2"></script>
     <script src="/static/js/batch/zones.js?v=0.4.2"></script>
@@ -756,6 +826,8 @@
     <script src="/static/js/batch/naming.js?v=0.4.2"></script>
     <script src="/static/js/batch/export.js?v=0.4.2"></script>
     <script src="/static/js/batch/recycle.js?v=0.4.2"></script>
+    <script src="/static/js/settings.js?v=0.4.2"></script>
+    <script src="/static/js/yanhe.js?v=0.4.2"></script>
     <script>lucide.createIcons();</script>
 </body>
 </html>

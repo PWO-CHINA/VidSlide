@@ -85,11 +85,11 @@ function _updateBatchBadge() {
         count = z.unselected.length + z.queue.length + z.completed.length;
     }
     if (G.batchMode) {
-        btn.innerHTML = '<i data-lucide="layout-grid" class="w-3.5 h-3.5 inline-block"></i> 标签页模式';
+        btn.innerHTML = '<i data-lucide="layers" class="w-3.5 h-3.5 inline-block"></i> 批量提取';
     } else if (count > 0) {
-        btn.innerHTML = '<i data-lucide="layers" class="w-3.5 h-3.5 inline-block"></i> 批量模式 <span class="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full ml-1">' + count + '</span>';
+        btn.innerHTML = '<i data-lucide="layers" class="w-3.5 h-3.5 inline-block"></i> 批量提取 <span class="workspace-count-badge">' + count + '</span>';
     } else {
-        btn.innerHTML = '<i data-lucide="layers" class="w-3.5 h-3.5 inline-block"></i> 批量模式';
+        btn.innerHTML = '<i data-lucide="layers" class="w-3.5 h-3.5 inline-block"></i> 批量提取';
     }
     refreshIcons(btn);
 }
@@ -97,26 +97,57 @@ function _updateBatchBadge() {
 // ============================================================
 //  视图切换
 // ============================================================
-function toggleBatchMode() {
-    G.batchMode = !G.batchMode;
+function _setWorkspaceButtonState(workspace) {
+    const buttons = {
+        yanhe: document.getElementById('btnWorkspaceYanhe'),
+        batch: document.getElementById('btnToggleMode'),
+        single: document.getElementById('btnWorkspaceSingle'),
+    };
+    for (const [name, btn] of Object.entries(buttons)) {
+        if (!btn) continue;
+        const active = name === workspace;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    }
+}
+
+function switchWorkspace(workspace) {
+    const target = ['yanhe', 'batch', 'single'].includes(workspace) ? workspace : 'yanhe';
+    const yanhe = document.getElementById('yanheWorkspace');
     const main = document.querySelector('main');
     const panel = document.getElementById('batchPanel');
     const resBar = document.getElementById('resourceBar');
-    if (G.batchMode) {
-        main.style.display = 'none';
-        panel.style.display = '';
-        if (resBar) resBar.style.display = '';
+
+    G.workspace = target;
+    G.batchMode = target === 'batch';
+    if (yanhe) yanhe.style.display = target === 'yanhe' ? '' : 'none';
+    if (main) main.style.display = target === 'single' ? '' : 'none';
+    if (panel) panel.style.display = target === 'batch' ? '' : 'none';
+    if (resBar) resBar.style.display = target === 'batch' ? '' : '';
+
+    if (target === 'batch') {
         if (!G.batch) {
             _initBatch();
         } else {
             _applyBatchPrefsToUI();
+            renderAllZones();
         }
-    } else {
-        main.style.display = '';
-        panel.style.display = 'none';
+    } else if (target === 'single' && Object.keys(G.tabs || {}).length === 0 && typeof addNewTab === 'function') {
+        addNewTab();
     }
+
+    _setWorkspaceButtonState(target);
     _updateBatchBadge();
+    refreshIcons(document);
 }
+
+function toggleBatchMode() {
+    switchWorkspace(G.workspace === 'batch' ? 'yanhe' : 'batch');
+}
+
+window.switchWorkspace = switchWorkspace;
+window.toggleBatchMode = toggleBatchMode;
+document.addEventListener('DOMContentLoaded', () => switchWorkspace(G.workspace || 'yanhe'));
 
 // ============================================================
 //  参数 UI

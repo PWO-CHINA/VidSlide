@@ -1704,9 +1704,9 @@ window.addEventListener('pagehide', () => {
         }
     }
 
-    // 第三步：如果没有恢复任何会话，创建第一个标签页
+    // 第三步：延河分支默认进入课程工作台。单视频标签页改为用户进入单视频区时再创建。
     if (Object.keys(G.tabs).length === 0) {
-        await addNewTab();
+        updateTabAddBtn();
     }
 
     // 第四步：恢复批量队列（如果有）& 初始化批量参数面板事件

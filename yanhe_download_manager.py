@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import queue
+import shutil
 import threading
 import time
 import traceback
@@ -220,6 +221,27 @@ def ffmpeg_status(user_path: str | None = None) -> dict[str, Any]:
         return {"available": False, "message": str(exc)}
 
 
+def download_preflight(payload: dict[str, Any]) -> dict[str, Any]:
+    ffmpeg = ffmpeg_status(payload.get("ffmpeg_path"))
+    if not payload.get("dry_run") and not ffmpeg.get("available"):
+        return {"ok": False, "kind": "ffmpeg_missing", "message": ffmpeg.get("message") or "ffmpeg not found", "ffmpeg": ffmpeg}
+    output_dir = Path(payload.get("output_dir") or settings_store.load_settings()["download"]["download_dir"])
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        usage = shutil.disk_usage(str(output_dir))
+        if usage.free < 512 * 1024 * 1024:
+            return {
+                "ok": False,
+                "kind": "disk_low",
+                "message": "download disk has less than 512 MB free",
+                "free_bytes": usage.free,
+                "output_dir": str(output_dir),
+            }
+    except Exception as exc:
+        return {"ok": False, "kind": "output_dir_unavailable", "message": str(exc), "output_dir": str(output_dir)}
+    return {"ok": True, "ffmpeg": ffmpeg, "output_dir": str(output_dir)}
+
+
 def _new_job(payload: dict[str, Any]) -> dict[str, Any]:
     jid = uuid.uuid4().hex[:10]
     now = time.time()
@@ -320,9 +342,10 @@ def _run_download_job(job: dict[str, Any], sessions_root: str) -> None:
         course_input = payload.get("course_input") or payload.get("course_url") or payload.get("course_id")
         selected_ids = {str(x) for x in payload.get("session_ids", []) if str(x).strip()}
         overwrite = bool(payload.get("overwrite", False))
+        dry_run = bool(payload.get("dry_run", False))
         output_dir = Path(payload.get("output_dir") or settings_store.load_settings()["download"]["download_dir"])
         output_dir.mkdir(parents=True, exist_ok=True)
-        ffmpeg = core.find_ffmpeg(payload.get("ffmpeg_path") or settings_store.load_settings()["download"].get("ffmpeg_path") or None)
+        ffmpeg = None if dry_run else core.find_ffmpeg(payload.get("ffmpeg_path") or settings_store.load_settings()["download"].get("ffmpeg_path") or None)
 
         job["status"] = "planning"
         job["message"] = "loading course"
@@ -351,6 +374,50 @@ def _run_download_job(job: dict[str, Any], sessions_root: str) -> None:
         if not planned:
             job["status"] = "completed"
             job["message"] = "no selected recordings"
+            _publish(job, {"type": "job_done", "job": _job_snapshot(job)})
+            return
+
+        if dry_run:
+            job["status"] = "planning"
+            job["message"] = "dry-run estimating selected recordings"
+            dry_items: list[dict[str, Any]] = []
+            total = len(planned)
+            for index, (item, output) in enumerate(planned):
+                if job.get("cancel"):
+                    raise InterruptedError("download job cancelled")
+                signed = cdp.evaluate(
+                    core.sign_url_expression(item["raw_vga"], str(info["user_badge"])),
+                    timeout=60,
+                    session_id=session_id,
+                )
+                expected_size = None
+                segment_count = 0
+                try:
+                    expected_size, segment_count = core.estimate_hls_size(
+                        signed,
+                        item.get("session_url") or _course_url(str(course_input)),
+                    )
+                except Exception:
+                    expected_size = None
+                if job.get("cancel"):
+                    raise InterruptedError("download job cancelled")
+                dry_item = {
+                    "session_id": item.get("session_id"),
+                    "title": item.get("title"),
+                    "filename": output.name,
+                    "output_path": str(output),
+                    "status": "dry_run",
+                    "estimated_size": expected_size,
+                    "estimated_size_text": core.format_bytes(expected_size),
+                    "segment_count": segment_count,
+                }
+                dry_items.append(dry_item)
+                job["progress"] = int((index + 1) * 100 / total)
+                _publish(job, {"type": "dry_run_item", "item": dry_item, "job": _job_snapshot(job)})
+            job["items"] = dry_items
+            job["status"] = "completed"
+            job["message"] = "dry run completed"
+            job["progress"] = 100
             _publish(job, {"type": "job_done", "job": _job_snapshot(job)})
             return
 
@@ -389,10 +456,25 @@ def _run_download_job(job: dict[str, Any], sessions_root: str) -> None:
             )
             duration = core.parse_duration(item.get("duration"))
             expected_size = None
+            segment_count = 0
             try:
-                expected_size = core.estimate_hls_size(signed, item.get("session_url") or _course_url(str(course_input)), duration)
+                expected_size, segment_count = core.estimate_hls_size(
+                    signed,
+                    item.get("session_url") or _course_url(str(course_input)),
+                )
             except Exception:
                 expected_size = None
+            if job.get("cancel"):
+                raise InterruptedError("download job cancelled")
+            if expected_size:
+                free_bytes = shutil.disk_usage(str(output_dir)).free
+                reserve = 512 * 1024 * 1024
+                if free_bytes < expected_size + reserve:
+                    raise OSError(
+                        "磁盘空间不足：预计当前录屏约 "
+                        f"{core.format_bytes(expected_size)}，下载目录剩余 "
+                        f"{core.format_bytes(free_bytes)}，建议至少保留 512 MB 余量"
+                    )
 
             def on_progress(**data: Any) -> None:
                 item_pct = None
@@ -408,6 +490,7 @@ def _run_download_job(job: dict[str, Any], sessions_root: str) -> None:
                     "item_progress": item_pct,
                     "current_size": data.get("current_size"),
                     "expected_size": data.get("expected_size"),
+                    "segment_count": segment_count,
                     "speed": data.get("speed"),
                     "job": _job_snapshot(job),
                 })
@@ -441,10 +524,15 @@ def _run_download_job(job: dict[str, Any], sessions_root: str) -> None:
         job["message"] = str(exc)
         _publish(job, {"type": "job_cancelled", "job": _job_snapshot(job)})
     except Exception as exc:
-        job["status"] = "error"
-        job["message"] = str(exc)
-        job["trace_tail"] = traceback.format_exc().splitlines()[-8:]
-        _publish(job, {"type": "job_error", "message": str(exc), "job": _job_snapshot(job)})
+        if job.get("cancel"):
+            job["status"] = "cancelled"
+            job["message"] = "download job cancelled"
+            _publish(job, {"type": "job_cancelled", "job": _job_snapshot(job)})
+        else:
+            job["status"] = "error"
+            job["message"] = str(exc)
+            job["trace_tail"] = traceback.format_exc().splitlines()[-8:]
+            _publish(job, {"type": "job_error", "message": str(exc), "job": _job_snapshot(job)})
     finally:
         _close_browser(cdp, proc)
 
@@ -478,4 +566,3 @@ def generate_job_sse(job_id: str):
             cleanup()
 
     return gen
-
