@@ -1,8 +1,12 @@
 """
-影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.4.1)
+影幻智提 (VidSlide) - PPT 幻灯片智能提取工具 (v0.4.2)
 =====================================================
 基于 Flask 的本地 Web 应用，提供可视化界面来提取、管理和打包 PPT 幻灯片。
 支持同时对多个视频进行提取（最多 3 个并行标签页）。
+
+v0.4.2 分支更新：
+    - 移植新版前端视觉与批量处理界面
+    - 批量处理固定为延河课堂 PPT 录屏提取
 
 v0.4.0 新特性：
     - SSE (Server-Sent Events) 服务器推送，替代高频轮询
@@ -19,7 +23,7 @@ v0.4.0 新特性：
     pip install flask opencv-python numpy pillow python-pptx psutil
 
 作者: PWO-CHINA
-版本: v0.4.0
+版本: v0.4.2
 """
 
 import cv2
@@ -851,59 +855,120 @@ def session_events(sid):
 # ============================================================
 _video_select_lock = threading.Lock()
 
+_VIDEO_FILETYPES = [
+    ("视频文件", "*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.m4v *.ts *.mpg *.mpeg *.3gp"),
+    ("所有文件", "*.*"),
+]
+
+
+def _ensure_dpi_aware():
+    """设置 Windows DPI 感知，让 tkinter 文件选择框显示清晰。"""
+    try:
+        import ctypes
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except Exception:
+        try:
+            import ctypes
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
+
+def _open_file_dialog(mode='single'):
+    """打开本地文件/文件夹选择框，避免浏览器上传大视频。"""
+    import tkinter as tk
+    from tkinter import filedialog
+    import queue as stdlib_queue
+
+    _ensure_dpi_aware()
+    result_queue = stdlib_queue.Queue()
+
+    def _pick():
+        try:
+            root = tk.Tk()
+            root.title('影幻智提 (VidSlide)')
+            root.withdraw()
+            root.wm_attributes('-topmost', 1)
+            root.focus_force()
+            if mode == 'multi':
+                paths = filedialog.askopenfilenames(
+                    title="请选择要批量处理的延河课堂录屏视频（可多选）",
+                    filetypes=_VIDEO_FILETYPES,
+                )
+                result_queue.put(list(paths) if paths else [])
+            elif mode == 'folder':
+                folder = filedialog.askdirectory(
+                    title="请选择包含延河课堂录屏视频的文件夹",
+                )
+                result_queue.put(folder or '')
+            else:
+                path = filedialog.askopenfilename(
+                    title="请选择要提取的延河课堂录屏视频",
+                    filetypes=_VIDEO_FILETYPES,
+                )
+                result_queue.put(path or '')
+            root.destroy()
+        except Exception as e:
+            print(f'[DEBUG] tkinter 弹窗异常: {e}')
+            result_queue.put([] if mode == 'multi' else '')
+
+    t = threading.Thread(target=_pick, daemon=True)
+    t.start()
+    t.join(timeout=120)
+
+    return result_queue.get_nowait() if not result_queue.empty() else ([] if mode == 'multi' else '')
+
+
 @app.route('/api/select-video', methods=['POST'])
 def select_video():
     if not _video_select_lock.acquire(blocking=False):
         return jsonify(success=False, message='其他标签页正在选择文件，请先完成或关闭弹窗')
     try:
-        try:
-            import ctypes
-            ctypes.windll.shcore.SetProcessDpiAwareness(2)
-        except Exception:
-            try:
-                import ctypes
-                ctypes.windll.user32.SetProcessDPIAware()
-            except Exception:
-                pass
-
-        import tkinter as tk
-        from tkinter import filedialog
-        import queue as stdlib_queue
-
-        result_queue = stdlib_queue.Queue()
-
-        def _pick():
-            try:
-                root = tk.Tk()
-                root.title('影幻智提 (VidSlide)')
-                root.withdraw()
-                root.wm_attributes('-topmost', 1)
-                root.focus_force()
-                path = filedialog.askopenfilename(
-                    title="请选择要提取的课程视频",
-                    filetypes=[
-                        ("视频文件", "*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm"),
-                        ("所有文件", "*.*"),
-                    ],
-                )
-                root.destroy()
-                result_queue.put(path or '')
-            except Exception as e:
-                print(f'[DEBUG] tkinter 弹窗异常: {e}')
-                result_queue.put('')
-
-        t = threading.Thread(target=_pick, daemon=True)
-        t.start()
-        t.join(timeout=120)
-
-        path = result_queue.get_nowait() if not result_queue.empty() else ''
-
+        path = _open_file_dialog(mode='single')
         if path:
             print(f'[DEBUG] 用户选择了视频: {path}')
             return jsonify(success=True, path=path)
         return jsonify(success=False, message='未选择文件')
     except Exception as e:
         print(f'[ERROR] select_video 异常: {e}')
+        return jsonify(success=False, message=str(e))
+    finally:
+        _video_select_lock.release()
+
+
+@app.route('/api/select-videos', methods=['POST'])
+def select_videos():
+    if not _video_select_lock.acquire(blocking=False):
+        return jsonify(success=False, message='其他操作正在选择文件，请先完成或关闭弹窗')
+    try:
+        paths = _open_file_dialog(mode='multi')
+        if paths:
+            print(f'[DEBUG] 用户选择了 {len(paths)} 个视频')
+            return jsonify(success=True, paths=paths)
+        return jsonify(success=False, message='未选择文件')
+    except Exception as e:
+        print(f'[ERROR] select_videos 异常: {e}')
+        return jsonify(success=False, message=str(e))
+    finally:
+        _video_select_lock.release()
+
+
+@app.route('/api/select-folder', methods=['POST'])
+def select_folder():
+    if not _video_select_lock.acquire(blocking=False):
+        return jsonify(success=False, message='其他操作正在选择文件，请先完成或关闭弹窗')
+    try:
+        from batch_manager import scan_folder_for_videos
+        folder = _open_file_dialog(mode='folder')
+        if not folder:
+            return jsonify(success=False, message='未选择文件夹')
+        videos = scan_folder_for_videos(folder)
+        if not videos:
+            return jsonify(success=False, message='所选文件夹中没有找到视频文件')
+        print(f'[DEBUG] 扫描文件夹 {folder}，找到 {len(videos)} 个视频')
+        return jsonify(success=True, paths=videos, folder=folder)
+    except Exception as e:
+        print(f'[ERROR] select_folder 异常: {e}')
         return jsonify(success=False, message=str(e))
     finally:
         _video_select_lock.release()
@@ -1336,6 +1401,10 @@ def cleanup_all():
     time.sleep(0.3)
     for sid in sids:
         _delete_session(sid)
+    try:
+        _bm.cleanup_all_batches()
+    except Exception:
+        pass
     return jsonify(success=True)
 
 
@@ -1391,6 +1460,12 @@ def system_status():
     if warnings:
         result['warning'] = '；'.join(warnings)
 
+    try:
+        batch_active = sum(1 for b in _bm.list_batches() if b.get('status') == 'processing')
+        result['active_tasks'] += batch_active
+    except Exception:
+        pass
+
     return jsonify(result)
 
 
@@ -1411,6 +1486,367 @@ def _check_resource_warning():
         return '；'.join(warnings) if warnings else None
     except Exception:
         return None
+
+
+# ============================================================
+#  路由 — GPU 硬件加速探测（前端提示用）
+# ============================================================
+@app.route('/api/gpu-info')
+def gpu_info():
+    """返回启动后采样到的 GPU 信息；4.1 分支不引入新版 extractor 探测逻辑。"""
+    if _gpu_cache.get('available'):
+        name = _gpu_cache.get('name') or 'GPU'
+        summary = f'已检测到 {name}，可尝试 GPU 硬件加速'
+        return jsonify(available=True, summary=summary)
+    return jsonify(available=False, summary='未检测到可用 GPU 加速信息，提取时会自动使用 CPU 回退')
+
+
+# ============================================================
+#  批量处理 API 路由（延河课堂 PPT 录屏专用）
+# ============================================================
+import batch_manager as _bm
+
+
+def _yanhe_batch_params(params):
+    """批量分支固定为 4.1 的延河课堂 PPT 录屏提取。"""
+    params = dict(params or {})
+    params['classroom_mode'] = 'ppt'
+    return params
+
+
+@app.route('/api/batch/create', methods=['POST'])
+def batch_create():
+    data = request.get_json(silent=True) or {}
+    params = _yanhe_batch_params(data.get('params', {}))
+    max_workers = min(int(data.get('max_workers', 1)), _bm.compute_max_batch_workers())
+    max_workers = max(1, max_workers)
+    bid = _bm.create_batch(SESSIONS_ROOT, params, max_workers)
+    return jsonify(success=True, batch_id=bid, max_batch_workers=_bm.compute_max_batch_workers())
+
+
+@app.route('/api/batch/<bid>/add-videos', methods=['POST'])
+def batch_add_videos(bid):
+    data = request.get_json(silent=True) or {}
+    entries = data.get('entries', [])
+    if not entries:
+        return jsonify(success=False, message='未提供视频')
+    valid = []
+    for entry in entries:
+        path = entry.get('path', '')
+        if path and os.path.isfile(path):
+            valid.append({
+                'path': path,
+                'name': (entry.get('name') or Path(path).stem or '未命名视频').strip(),
+            })
+    if not valid:
+        return jsonify(success=False, message='所有视频路径均无效')
+    added = _bm.add_videos(bid, valid)
+    if not added:
+        return jsonify(success=False, message='添加失败，批量队列不存在')
+    return jsonify(success=True, added=added, count=len(added))
+
+
+@app.route('/api/batch/<bid>/remove-video/<vid>', methods=['POST'])
+def batch_remove_video(bid, vid):
+    ok, msg = _bm.remove_video(bid, vid)
+    return jsonify(success=ok, message=msg)
+
+
+@app.route('/api/batch/<bid>/move-to-queue', methods=['POST'])
+def batch_move_to_queue(bid):
+    data = request.get_json(silent=True) or {}
+    video_ids = data.get('video_ids', [])
+    position = data.get('position', None)
+    if not video_ids:
+        return jsonify(success=False, message='未提供视频 ID')
+    count = _bm.move_to_queue(bid, video_ids, position)
+    return jsonify(success=True, moved=count)
+
+
+@app.route('/api/batch/<bid>/move-to-unselected', methods=['POST'])
+def batch_move_to_unselected(bid):
+    data = request.get_json(silent=True) or {}
+    video_ids = data.get('video_ids', [])
+    if not video_ids:
+        return jsonify(success=False, message='未提供视频 ID')
+    count = _bm.move_to_unselected(bid, video_ids)
+    return jsonify(success=True, moved=count)
+
+
+@app.route('/api/batch/<bid>/reorder', methods=['POST'])
+def batch_reorder(bid):
+    data = request.get_json(silent=True) or {}
+    ordered_vids = data.get('order', [])
+    zone = data.get('zone', 'queue')
+    ok = _bm.reorder_zone(bid, zone, ordered_vids)
+    return jsonify(success=ok)
+
+
+@app.route('/api/batch/<bid>/update-name/<vid>', methods=['POST'])
+def batch_update_name(bid, vid):
+    data = request.get_json(silent=True) or {}
+    new_name = data.get('name', '').strip()
+    if not new_name:
+        return jsonify(success=False, message='名称不能为空')
+    ok = _bm.update_video_name(bid, vid, new_name)
+    return jsonify(success=ok)
+
+
+@app.route('/api/batch/<bid>/prioritize/<vid>', methods=['POST'])
+def batch_prioritize(bid, vid):
+    ok = _bm.prioritize_video(bid, vid)
+    return jsonify(success=ok)
+
+
+@app.route('/api/batch/<bid>/start', methods=['POST'])
+def batch_start(bid):
+    warning = _check_resource_warning()
+    if warning:
+        return jsonify(success=False, message=f'系统资源不足：{warning}')
+    data = request.get_json(silent=True) or {}
+    params = data.get('params')
+    if isinstance(params, dict):
+        _bm.update_batch_params(bid, _yanhe_batch_params(params))
+    ok, msg = _bm.start_processing(bid)
+    return jsonify(success=ok, message=msg)
+
+
+@app.route('/api/batch/<bid>/pause', methods=['POST'])
+def batch_pause(bid):
+    ok = _bm.pause_after_current(bid)
+    return jsonify(success=ok)
+
+
+@app.route('/api/batch/<bid>/retry/<vid>', methods=['POST'])
+def batch_retry(bid, vid):
+    ok, msg = _bm.retry_video(bid, vid)
+    return jsonify(success=ok, message=msg)
+
+
+@app.route('/api/batch/<bid>/set-workers', methods=['POST'])
+def batch_set_workers(bid):
+    data = request.get_json(silent=True) or {}
+    n = int(data.get('max_workers', 1))
+    n = max(1, min(n, _bm.compute_max_batch_workers()))
+    ok = _bm.set_max_workers(bid, n)
+    return jsonify(success=ok)
+
+
+@app.route('/api/batch/<bid>/status', methods=['GET'])
+def batch_status(bid):
+    state = _bm.get_batch_state(bid)
+    if not state:
+        return jsonify(success=False, message='批量队列不存在')
+    return jsonify(success=True, batch=state)
+
+
+@app.route('/api/batch/<bid>/events', methods=['GET'])
+def batch_events(bid):
+    gen, _cleanup = _bm.generate_batch_sse(bid)
+    if not gen:
+        return jsonify(success=False, message='批量队列不存在'), 404
+    return Response(
+        gen(),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive',
+        },
+    )
+
+
+@app.route('/api/batch/<bid>/thumbnail/<vid>', methods=['GET'])
+def batch_thumbnail(bid, vid):
+    path = _bm.get_thumbnail_path(bid, vid)
+    if not path:
+        return '', 404
+    return send_file(path, mimetype='image/jpeg')
+
+
+@app.route('/api/video-preview-thumb', methods=['POST'])
+def video_preview_thumb():
+    data = request.get_json(silent=True) or {}
+    video_path = data.get('path', '')
+    if not video_path or not os.path.isfile(video_path):
+        return jsonify(success=False, message='视频文件不存在'), 400
+    try:
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            cap.release()
+            return jsonify(success=False, message='无法打开视频'), 400
+        fps = cap.get(cv2.CAP_PROP_FPS) or 25
+        cap.set(cv2.CAP_PROP_POS_FRAMES, int(fps))
+        ok, frame = cap.read()
+        if not ok or frame is None:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            ok, frame = cap.read()
+        cap.release()
+        if not ok or frame is None:
+            return jsonify(success=False, message='无法读取帧'), 400
+        h, w = frame.shape[:2]
+        new_w = 360
+        new_h = int(h * new_w / w) if w > 0 else 200
+        thumb = cv2.resize(frame, (new_w, new_h))
+        ok, buf = cv2.imencode('.jpg', thumb, [cv2.IMWRITE_JPEG_QUALITY, 70])
+        if not ok:
+            return jsonify(success=False, message='缩略图编码失败'), 500
+        import base64
+        b64 = base64.b64encode(buf.tobytes()).decode('ascii')
+        return jsonify(success=True, thumbnail='data:image/jpeg;base64,' + b64)
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 500
+
+
+@app.route('/api/batch/<bid>/video/<vid>/images', methods=['GET'])
+def batch_video_images(bid, vid):
+    images = _bm.get_video_images(bid, vid)
+    return jsonify(success=True, images=images)
+
+
+@app.route('/api/batch/<bid>/video/<vid>/image/<filename>', methods=['GET'])
+def batch_video_image(bid, vid, filename):
+    path = _bm.get_video_image_path(bid, vid, filename)
+    if not path:
+        return '', 404
+    return send_file(path, mimetype='image/jpeg')
+
+
+@app.route('/api/batch/<bid>/cancel-video/<vid>', methods=['POST'])
+def batch_cancel_video(bid, vid):
+    ok, msg = _bm.cancel_video(bid, vid)
+    return jsonify(success=ok, message=msg)
+
+
+@app.route('/api/batch/<bid>/video/<vid>/delete-image/<filename>', methods=['POST'])
+def batch_delete_image(bid, vid, filename):
+    ok, msg = _bm.trash_image(bid, vid, filename)
+    return jsonify(success=ok, message=msg)
+
+
+@app.route('/api/batch/<bid>/package/<vid>', methods=['POST'])
+def batch_package_video(bid, vid):
+    data = request.get_json(silent=True) or {}
+    fmt = data.get('format', 'pdf')
+    if fmt not in ('pdf', 'pptx', 'zip'):
+        return jsonify(success=False, message=f'不支持的格式: {fmt}')
+
+    threading.Thread(target=lambda: _bm.package_batch_video(bid, vid, fmt), daemon=True).start()
+    return jsonify(success=True, message='打包已开始')
+
+
+@app.route('/api/batch/<bid>/package-all', methods=['POST'])
+def batch_package_all(bid):
+    data = request.get_json(silent=True) or {}
+    fmt = data.get('format', 'zip')
+    if fmt not in ('pdf', 'pptx', 'zip'):
+        return jsonify(success=False, message=f'不支持的格式: {fmt}')
+    video_ids = data.get('video_ids', None)
+
+    threading.Thread(target=lambda: _bm.package_batch_all(bid, fmt, video_ids=video_ids), daemon=True).start()
+    return jsonify(success=True, message='批量打包已开始')
+
+
+@app.route('/api/batch/<bid>/download/<path:filename>', methods=['GET'])
+def batch_download(bid, filename):
+    path = _bm.get_download_path(bid, filename)
+    if not path:
+        return jsonify(success=False, message='文件不存在'), 404
+    return send_file(path, as_attachment=True, download_name=os.path.basename(path))
+
+
+@app.route('/api/batch/<bid>/video/<vid>/download/<filename>', methods=['GET'])
+def batch_video_download(bid, vid, filename):
+    path = _bm.get_video_download_path(bid, vid, filename)
+    if not path:
+        return jsonify(success=False, message='文件不存在'), 404
+    return send_file(path, as_attachment=True, download_name=os.path.basename(path))
+
+
+@app.route('/api/batch/<bid>/video/<vid>/restore-image/<filename>', methods=['POST'])
+def batch_restore_image(bid, vid, filename):
+    ok, msg = _bm.restore_image(bid, vid, filename)
+    return jsonify(success=ok, message=msg)
+
+
+@app.route('/api/batch/<bid>/video/<vid>/restore-all-images', methods=['POST'])
+def batch_restore_all_images(bid, vid):
+    count = _bm.restore_all_images(bid, vid)
+    return jsonify(success=True, count=count)
+
+
+@app.route('/api/batch/<bid>/video/<vid>/trashed-images', methods=['GET'])
+def batch_trashed_images(bid, vid):
+    images = _bm.list_trashed_images(bid, vid)
+    return jsonify(success=True, images=images)
+
+
+@app.route('/api/batch/<bid>/video/<vid>/trashed-image/<filename>')
+def batch_serve_trashed_image(bid, vid, filename):
+    path = _bm.get_trashed_image_path(bid, vid, filename)
+    if not path:
+        return '', 404
+    return send_file(path, mimetype='image/jpeg')
+
+
+@app.route('/api/batch/<bid>/trash-video/<vid>', methods=['POST'])
+def batch_trash_video(bid, vid):
+    ok, msg = _bm.trash_video(bid, vid)
+    return jsonify(success=ok, message=msg)
+
+
+@app.route('/api/batch/<bid>/restore-video/<vid>', methods=['POST'])
+def batch_restore_video(bid, vid):
+    data = request.get_json(silent=True) or {}
+    action = data.get('action', 'to_unselected')
+    ok, msg = _bm.restore_from_trash(bid, vid, action)
+    return jsonify(success=ok, message=msg)
+
+
+@app.route('/api/batch/<bid>/restore-all-videos', methods=['POST'])
+def batch_restore_all_videos(bid):
+    videos = _bm.list_trashed_videos(bid)
+    count = 0
+    for video in videos:
+        ok, _ = _bm.restore_from_trash(bid, video['id'], 'to_unselected')
+        if ok:
+            count += 1
+    return jsonify(success=True, count=count)
+
+
+@app.route('/api/batch/<bid>/trashed-videos', methods=['GET'])
+def batch_trashed_videos(bid):
+    videos = _bm.list_trashed_videos(bid)
+    return jsonify(success=True, videos=videos)
+
+
+@app.route('/api/batch/<bid>/empty-video-trash', methods=['POST'])
+def batch_empty_video_trash(bid):
+    count = _bm.empty_video_trash(bid)
+    return jsonify(success=True, count=count)
+
+
+@app.route('/api/batch/<bid>/cleanup', methods=['POST'])
+def batch_cleanup(bid):
+    ok = _bm.cleanup_batch(bid)
+    return jsonify(success=ok)
+
+
+@app.route('/api/batches', methods=['GET'])
+def list_batches():
+    batches = _bm.list_batches()
+    return jsonify(success=True, batches=batches, max_batch_workers=_bm.compute_max_batch_workers())
+
+
+@app.route('/api/batch/auto-increment-names', methods=['POST'])
+def batch_auto_increment():
+    data = request.get_json(silent=True) or {}
+    base_name = data.get('base_name', '')
+    count = int(data.get('count', 1))
+    if not base_name or count < 1:
+        return jsonify(success=False, message='参数无效')
+    names = _bm.auto_increment_name(base_name, count)
+    return jsonify(success=True, names=names)
 
 
 # ============================================================
@@ -1446,12 +1882,19 @@ def shutdown():
 def _do_cleanup(force=False):
     """清理临时文件。force=True 时强制删除所有，否则保留有提取成果的会话。"""
     if force:
+        try:
+            _bm.cleanup_all_batches()
+        except Exception:
+            pass
+    if force:
         if os.path.exists(SESSIONS_ROOT):
             shutil.rmtree(SESSIONS_ROOT, ignore_errors=True)
     else:
         # 只清理空会话，保留有提取成果的会话用于恢复
         if os.path.exists(SESSIONS_ROOT):
             for name in os.listdir(SESSIONS_ROOT):
+                if name.startswith('batch_'):
+                    continue
                 sess_dir = os.path.join(SESSIONS_ROOT, name)
                 if not os.path.isdir(sess_dir):
                     continue
@@ -1480,6 +1923,14 @@ def _has_active_work():
                     return True
                 if sess.get('saved_count', 0) > 0:
                     return True
+    try:
+        for batch in _bm.list_batches():
+            if batch.get('status') == 'processing':
+                return True
+            if batch.get('task_count', 0) > 0 or batch.get('total_images', 0) > 0:
+                return True
+    except Exception:
+        pass
     return False
 
 
@@ -1575,6 +2026,8 @@ if __name__ == '__main__':
 
         # 启动时恢复磁盘上的会话（断线恢复 & 断点续传）
         recovered = _recover_sessions_from_disk()
+        _bm.recover_batches_from_disk(SESSIONS_ROOT)
+        recovered_batches = len(_bm.list_batches())
 
         if args.port:
             # 用户指定端口，检查是否可用
@@ -1599,7 +2052,7 @@ if __name__ == '__main__':
 
         print()
         print('=' * 60)
-        print('  影幻智提 (VidSlide) v0.4.1 - 细节优化版')
+        print('  影幻智提 (VidSlide) v0.4.2 - 延河课堂批量版')
         print(f'  访问地址: {url}')
         if args.no_browser:
             print('  （已禁用自动打开浏览器，请手动访问上方地址）')
@@ -1608,6 +2061,8 @@ if __name__ == '__main__':
         print('  浏览器断联 5 分钟后服务自动退出（有任务时延长等待）')
         if recovered > 0:
             print(f'  📂 已从磁盘恢复 {recovered} 个会话')
+        if recovered_batches > 0:
+            print(f'  📚 已从磁盘恢复 {recovered_batches} 个批量队列')
         print('  按 Ctrl+C 手动停止 | python app.py --help 查看命令行选项')
         print('=' * 60)
         print()

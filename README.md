@@ -109,6 +109,7 @@ python app.py [选项]
 | 🎯 三档运行模式 | Eco 后台静默 / Fast 全速狂飙 / Turbo 极速狂暴，根据场景自由选择（v0.3.1+） |
 | 💾 参数配置记忆 | 自动记住上次的参数选择，下次打开无需重新设置（v0.3.1+） |
 | 📡 跨标签页同步 | 关闭服务时所有标签页同步响应，重复标签页自动检测（v0.4.0+） |
+| 🗂️ 延河课堂批量处理 | 多选/扫描文件夹、队列排序、批量提取、批量导出（v0.4.2+） |
 
 ## ⚡ 三档运行模式详解
 
@@ -168,7 +169,7 @@ pip install pyinstaller
 # 运行 PyInstaller 打包脚本
 build.bat
 # 或手动执行
-pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt" --add-data "templates;templates" --add-data "static;static" --hidden-import extractor --hidden-import exporter --name "VidSlide" app.py
+pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt" --add-data "templates;templates" --add-data "static;static" --hidden-import extractor --hidden-import exporter --hidden-import batch_manager --name "VidSlide" app.py
 ```
 
 ## 项目结构
@@ -176,13 +177,16 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 ```
 VidSlide/
 ├── app.py              # Flask 后端（多会话 + SSE 推送 + 资源监控）
+├── batch_manager.py    # 延河课堂批量队列、调度、导出与回收站
 ├── extractor.py        # 视频提取核心（GPU 加速 + 进程优先级调整）
 ├── exporter.py         # 打包导出（PDF / PPTX / ZIP）
 ├── templates/
 │   └── index.html      # 前端页面模板
 ├── static/
 │   ├── css/style.css   # 外部样式表
-│   └── js/main.js      # 前端主逻辑（SSE + DocumentFragment）
+│   └── js/
+│       ├── main.js     # 前端主逻辑（SSE + DocumentFragment）
+│       └── batch/      # 批量处理前端模块
 ├── logo.ico            # 应用图标
 ├── version.txt         # exe 版本信息
 ├── requirements.txt    # Python 依赖
@@ -248,6 +252,12 @@ VidSlide/
 本项目绝大部分代码由 **GitHub Copilot (Claude Opus 4.6)** AI 生成，由 [PWO-CHINA](https://github.com/PWO-CHINA) 审核、测试和维护。
 
 ## 更新日志
+
+### v0.4.2 (2026-05-01) — 延河课堂批量版
+- 🧭 **新版前端移植**：引入 v0.6.x 的视觉风格、Lucide 图标、批量面板与模块化前端结构
+- 🗂️ **批量处理**：支持多选视频、递归扫描文件夹、三区域队列、暂停/重试、详情预览与批量导出
+- 🧷 **4.1 提取边界保持**：不引入实体课堂/电子课堂处理对象，单任务和批量任务都固定为延河课堂 PPT 录屏
+- 🧹 **批量恢复与清理**：批量队列持久化到 `.vidslide_sessions/batch_*`，重启后可恢复，关闭服务时统一清理
 
 ### v0.4.1 (2026-02-26) — 细节优化版
 - 🖼️ **图标更新**：替换为新版高清图标（256x256）

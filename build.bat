@@ -41,6 +41,7 @@ pyinstaller --onefile --noconsole ^
     --add-data "static;static" ^
     --hidden-import extractor ^
     --hidden-import exporter ^
+    --hidden-import batch_manager ^
     --name "VidSlide" ^
     app.py
 

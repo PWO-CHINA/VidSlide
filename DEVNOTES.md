@@ -11,7 +11,7 @@
 
 - **定位**：从延河课堂桌面录屏视频中提取 PPT 幻灯片的单机工具
 - **架构**：Python Flask 后端 + 原生 HTML/JS 前端（无框架），单进程多线程
-- **当前版本**：v0.4.1
+- **当前版本**：v0.4.2（延河课堂批量分支，和 main 的 v0.6.x 分开）
 - **GitHub**：https://github.com/PWO-CHINA/VidSlide
 - **Gitee 镜像**：https://gitee.com/pwo101/VidSlide（国内下载更快）
 - **Python**：3.11（Microsoft Store 版），虚拟环境在 `./venv`
@@ -20,12 +20,14 @@
 
 | 文件 | 行数（约） | 职责 |
 |------|-----------|------|
-| `app.py` | ~1250 | Flask 路由、多会话管理、SSE 推送、GPU 监控、系统资源采样 |
+| `app.py` | ~1800 | Flask 路由、多会话管理、SSE 推送、GPU 监控、系统资源采样、批量 API |
+| `batch_manager.py` | ~1800 | 延河课堂批量队列、调度、缩略图、导出、回收站、持久化 |
 | `extractor.py` | ~295 | 视频帧差检测核心、场景切换识别、三档速度模式 |
 | `exporter.py` | ~150 | PDF/PPTX/ZIP 导出 |
-| `templates/index.html` | ~340 | 前端 HTML 模板（Tailwind CDN） |
-| `static/js/main.js` | ~1230 | 前端全部逻辑：SSE、画廊、拖拽排序、localStorage 配置记忆 |
-| `static/css/style.css` | ~200 | 自定义样式 |
+| `templates/index.html` | ~740 | 前端 HTML 模板（Tailwind CDN + 批量面板） |
+| `static/js/main.js` | ~1700 | 前端主逻辑：标签页、SSE、画廊、配置记忆 |
+| `static/js/batch/*.js` | ~2000 | 批量前端模块：三区域、选择、控制、详情、导出、回收站 |
+| `static/css/style.css` | ~1200 | 自定义样式 |
 
 ## 重要设计决策 & 踩坑记录
 
@@ -290,7 +292,7 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 - 图片服务、下载、打包三个路由加 `os.path.basename()` 防路径穿越
 - 视频路径校验从 `os.path.exists` 改为 `os.path.isfile`
 - 端口文件读取改用 `with open()` 修复资源泄漏
-- 静态文件引用加 `?v=0.4.1` cache buster
+- 静态文件引用加 `?v=0.4.2` cache buster
 - Flask 加 `TEMPLATES_AUTO_RELOAD` 和 `SEND_FILE_MAX_AGE_DEFAULT=0`
 
 ### 21. 核显提示折叠
@@ -298,4 +300,24 @@ pyinstaller --onefile --noconsole --icon="logo.ico" --version-file="version.txt"
 **方案**：将核显性能提示从始终可见的 `<div>` 改为 `<details>` 折叠元素，默认收起，标题"💡 核显用户性能提示（点击展开）"。非核显用户不会被干扰。
 
 **代码位置**：`index.html` 参数面板内。
+
+## v0.4.2 新增设计决策
+
+### 22. 延河课堂稳定分支与 main 分离
+
+**背景**：main 分支后续引入了电子课堂/实体课堂等新处理对象，但 v0.4.1 是当前推荐的延河课堂桌面录屏稳定提取基线。
+
+**方案**：从 `rollback/v0.4.1` 新建 `yanhe/v0.4.2-batch`，目录重命名为 `VidSlide-v0.4.2-yanhe-batch`。版本号使用 `0.4.2`，不跟随 main 的 `0.6.x`。
+
+### 23. 新前端只保留 PPT 录屏处理边界
+
+**背景**：新版前端包含 `ppt/hybrid/blackboard` 三模式选择，但本分支只面向延河课堂 VGA/PPT 屏幕录屏。
+
+**方案**：HTML 中隐藏 `classroom_mode` 控件并固定为 `ppt`；`main.js`、`batch/core.js` 始终提交 `classroom_mode: 'ppt'`；`app.py` 和 `batch_manager.py` 在后端再次强制归一。
+
+### 24. 批量处理复用 4.1 extractor
+
+**方案**：移植 `batch_manager.py` 的三区域队列、SSE、打包、回收站和持久化，但 worker 调用保持 v0.4.1 的 `extract_slides(...)` 参数签名，不传新版的 `classroom_mode`。
+
+**代码位置**：`batch_manager.py` `_video_worker()`。
 
