@@ -461,6 +461,15 @@ body {
     color: var(--text-secondary);
     font-size: .86rem;
 }
+.setting-path-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: .5rem;
+    align-items: center;
+}
+.setting-path-row .setting-input {
+    width: 100%;
+}
 .settings-info {
     border: 1px solid var(--border);
     border-radius: .6rem;
@@ -551,6 +560,9 @@ body {
     .yanhe-progress-foot .btn-secondary {
         width: 100%;
         justify-content: center;
+    }
+    .setting-path-row {
+        grid-template-columns: 1fr;
     }
     .yanhe-session-item {
         grid-template-columns: auto minmax(0, 1fr);

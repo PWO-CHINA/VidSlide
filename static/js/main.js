@@ -384,7 +384,7 @@ function setExportButtonsState(sid, disabled, text) {
 // ============================================================
 async function api(path, opts = {}) {
     try {
-        const timeout = path.includes('select-video') ? 180000 : 60000;
+        const timeout = path.includes('select-video') || path.includes('/select-') ? 180000 : 60000;
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeout);
         opts.signal = controller.signal;

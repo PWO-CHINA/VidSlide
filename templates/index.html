@@ -806,9 +806,17 @@
         </div>
         <div class="settings-section">
             <h3>下载</h3>
-            <label>ffmpeg.exe 路径 <input id="settingFfmpegPath" type="text" class="setting-input" placeholder="留空时优先使用内置 bin\ffmpeg.exe"></label>
+            <label>ffmpeg.exe 路径</label>
+            <div class="setting-path-row">
+                <input id="settingFfmpegPath" type="text" class="setting-input" placeholder="留空时优先使用内置 bin\ffmpeg.exe">
+                <button class="btn-secondary" onclick="chooseFfmpegPath()">选择</button>
+            </div>
             <div id="settingsFfmpegCandidates" class="settings-info"></div>
-            <label>下载目录 <input id="settingDownloadDir" type="text" class="setting-input" placeholder="F:\VidSlide\yanhe-batch-v0.4.2\downloads"></label>
+            <label>下载目录</label>
+            <div class="setting-path-row">
+                <input id="settingDownloadDir" type="text" class="setting-input" placeholder="F:\VidSlide\yanhe-batch-v0.4.2\downloads">
+                <button class="btn-secondary" onclick="chooseDownloadDir()">选择</button>
+            </div>
             <label class="setting-line"><input type="checkbox" id="settingUseGetvideoProfile"> 临时使用 getvideo 的本机 Chrome profile（只复用登录态，不保存账号密码）</label>
             <label class="setting-line"><input type="checkbox" id="settingCleanSource"> 成功提取后清理受管源视频</label>
             <button class="btn-primary" onclick="saveSettingsDrawer()">保存下载设置</button>

@@ -193,6 +193,37 @@
         }
     };
 
+    window.chooseFfmpegPath = async function () {
+        try {
+            showToast('请选择 ffmpeg.exe，弹窗可能在浏览器后面', 'info', 2400);
+            const res = await api('/api/settings/select-ffmpeg', { method: 'POST' });
+            if (!res.success) throw new Error(res.message || '未选择 ffmpeg');
+            currentSettings = res.settings;
+            $('settingFfmpegPath').value = res.path || '';
+            await loadDiagnostics();
+            if (typeof window.refreshYanheStatus === 'function') await window.refreshYanheStatus();
+            showToast('ffmpeg 路径已保存', 'success');
+        } catch (e) {
+            showToast('选择 ffmpeg 失败：' + e.message, 'error');
+        }
+    };
+
+    window.chooseDownloadDir = async function () {
+        try {
+            showToast('请选择延河下载目录，建议使用 F 盘', 'info', 2400);
+            const res = await api('/api/settings/select-download-dir', { method: 'POST' });
+            if (!res.success) throw new Error(res.message || '未选择下载目录');
+            currentSettings = res.settings;
+            $('settingDownloadDir').value = res.path || '';
+            await loadStorageInfo();
+            await loadDiagnostics();
+            if (typeof window.refreshYanheStatus === 'function') await window.refreshYanheStatus();
+            showToast('下载目录已保存', 'success');
+        } catch (e) {
+            showToast('选择下载目录失败：' + e.message, 'error');
+        }
+    };
+
     window.openManagedStorage = async function (kind) {
         try {
             const res = await api('/api/storage/open', {

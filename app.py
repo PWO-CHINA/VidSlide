@@ -1051,6 +1051,12 @@ _VIDEO_FILETYPES = [
     ("所有文件", "*.*"),
 ]
 
+_FFMPEG_FILETYPES = [
+    ("ffmpeg.exe", "ffmpeg.exe"),
+    ("可执行文件", "*.exe"),
+    ("所有文件", "*.*"),
+]
+
 
 def _ensure_dpi_aware():
     """设置 Windows DPI 感知，让 tkinter 文件选择框显示清晰。"""
@@ -1065,7 +1071,7 @@ def _ensure_dpi_aware():
             pass
 
 
-def _open_file_dialog(mode='single'):
+def _open_file_dialog(mode='single', initialdir=None):
     """打开本地文件/文件夹选择框，避免浏览器上传大视频。"""
     import tkinter as tk
     from tkinter import filedialog
@@ -1081,21 +1087,40 @@ def _open_file_dialog(mode='single'):
             root.withdraw()
             root.wm_attributes('-topmost', 1)
             root.focus_force()
+            dialog_kwargs = {}
+            if initialdir and os.path.isdir(initialdir):
+                dialog_kwargs['initialdir'] = initialdir
             if mode == 'multi':
                 paths = filedialog.askopenfilenames(
                     title="请选择要批量处理的延河课堂录屏视频（可多选）",
                     filetypes=_VIDEO_FILETYPES,
+                    **dialog_kwargs,
                 )
                 result_queue.put(list(paths) if paths else [])
             elif mode == 'folder':
                 folder = filedialog.askdirectory(
                     title="请选择包含延河课堂录屏视频的文件夹",
+                    **dialog_kwargs,
                 )
                 result_queue.put(folder or '')
+            elif mode == 'directory':
+                folder = filedialog.askdirectory(
+                    title="请选择延河录屏下载目录（建议使用 F 盘）",
+                    **dialog_kwargs,
+                )
+                result_queue.put(folder or '')
+            elif mode == 'ffmpeg':
+                path = filedialog.askopenfilename(
+                    title="请选择 ffmpeg.exe",
+                    filetypes=_FFMPEG_FILETYPES,
+                    **dialog_kwargs,
+                )
+                result_queue.put(path or '')
             else:
                 path = filedialog.askopenfilename(
                     title="请选择要提取的延河课堂录屏视频",
                     filetypes=_VIDEO_FILETYPES,
+                    **dialog_kwargs,
                 )
                 result_queue.put(path or '')
             root.destroy()
@@ -1160,6 +1185,62 @@ def select_folder():
         return jsonify(success=True, paths=videos, folder=folder)
     except Exception as e:
         print(f'[ERROR] select_folder 异常: {e}')
+        return jsonify(success=False, message=str(e))
+    finally:
+        _video_select_lock.release()
+
+
+@app.route('/api/settings/select-ffmpeg', methods=['POST'])
+def settings_select_ffmpeg():
+    if not _video_select_lock.acquire(blocking=False):
+        return jsonify(success=False, message='其他操作正在选择文件，请先完成或关闭弹窗')
+    try:
+        settings = settings_store.load_settings()
+        current = settings.get('download', {}).get('ffmpeg_path') or ''
+        initialdir = str(Path(current).parent) if current else str(BASE_DIR)
+        path = _open_file_dialog(mode='ffmpeg', initialdir=initialdir)
+        if not path:
+            return jsonify(success=False, message='未选择 ffmpeg.exe')
+        status = _ydm.ffmpeg_status(path)
+        if not status.get('available'):
+            return jsonify(success=False, message=status.get('message') or '所选 ffmpeg 不可用', ffmpeg=status)
+        settings = settings_store.update_settings({'download': {'ffmpeg_path': path}})
+        return jsonify(success=True, path=path, ffmpeg=status, settings=settings)
+    except Exception as e:
+        print(f'[ERROR] settings_select_ffmpeg 异常: {e}')
+        return jsonify(success=False, message=str(e))
+    finally:
+        _video_select_lock.release()
+
+
+@app.route('/api/settings/select-download-dir', methods=['POST'])
+def settings_select_download_dir():
+    if not _video_select_lock.acquire(blocking=False):
+        return jsonify(success=False, message='其他操作正在选择文件夹，请先完成或关闭弹窗')
+    try:
+        settings = settings_store.load_settings()
+        current = settings.get('download', {}).get('download_dir') or str(storage.downloads_dir())
+        folder = _open_file_dialog(mode='directory', initialdir=current)
+        if not folder:
+            return jsonify(success=False, message='未选择下载目录')
+        target = Path(folder).expanduser()
+        target.mkdir(parents=True, exist_ok=True)
+        test_file = target / '.vidslide-write-test'
+        test_file.write_text('ok', encoding='utf-8')
+        try:
+            test_file.unlink()
+        except OSError:
+            pass
+        settings = settings_store.update_settings({'download': {'download_dir': str(target)}})
+        usage = shutil.disk_usage(str(target))
+        return jsonify(
+            success=True,
+            path=str(target),
+            disk={'total_bytes': usage.total, 'free_bytes': usage.free, 'used_bytes': usage.used},
+            settings=settings,
+        )
+    except Exception as e:
+        print(f'[ERROR] settings_select_download_dir 异常: {e}')
         return jsonify(success=False, message=str(e))
     finally:
         _video_select_lock.release()

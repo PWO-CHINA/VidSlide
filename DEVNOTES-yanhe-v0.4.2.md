@@ -114,6 +114,23 @@ Browser productization smoke result:
 - Browser console still shows extension-origin and blocked third-party traffic
   unrelated to the app; app-origin smoke path passed.
 
+Settings picker update:
+
+- Added native picker endpoints:
+  - `POST /api/settings/select-ffmpeg`
+  - `POST /api/settings/select-download-dir`
+- These reuse the existing Tkinter picker infrastructure. If a permission or
+  window-focus prompt appears during manual use, handle it in the visible desktop
+  rather than blocking the agent loop.
+- The ffmpeg picker validates the selected file through `ffmpeg_status()` before
+  saving it to settings.
+- The download-directory picker creates the directory if needed, performs a
+  write test, saves the path, and returns disk usage.
+- Settings drawer now has "选择" buttons beside both path fields. Browser smoke
+  verified the buttons render and current diagnostics still show bundled ffmpeg,
+  F-drive downloads, and the getvideo development profile.
+- Unit tests mock the native dialogs so CI/automation does not hang.
+
 ## ffmpeg
 
 Real downloads require ffmpeg. The app now:

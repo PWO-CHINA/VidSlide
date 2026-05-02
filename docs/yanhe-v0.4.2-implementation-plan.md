@@ -167,7 +167,12 @@ handoff without losing decisions.
   - Browser smoke on course `67968` verified the productized UI, sorting, selected-duration stats, settings drawer, and download-complete handoff.
   - API smoke verified downloading the already-present session `853828` twice leaves the target batch with exactly one unselected video.
   - Real extraction smoke used a local 5-minute clip cut from the downloaded Yanhe MP4. With the existing extractor settings and unchanged extraction principle, it completed in about 12 seconds, saved 4 slides, and ZIP/PDF/PPTX exports downloaded successfully.
+- M6 settings usability update:
+  - Added native settings picker APIs for `ffmpeg.exe` and the Yanhe download directory.
+  - Settings drawer now has "选择" buttons next to both path fields. Successful selection persists settings and refreshes diagnostics/status.
+  - The ffmpeg picker validates the selected executable through the existing ffmpeg status path before saving.
+  - The download directory picker creates/checks a small write-test file before saving and returns disk free space.
+  - Added tests covering both picker APIs with mocked native dialogs.
 - Next immediate steps:
-  - Commit and push the UI productization/extraction-smoke milestone.
-  - Add a native file picker for ffmpeg and download directories; current text inputs/candidate buttons work but are not final product feel.
+  - Commit and push the settings picker milestone.
   - Continue frontend polish around batch zone guidance, export progress visibility, and mobile layout.

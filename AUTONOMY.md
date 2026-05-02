@@ -32,15 +32,16 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the verified productization/extraction-smoke milestone.
-2. Add native helper APIs/buttons for choosing ffmpeg and download directories.
-3. Polish batch zone guidance and export progress so the user always knows the
+1. Commit and push the settings picker milestone.
+2. Polish batch zone guidance and export progress so the user always knows the
    next manual action.
-4. Add more regression tests around download job SSE terminal events and
+3. Add more regression tests around download job SSE terminal events and
    duplicate-path batch insertion.
-5. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
+4. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
    using short local clips for extraction unless a full-course overnight run is
    intentionally useful.
+5. Review packaging/build notes so sidecar ffmpeg is included in release
+   artifacts without being committed to Git.
 
 ## Latest Verified Loop
 
@@ -51,3 +52,5 @@ Repeat until the product is materially better:
 - Repeated download of the same existing MP4 no longer duplicates the batch entry.
 - A 5-minute clip from the real Yanhe download extracted 4 slides in about 12 seconds.
 - ZIP/PDF/PPTX export downloads for that sample returned HTTP 200.
+- Settings now has native "选择" buttons for ffmpeg and download directory; tests
+  mock the dialogs to avoid unattended hangs.
