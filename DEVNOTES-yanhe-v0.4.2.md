@@ -249,6 +249,30 @@ Batch detail thumbnail index regression update:
 - Added a frontend regression test to prevent reintroducing the stale
   `idx`-closure pattern.
 
+Yanhe PPT extraction parameter audit:
+
+- Rechecked the batch extraction path. `extractor.py` still matches
+  `rollback/v0.4.1` except for the version string; this branch has not imported
+  the v0.6.x blackboard/electronic-classroom/PyAV/MOG2 extraction core.
+- The batch path remains: downloaded/imported video enters unselected, user moves
+  it to queue, `/api/batch/<id>/start` normalizes Yanhe params, then
+  `batch_manager._video_worker()` calls `extract_slides()` with the v0.4.1 PPT
+  recording algorithm.
+- Current safe default for formal Yanhe batch extraction is `threshold=5`,
+  `use_roi=true`, `fast_mode=true`, `use_gpu=true`, `enable_history=true`,
+  `max_history=5`, `speed_mode=fast`, and `workers=1`.
+- The main inherent risks are still the v0.4.1 tradeoffs: 1-second sampling can
+  miss slides shown for less than about a second, hard-coded Yanhe ROI can miss
+  nonstandard layouts, and stable bullet animations can be saved as valid states
+  if they pause long enough.
+- Kept the extraction core unchanged. Instead, batch param normalization now
+  clamps numeric/bool inputs, rejects `turbo`, forces `classroom_mode=ppt`, and
+  migrates legacy unversioned batch params with `threshold < 4.5` back to the
+  formal default of `5.0`.
+- Batch resume now reports and persists `saved_offset + newly_saved` rather than
+  only the images saved after resume, preventing total-image counts from drifting
+  after interrupted batch work.
+
 ## ffmpeg
 
 Real downloads require ffmpeg. The app now:

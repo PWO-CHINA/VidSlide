@@ -37,9 +37,11 @@ function _formatBatchTime(seconds) {
 //  参数记忆（localStorage）
 // ============================================================
 const _BATCH_PREFS_KEY = 'vidslide_batch_prefs';
+const _BATCH_PREFS_VERSION = 2;
 
-function _normalizeBatchParams(params) {
+function _normalizeBatchParams(params, options = {}) {
     const p = { ...(params || {}) };
+    const hadVersion = p._param_version === _BATCH_PREFS_VERSION;
     p.classroom_mode = 'ppt';
     if (p.speed_mode === 'turbo') {
         p.speed_mode = 'fast';
@@ -47,13 +49,27 @@ function _normalizeBatchParams(params) {
     if (!['eco', 'fast'].includes(p.speed_mode)) {
         p.speed_mode = 'fast';
     }
+    const threshold = Number.parseFloat(p.threshold);
+    p.threshold = Number.isFinite(threshold) ? Math.min(15, Math.max(1, threshold)) : 5;
+    if (options.migrateLegacy && !hadVersion && p.threshold < 4.5) {
+        p.threshold = 5;
+    }
+    p.fast_mode = p.fast_mode ?? true;
+    p.use_roi = p.use_roi ?? true;
+    p.use_gpu = p.use_gpu ?? true;
+    p.enable_history = p.enable_history ?? true;
+    const maxHistory = Number.parseInt(p.max_history, 10);
+    p.max_history = Number.isFinite(maxHistory) ? Math.min(20, Math.max(2, maxHistory)) : 5;
+    p._param_version = _BATCH_PREFS_VERSION;
     return p;
 }
 
 function _loadBatchPrefs() {
     try {
         const raw = localStorage.getItem(_BATCH_PREFS_KEY);
-        return _normalizeBatchParams(raw ? JSON.parse(raw) : {});
+        const prefs = _normalizeBatchParams(raw ? JSON.parse(raw) : {}, { migrateLegacy: true });
+        if (raw) _saveBatchPrefs(prefs);
+        return prefs;
     } catch { return {}; }
 }
 

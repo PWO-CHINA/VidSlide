@@ -57,14 +57,63 @@ _batches = {}  # bid -> BatchQueue dict
 
 
 _YANHE_BATCH_SPEED_MODES = frozenset({'eco', 'fast'})
+_YANHE_BATCH_PARAMS_VERSION = 2
 
 
-def normalize_batch_params(params):
+def _coerce_bool(value, default=True):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        v = value.strip().lower()
+        if v in ('1', 'true', 'yes', 'on'):
+            return True
+        if v in ('0', 'false', 'no', 'off'):
+            return False
+    if value is None:
+        return default
+    return bool(value)
+
+
+def _coerce_float(value, default, min_value, max_value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        number = default
+    if number < min_value:
+        return min_value
+    if number > max_value:
+        return max_value
+    return number
+
+
+def _coerce_int(value, default, min_value, max_value):
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        number = default
+    if number < min_value:
+        return min_value
+    if number > max_value:
+        return max_value
+    return number
+
+
+def normalize_batch_params(params, migrate_legacy=False):
     """Return safe Yanhe batch params for the v0.4.x PPT-only branch."""
     params = dict(params or {})
+    had_version = params.get('_param_version') == _YANHE_BATCH_PARAMS_VERSION
     params['classroom_mode'] = 'ppt'
     if params.get('speed_mode') not in _YANHE_BATCH_SPEED_MODES:
         params['speed_mode'] = 'fast'
+    params['threshold'] = _coerce_float(params.get('threshold', 5.0), 5.0, 1.0, 15.0)
+    if migrate_legacy and not had_version and params['threshold'] < 4.5:
+        params['threshold'] = 5.0
+    params['fast_mode'] = _coerce_bool(params.get('fast_mode', True), True)
+    params['use_roi'] = _coerce_bool(params.get('use_roi', True), True)
+    params['use_gpu'] = _coerce_bool(params.get('use_gpu', True), True)
+    params['enable_history'] = _coerce_bool(params.get('enable_history', True), True)
+    params['max_history'] = _coerce_int(params.get('max_history', 5), 5, 2, 20)
+    params['_param_version'] = _YANHE_BATCH_PARAMS_VERSION
     return params
 
 
@@ -883,8 +932,9 @@ def _video_worker(bid, vid):
                 task['resume_from_breakpoint'] = False
 
         def on_progress(saved_count, progress_pct, message, eta_seconds, elapsed_seconds, current_frame=0):
+            actual_saved = saved_offset + saved_count
             with batch['lock']:
-                task['saved_count'] = saved_count
+                task['saved_count'] = actual_saved
                 task['progress'] = progress_pct
                 task['message'] = message
                 task['eta_seconds'] = eta_seconds
@@ -893,7 +943,7 @@ def _video_worker(bid, vid):
             _push_batch_event(bid, {
                 'type': 'video_progress',
                 'video_id': vid,
-                'saved_count': saved_count,
+                'saved_count': actual_saved,
                 'progress': progress_pct,
                 'message': message,
                 'eta_seconds': eta_seconds,
@@ -925,8 +975,9 @@ def _video_worker(bid, vid):
             saved_offset=saved_offset,
         )
 
+        actual_saved = saved_offset + saved_count
         with batch['lock']:
-            task['saved_count'] = saved_count
+            task['saved_count'] = actual_saved
             if status == 'done':
                 # 正常完成 → 移入已完成区域
                 task['zone'] = 'completed'
@@ -934,7 +985,7 @@ def _video_worker(bid, vid):
                 task['progress'] = 100
                 task['message'] = message
                 batch['completed_count'] += 1
-                batch['total_images'] += saved_count
+                batch['total_images'] += actual_saved
             elif status == 'cancelled':
                 if task.get('_pending_trash'):
                     # 用户取消 running 视频 → 进入回收站
@@ -1274,7 +1325,7 @@ def recover_batches_from_disk(sessions_root):
                 'id': bid,
                 'status': new_status,
                 'tasks': [],
-                'params': normalize_batch_params(meta.get('params', {})),
+                'params': normalize_batch_params(meta.get('params', {}), migrate_legacy=True),
                 'max_workers': meta.get('max_workers', 1),
                 'created_at': meta.get('created_at', time.time()),
                 'batch_dir': batch_dir,

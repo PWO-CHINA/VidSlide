@@ -76,15 +76,19 @@ class YanheBranchTests(unittest.TestCase):
         app_module = importlib.import_module("app")
         try:
             params = app_module._yanhe_batch_params({
-                "threshold": 3,
+                "threshold": "0.5",
                 "speed_mode": "turbo",
                 "classroom_mode": "blackboard",
+                "max_history": "999",
+                "use_roi": "false",
             })
         finally:
             sys.modules.pop("app", None)
         self.assertEqual(params["speed_mode"], "fast")
         self.assertEqual(params["classroom_mode"], "ppt")
-        self.assertEqual(params["threshold"], 3)
+        self.assertEqual(params["threshold"], 1.0)
+        self.assertEqual(params["max_history"], 20)
+        self.assertFalse(params["use_roi"])
 
     def test_batch_manager_clamps_turbo_on_create_and_update(self):
         sessions = Path(self.tmp.name) / "sessions"
@@ -92,10 +96,13 @@ class YanheBranchTests(unittest.TestCase):
             "threshold": 3,
             "speed_mode": "turbo",
             "classroom_mode": "hybrid",
+            "max_history": 1,
         }, 1)
         state = batch_manager.get_batch_state(bid)
         self.assertEqual(state["params"]["speed_mode"], "fast")
         self.assertEqual(state["params"]["classroom_mode"], "ppt")
+        self.assertEqual(state["params"]["threshold"], 3)
+        self.assertEqual(state["params"]["max_history"], 2)
 
         batch_manager.update_batch_params(bid, {
             "speed_mode": "turbo",
@@ -112,6 +119,7 @@ class YanheBranchTests(unittest.TestCase):
         (batch_dir / "batch.json").write_text(json.dumps({
             "id": "legacy",
             "params": {
+                "threshold": 3,
                 "speed_mode": "turbo",
                 "classroom_mode": "blackboard",
             },
@@ -122,6 +130,67 @@ class YanheBranchTests(unittest.TestCase):
         state = batch_manager.get_batch_state("legacy")
         self.assertEqual(state["params"]["speed_mode"], "fast")
         self.assertEqual(state["params"]["classroom_mode"], "ppt")
+        self.assertEqual(state["params"]["threshold"], 5.0)
+
+    def test_batch_resume_counts_existing_and_new_saved_images(self):
+        video = Path(self.tmp.name) / "sample.mp4"
+        video.write_bytes(b"not a real mp4")
+        bid = batch_manager.create_batch(Path(self.tmp.name) / "sessions", {"threshold": 5}, 1)
+        task = {
+            "id": "vid1",
+            "video_path": str(video),
+            "display_name": "sample",
+            "zone": "queue",
+            "status": "waiting",
+            "progress": 0,
+            "message": "",
+            "saved_count": 4,
+            "eta_seconds": -1,
+            "elapsed_seconds": 0,
+            "error_message": "",
+            "retry_count": 0,
+            "cancel_flag": False,
+            "_pending_trash": False,
+            "total_frames": 100,
+            "fps": 25,
+            "resolution": (1920, 1080),
+            "codec": "h264",
+            "last_frame_index": 50,
+            "resume_from_breakpoint": True,
+            "output_dir": str(Path(self.tmp.name) / "out"),
+            "cache_dir": str(Path(self.tmp.name) / "out" / "cache"),
+            "pkg_dir": str(Path(self.tmp.name) / "out" / "packages"),
+        }
+        Path(task["cache_dir"]).mkdir(parents=True)
+        Path(task["pkg_dir"]).mkdir(parents=True)
+        batch = batch_manager.get_batch(bid)
+        with batch["lock"]:
+            batch["tasks"].append(task)
+
+        fake_cap = mock.Mock()
+        fake_cap.isOpened.return_value = True
+        fake_cap.read.return_value = (True, object())
+        fake_cap.get.side_effect = lambda prop: {
+            batch_manager.cv2.CAP_PROP_FRAME_COUNT: 100,
+            batch_manager.cv2.CAP_PROP_FPS: 25,
+        }.get(prop, 0)
+        fake_cap.release.return_value = None
+
+        def fake_extract(*_args, **kwargs):
+            self.assertEqual(kwargs["start_frame"], 50)
+            self.assertEqual(kwargs["saved_offset"], 4)
+            kwargs["on_progress"](2, 80, "resume progress", 1, 2, 75)
+            return "done", "done", 3
+
+        with mock.patch.object(batch_manager.cv2, "VideoCapture", return_value=fake_cap), \
+             mock.patch.object(batch_manager, "extract_slides", side_effect=fake_extract):
+            batch["worker_semaphore"].acquire()
+            batch_manager._video_worker(bid, "vid1")
+
+        state = batch_manager.get_batch_state(bid)
+        completed = state["zones"]["completed"][0]
+        self.assertEqual(completed["saved_count"], 7)
+        self.assertEqual(state["total_images"], 7)
 
     def test_batch_add_videos_skips_duplicate_paths(self):
         video = Path(self.tmp.name) / "sample.mp4"
