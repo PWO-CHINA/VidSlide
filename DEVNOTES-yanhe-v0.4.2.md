@@ -204,6 +204,19 @@ Local sidecar currently used during development:
 
 Do not commit ffmpeg binaries to this branch. The build scripts include
 `bin\ffmpeg.exe` when it exists, so release artifacts can still be self-contained.
+See `docs/yanhe-release-packaging.md` for the release checklist and license
+reminder.
+
+Packaging compatibility update:
+
+- Runtime resource discovery now also checks Nuitka's `__compiled__.containing_dir`
+  when present, in addition to PyInstaller `_MEIPASS`, the exe/app directory, and
+  the source directory.
+- The README now documents the v0.4.2 Yanhe flow, the F-drive download default,
+  and the local `bin\ffmpeg.exe` release strategy.
+- Local verification confirmed `bin\ffmpeg.exe -version` works. The current local
+  binary is a Gyan.dev full build with GPL-enabled configuration, so public
+  release notes should include the matching ffmpeg license/source notice.
 
 ## Verification
 

@@ -80,6 +80,10 @@ def get_resource_path(relative_path):
     """获取打包后的资源文件路径"""
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
+    compiled = globals().get('__compiled__')
+    compiled_dir = getattr(compiled, 'containing_dir', '') if compiled else ''
+    if compiled_dir:
+        return os.path.join(compiled_dir, relative_path)
     return os.path.join(os.path.abspath(os.path.dirname(__file__)), relative_path)
 
 

@@ -1,6 +1,7 @@
 import os
 import json
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -49,6 +50,19 @@ class YanheBranchTests(unittest.TestCase):
         self.assertTrue(core.filename_for({"title": "第1周", "course_name": "生物仪器分析"}, 1).endswith("_课堂录屏.mp4"))
         with self.assertRaises(FileNotFoundError):
             core.find_ffmpeg(str(Path(self.tmp.name) / "missing-ffmpeg.exe"))
+
+    def test_resource_dirs_include_nuitka_containing_dir(self):
+        compiled_dir = Path(self.tmp.name) / "nuitka-onefile"
+        compiled_dir.mkdir()
+        old_compiled = getattr(core, "__compiled__", None)
+        core.__compiled__ = types.SimpleNamespace(containing_dir=str(compiled_dir))
+        try:
+            self.assertIn(compiled_dir.resolve(), core.resource_dirs())
+        finally:
+            if old_compiled is None:
+                delattr(core, "__compiled__")
+            else:
+                core.__compiled__ = old_compiled
 
     def test_dry_run_preflight_does_not_require_ffmpeg(self):
         result = ydm.download_preflight({"dry_run": True})

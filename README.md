@@ -9,6 +9,20 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ![AI Generated](https://img.shields.io/badge/Code-AI_Generated-blueviolet?logo=github-copilot)
 
+## v0.4.2 延河批量版
+
+这个分支的第一入口是本地 Web 工作台里的“延河课程”：
+
+1. 输入课程链接或课程 ID，例如 `https://www.yanhekt.cn/course/67968`。
+2. 加载课程录屏列表，勾选要下载的 VGA/屏幕录屏。
+3. 下载到本机，默认大文件目录是 `F:\VidSlide\yanhe-batch-v0.4.2\downloads`。
+4. 下载完成后视频进入批量工作台的“未选中区”，不会自动开始提取。
+5. 手动移入处理队列、开始提取、检查结果，再导出 ZIP/PDF/PPTX。
+
+真实下载需要 `ffmpeg.exe`。开发和发布推荐把它放在 `bin\ffmpeg.exe`；
+这个二进制不会提交到 Git，但 `build.bat` 和 `build_nuitka.bat` 会在本地存在时自动打进发布产物。
+发布前请看 [延河版打包说明](docs/yanhe-release-packaging.md)。
+
 ## 这是什么？
 
 延河课堂的录播视频只能在线看，没有现成的 PPT 下载。  

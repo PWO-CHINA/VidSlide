@@ -55,11 +55,22 @@ def resource_dirs() -> list[Path]:
     meipass = getattr(sys, "_MEIPASS", "")
     if meipass:
         dirs.append(Path(meipass).resolve())
+    compiled = globals().get("__compiled__")
+    compiled_dir = getattr(compiled, "containing_dir", "") if compiled else ""
+    if compiled_dir:
+        dirs.append(Path(compiled_dir).resolve())
     dirs.append(app_dir())
     source_dir = Path(__file__).resolve().parent
     if source_dir not in dirs:
         dirs.append(source_dir)
-    return dirs
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for path in dirs:
+        key = str(path).casefold()
+        if key not in seen:
+            unique.append(path)
+            seen.add(key)
+    return unique
 
 
 def default_profile_dir() -> Path:

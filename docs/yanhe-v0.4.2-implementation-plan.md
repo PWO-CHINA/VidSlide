@@ -198,6 +198,12 @@ handoff without losing decisions.
   - Tests cover terminal event delivery, late terminal subscribers, SSE cleanup,
     and the existing-MP4 path adding exactly one video to batch unselected
     without auto-starting extraction.
+- M8 release packaging update:
+  - Added `docs/yanhe-release-packaging.md` with the sidecar ffmpeg release
+    checklist and no-commit rules.
+  - Runtime resource discovery now checks Nuitka `__compiled__.containing_dir`
+    as well as PyInstaller `_MEIPASS`, the app/exe directory, and source checkout.
+  - README now has a v0.4.2 Yanhe batch quick flow and links to packaging notes.
 - Next immediate steps:
-  - Commit and push the download/SSE regression milestone.
-  - Continue settings drawer polish and release packaging notes.
+  - Commit and push the release packaging notes milestone.
+  - Continue settings drawer polish and another browser smoke pass.

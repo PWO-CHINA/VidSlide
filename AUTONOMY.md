@@ -32,14 +32,13 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the download/SSE regression milestone.
-2. Review packaging/build notes so sidecar ffmpeg is included in release
-   artifacts without being committed to Git.
+1. Commit and push the release packaging notes milestone.
+2. Add focused settings drawer polish where mobile QA still finds friction.
 3. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
    using short local clips for extraction unless a full-course overnight run is
    intentionally useful.
-4. Add focused settings drawer polish where mobile QA still finds friction.
-5. Continue settings drawer visual polish and narrow-screen QA.
+4. Continue settings drawer visual polish and narrow-screen QA.
+5. Prepare an alpha tag only after one more full browser/API smoke pass.
 
 ## Latest Verified Loop
 
@@ -60,3 +59,5 @@ Repeat until the product is materially better:
   settings drawer browser checks reported no horizontal overflow.
 - Download-job SSE now closes cleanly for late terminal subscribers, and tests
   cover terminal events plus the existing-MP4 duplicate-download path.
+- Release packaging notes document the local `bin\ffmpeg.exe` sidecar strategy.
+  Runtime resource discovery now checks Nuitka's onefile containing directory.
