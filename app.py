@@ -76,15 +76,37 @@ def _is_frozen():
             or '__compiled__' in globals())
 
 
-def get_resource_path(relative_path):
-    """获取打包后的资源文件路径"""
+def _resource_roots():
+    roots = []
     if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, relative_path)
+        roots.append(sys._MEIPASS)
     compiled = globals().get('__compiled__')
     compiled_dir = getattr(compiled, 'containing_dir', '') if compiled else ''
     if compiled_dir:
-        return os.path.join(compiled_dir, relative_path)
-    return os.path.join(os.path.abspath(os.path.dirname(__file__)), relative_path)
+        roots.append(compiled_dir)
+    if _is_frozen():
+        roots.append(os.path.dirname(os.path.abspath(sys.executable)))
+    roots.append(os.path.abspath(os.path.dirname(__file__)))
+
+    seen = set()
+    unique = []
+    for root in roots:
+        if not root:
+            continue
+        norm = os.path.normcase(os.path.abspath(root))
+        if norm not in seen:
+            seen.add(norm)
+            unique.append(root)
+    return unique
+
+
+def get_resource_path(relative_path):
+    """获取打包后的资源文件路径，并兼容 onefile 解包和本地旁置资源。"""
+    for root in _resource_roots():
+        candidate = os.path.join(root, relative_path)
+        if os.path.exists(candidate):
+            return candidate
+    return os.path.join(_resource_roots()[0], relative_path)
 
 
 # ============================================================
@@ -131,6 +153,23 @@ ORPHAN_SESSION_TIMEOUT = 60
 app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # 开发阶段禁用静态文件缓存
+
+
+def _static_health():
+    required = [
+        os.path.join(STATIC_DIR, 'css', 'style.css'),
+        os.path.join(STATIC_DIR, 'vendor', 'tailwind', 'tailwind.generated.css'),
+        os.path.join(STATIC_DIR, 'js', 'main.js'),
+        os.path.join(STATIC_DIR, 'logo.png'),
+    ]
+    missing = [p for p in required if not os.path.isfile(p)]
+    return {
+        'ok': not missing,
+        'template_dir': TEMPLATE_DIR,
+        'static_dir': STATIC_DIR,
+        'resource_roots': _resource_roots(),
+        'missing': missing,
+    }
 
 
 # ============================================================
@@ -686,6 +725,12 @@ HEARTBEAT_TIMEOUT = 300  # 5 分钟：浏览器后台标签页会大幅节流 se
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+@app.route('/api/static-health')
+def static_health():
+    status = _static_health()
+    return jsonify(success=status['ok'], **status), (200 if status['ok'] else 500)
 
 
 # ============================================================
@@ -2328,6 +2373,12 @@ if __name__ == '__main__':
             port = _find_free_port(5873)
         _write_port_file(port)
         url = f'http://127.0.0.1:{port}'
+        static_status = _static_health()
+        if not static_status['ok']:
+            print('⚠️  静态资源缺失，页面可能只显示裸 HTML。')
+            print(f'  static_dir: {static_status["static_dir"]}')
+            for missing in static_status['missing']:
+                print(f'  missing: {missing}')
 
         if not args.no_browser:
             threading.Timer(1.5, lambda: webbrowser.open(url)).start()

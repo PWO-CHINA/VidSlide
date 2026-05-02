@@ -61,6 +61,29 @@ window.toggleTheme = toggleTheme;
 document.addEventListener('DOMContentLoaded', updateThemeIcon);
 
 // ============================================================
+//  静态资源自检：避免打包版偶发只显示裸 HTML
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(async () => {
+        const styled = window.getComputedStyle(document.body).getPropertyValue('--text-primary').trim();
+        const hasAppCss = !!styled || !!document.querySelector('.glass-header');
+        if (hasAppCss) {
+            document.documentElement.classList.remove('static-missing');
+            return;
+        }
+        document.documentElement.classList.add('static-missing');
+        try {
+            const res = await fetch('/api/static-health', { cache: 'no-store' });
+            const data = await res.json();
+            const box = document.getElementById('staticHealthFallback');
+            if (box && data && !data.success) {
+                box.textContent = '页面样式资源缺失：' + (data.missing || []).join('；') + '。请重新启动 VidSlide，或换用新版 exe。';
+            }
+        } catch {}
+    }, 1200);
+});
+
+// ============================================================
 //  Sticky Header 滚动效果
 // ============================================================
 let lastScrollY = 0;
