@@ -173,6 +173,13 @@ handoff without losing decisions.
   - The ffmpeg picker validates the selected executable through the existing ffmpeg status path before saving.
   - The download directory picker creates/checks a small write-test file before saving and returns disk free space.
   - Added tests covering both picker APIs with mocked native dialogs.
+- M6 batch workspace guidance update:
+  - Batch page now has a compact three-step strip: unselected -> queue -> completed/export.
+  - Zone headers now make the manual boundary explicit: downloads land in unselected, only queue items are extracted, completed items should be reviewed/exported.
+  - Runtime mode labels were toned down to product-facing language: Eco, balanced Fast, and Turbo.
+  - Batch export progress bar now has local CSS and stays visible briefly after completion instead of disappearing immediately.
+  - Single-video export from the completed detail view now reports packaging progress and errors in the detail status line.
 - Next immediate steps:
-  - Commit and push the settings picker milestone.
-  - Continue frontend polish around batch zone guidance, export progress visibility, and mobile layout.
+  - Commit and push the batch guidance/export feedback milestone.
+  - Review resource-warning policy so high memory is visible without unnecessarily blocking short/manual batch runs.
+  - Continue mobile layout checks.

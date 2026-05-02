@@ -51,12 +51,13 @@ async function packageBatchAll(fmt) {
 function _handlePackagingEvent(data) {
     switch (data.type) {
         case 'packaging':
-            // 单视频打包进度（可选展示）
+            _onPackagingProgress(data);
             break;
         case 'packaging_done':
             _onPackagingDone(data);
             break;
         case 'packaging_error':
+            _onPackagingError(data);
             showToast('打包失败: ' + (data.message || ''), 'error');
             break;
         case 'batch_packaging':
@@ -66,8 +67,17 @@ function _handlePackagingEvent(data) {
             _onBatchPackagingDone(data);
             break;
         case 'batch_packaging_error':
+            _onBatchPackagingError(data);
             showToast('批量打包失败: ' + (data.message || ''), 'error');
             break;
+    }
+}
+
+function _onPackagingProgress(data) {
+    const statusEl = document.getElementById('batchDetailExportStatus');
+    if (statusEl && _batchDetailVid === data.video_id) {
+        const pct = data.progress !== undefined ? Math.round(data.progress) + '% · ' : '';
+        statusEl.textContent = pct + (data.message || '正在导出...');
     }
 }
 
@@ -93,6 +103,13 @@ function _onPackagingDone(data) {
     }
 }
 
+function _onPackagingError(data) {
+    const statusEl = document.getElementById('batchDetailExportStatus');
+    if (statusEl && _batchDetailVid === data.video_id) {
+        statusEl.textContent = '导出失败：' + (data.message || '未知错误');
+    }
+}
+
 function _onBatchPackagingProgress(data) {
     const bar = document.getElementById('batchExportProgressBar');
     const msg = document.getElementById('batchExportMessage');
@@ -103,8 +120,10 @@ function _onBatchPackagingProgress(data) {
 function _onBatchPackagingDone(data) {
     const bar = document.getElementById('batchExportProgressBar');
     if (bar) bar.style.width = '100%';
+    const msg = document.getElementById('batchExportMessage');
+    if (msg) msg.textContent = '批量导出完成，已开始下载';
     const progressEl = document.getElementById('batchExportProgress');
-    if (progressEl) progressEl.style.display = 'none';
+    if (progressEl) setTimeout(() => { progressEl.style.display = 'none'; }, 2500);
 
     if (data.filename && G.batch) {
         const a = document.createElement('a');
@@ -116,4 +135,13 @@ function _onBatchPackagingDone(data) {
         document.body.removeChild(a);
     }
     showToast('批量打包完成', 'success', 3000);
+}
+
+function _onBatchPackagingError(data) {
+    const bar = document.getElementById('batchExportProgressBar');
+    const msg = document.getElementById('batchExportMessage');
+    const progressEl = document.getElementById('batchExportProgress');
+    if (progressEl) progressEl.style.display = '';
+    if (bar) bar.style.width = '0%';
+    if (msg) msg.textContent = data.message || '批量导出失败';
 }

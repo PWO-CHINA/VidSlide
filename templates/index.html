@@ -260,11 +260,11 @@
                     <div>
                         <label class="text-xs font-medium text-slate-600 dark:text-slate-300 block mb-1"><i data-lucide="crosshair" class="w-3.5 h-3.5 inline-block"></i> 运行模式</label>
                         <select id="batchSpeedMode" class="w-full text-xs px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600">
-                            <option value="eco">后台静默 (Eco)</option>
-                            <option value="fast" selected>全速狂飙 (Fast) — 推荐</option>
-                            <option value="turbo">极速狂暴 (Turbo)</option>
+                            <option value="eco">省电 (Eco)</option>
+                            <option value="fast" selected>均衡 (Fast) — 推荐</option>
+                            <option value="turbo">极速 (Turbo)</option>
                         </select>
-                        <p class="text-xs text-slate-400 mt-0.5">Eco 节省资源；Fast 释放算力；Turbo 极限压榜</p>
+                        <p class="text-xs text-slate-400 mt-0.5">省电适合后台跑；均衡是默认；极速更快但可能漏掉快速翻页</p>
                     </div>
                 </div>
             </div>
@@ -299,6 +299,12 @@
             </div>
         </div>
 
+        <div class="batch-guide-strip mb-3">
+            <span><b>1</b> 下载/导入停在未选中区</span>
+            <span><b>2</b> 手动移入处理队列</span>
+            <span><b>3</b> 完成后检查再导出</span>
+        </div>
+
         <!-- ═══ 三区域容器 ═══ -->
         <div class="batch-zones-container">
 
@@ -309,6 +315,7 @@
                         <span class="zone-badge unselected">1</span>
                         <i data-lucide="list" class="w-4 h-4 inline-block"></i> 未选中区域
                         <span class="text-xs text-slate-400 font-normal" id="unselectedCount">(0)</span>
+                        <span class="zone-subtitle">下载完成默认到这里</span>
                     </h3>
                     <div class="flex items-center gap-2">
                         <button onclick="moveSelectedToQueue()" class="btn-primary text-xs" id="btnMoveToQueue">
@@ -331,6 +338,7 @@
                         <span class="zone-badge queue">2</span>
                         <i data-lucide="cpu" class="w-4 h-4 inline-block"></i> 处理队列
                         <span class="text-xs text-slate-400 font-normal" id="queueCount">(0)</span>
+                        <span class="zone-subtitle">只有这里会被提取</span>
                     </h3>
                     <div class="flex items-center gap-2">
                         <button onclick="moveSelectedToUnselected()" class="btn-ghost text-xs" id="btnMoveToUnselected" disabled>
@@ -358,6 +366,7 @@
                 <div id="queueEmpty" class="text-center py-8 text-slate-400">
                     <span class="text-3xl mb-2 block"><i data-lucide="cpu" class="w-8 h-8 inline-block"></i></span>
                     <p class="text-sm">从未选中区域移入视频开始处理</p>
+                    <p class="text-xs mt-1">移动到队列后仍需点击开始处理</p>
                 </div>
                 <div id="queueList" class="zone-list" style="display:none"></div>
             </section>
@@ -369,6 +378,7 @@
                         <span class="zone-badge completed">3</span>
                         <i data-lucide="check-circle-2" class="w-4 h-4 inline-block text-emerald-500"></i> 已完成处理
                         <span class="text-xs text-slate-400 font-normal" id="completedCount">(0)</span>
+                        <span class="zone-subtitle">预览确认后导出</span>
                     </h3>
                     <div class="flex items-center gap-2" id="completedExportBar" style="display:none">
                         <button onclick="selectAllInZone('completed')" class="btn-ghost text-xs" id="btnSelectAllCompleted">全选</button>
@@ -381,6 +391,7 @@
                 <div id="completedEmpty" class="text-center py-8 text-slate-400">
                     <span class="text-3xl mb-2 block"><i data-lucide="check-circle-2" class="w-8 h-8 inline-block text-emerald-500"></i></span>
                     <p class="text-sm">处理完成的视频将显示在这里</p>
+                    <p class="text-xs mt-1">打开详情检查图片，或勾选后批量导出</p>
                 </div>
                 <div id="completedList" class="zone-list" style="display:none"></div>
                 <!-- 导出进度 -->

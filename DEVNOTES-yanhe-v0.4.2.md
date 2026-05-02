@@ -131,6 +131,22 @@ Settings picker update:
   F-drive downloads, and the getvideo development profile.
 - Unit tests mock the native dialogs so CI/automation does not hang.
 
+Batch workspace guidance update:
+
+- The batch workspace now has a compact three-step strip directly above the
+  zones: unselected, queue, completed/export.
+- Zone headers now state the boundary that matters most for this branch:
+  downloaded videos land in unselected, only queue videos are extracted, and
+  completed videos should be checked before export.
+- Runtime preset labels were toned down to `省电`, `均衡`, and `极速`, with
+  clearer speed/accuracy tradeoff text.
+- Batch export progress now has actual local CSS and remains visible briefly
+  after completion with a completion message.
+- Completed-detail single-video export now writes packaging progress/errors into
+  the detail status line.
+- Browser smoke verified the guide strip, calmer speed labels, zone subtitles,
+  and progress-bar styling on the batch page.
+
 ## ffmpeg
 
 Real downloads require ffmpeg. The app now:

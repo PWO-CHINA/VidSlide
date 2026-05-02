@@ -1670,6 +1670,53 @@ body {
 }
 .dark .batch-top-bar { background: var(--bg-card); }
 
+.batch-guide-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+.batch-guide-strip span {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    min-height: 2rem;
+    padding: .35rem .65rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: .76rem;
+    font-weight: 600;
+}
+.batch-guide-strip b {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 999px;
+    background: var(--bg-muted);
+    color: var(--text-primary);
+    font-size: .68rem;
+}
+.zone-subtitle {
+    color: var(--text-muted);
+    font-size: .72rem;
+    font-weight: 500;
+}
+.progress-bar-bg {
+    height: .55rem;
+    border-radius: 999px;
+    background: var(--bg-muted);
+    overflow: hidden;
+}
+.progress-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #5a7a9e, #7da0c4);
+    transition: width .25s ease;
+}
+
 /* ============================================================
    Yanhe v0.4.2 workspace shell
    ============================================================ */

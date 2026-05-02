@@ -32,9 +32,9 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the settings picker milestone.
-2. Polish batch zone guidance and export progress so the user always knows the
-   next manual action.
+1. Commit and push the batch guidance/export feedback milestone.
+2. Review resource-warning policy so high memory is shown clearly without
+   blocking short/manual smoke runs too aggressively.
 3. Add more regression tests around download job SSE terminal events and
    duplicate-path batch insertion.
 4. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
@@ -54,3 +54,5 @@ Repeat until the product is materially better:
 - ZIP/PDF/PPTX export downloads for that sample returned HTTP 200.
 - Settings now has native "选择" buttons for ffmpeg and download directory; tests
   mock the dialogs to avoid unattended hangs.
+- Batch workspace now shows a three-step unselected -> queue -> completed/export
+  guide and better export progress status.
