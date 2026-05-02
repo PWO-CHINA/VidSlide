@@ -222,7 +222,15 @@ handoff without losing decisions.
   - The drawer explains ffmpeg, the F-drive download default, temporary getvideo
     profile reuse, and source cleanup in clearer language.
   - Browser smoke verified no horizontal overflow and no overflowing controls.
+- Release-candidate build smoke:
+  - Built `dist\VidSlide-yanhe-v0.4.2-alpha.1.exe` with PyInstaller and bundled
+    `bin\ffmpeg.exe`.
+  - The exe started on port `5883` with `--no-browser`.
+  - Diagnostics reported bundled ffmpeg from the PyInstaller `_MEI...\bin\ffmpeg.exe`
+    extraction path, F-drive downloads, and zero external asset references.
+  - Root HTML, course load for `67968`, one-session dry-run, and terminal SSE
+    smoke all passed.
 - Next immediate steps:
-  - Commit and push the settings polish milestone.
-  - Continue release-candidate smoke testing and decide whether to build a local
-    executable candidate.
+  - Commit and push the executable smoke documentation.
+  - Decide whether to publish the existing alpha exe as a GitHub release asset
+    after adding ffmpeg license/source notes.

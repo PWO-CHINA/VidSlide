@@ -234,6 +234,16 @@ Packaging compatibility update:
 - Local verification confirmed `bin\ffmpeg.exe -version` works. The current local
   binary is a Gyan.dev full build with GPL-enabled configuration, so public
   release notes should include the matching ffmpeg license/source notice.
+- Built a local PyInstaller candidate:
+  `dist\VidSlide-yanhe-v0.4.2-alpha.1.exe` (`173,348,247` bytes).
+- Exe smoke on port `5883` verified:
+  - `/api/diagnostics/status` finds bundled ffmpeg at the PyInstaller `_MEI...\bin\ffmpeg.exe` path.
+  - The root page loads and contains the post-alpha settings copy.
+  - Course `67968` loads as `生物仪器分析` with `16` recordings.
+  - A dry-run job for session `863057` completes with progress `100`.
+  - Late terminal SSE returns the final init snapshot and closes.
+- The generated `build/`, `dist/`, and `.spec` files remain ignored and were not
+  committed.
 
 ## Verification
 

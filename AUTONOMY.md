@@ -32,8 +32,8 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the settings polish milestone.
-2. Continue release-candidate smoke testing and decide whether to build a local executable candidate.
+1. Commit and push the executable smoke documentation.
+2. Decide whether to publish the existing alpha exe as a GitHub release asset after adding ffmpeg license/source notes.
 3. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
    using short local clips for extraction unless a full-course overnight run is
    intentionally useful.
@@ -68,3 +68,6 @@ Repeat until the product is materially better:
 - Post-alpha settings drawer polish passed mobile browser smoke: full-width
   drawer, sticky title bar, clearer ffmpeg/F-drive/getvideo-profile copy, and no
   horizontal overflow.
+- Local PyInstaller exe candidate `dist\VidSlide-yanhe-v0.4.2-alpha.1.exe`
+  was built and passed root-page, diagnostics, course-load, dry-run, and terminal
+  SSE smoke on port `5883`.
