@@ -156,8 +156,18 @@ handoff without losing decisions.
   - Download job preflight now blocks missing ffmpeg before creating a job; real downloads also check estimated HLS size against disk free space plus a 512 MB reserve.
   - Added `tests/test_yanhe_branch.py` for workspace guards, settings round trip, downloader helpers, and dry-run preflight.
   - `python -m unittest discover -s tests`, `py_compile`, JS `node --check`, and CDN scans pass.
+- M6/M8 productization and chain validation update:
+  - Yanhe first screen now has a live flow strip: course -> download -> unselected zone -> manual extraction -> export.
+  - Course load shows recording count, total duration, selected count, and selected duration.
+  - Recording list supports title search and sorting by newest, oldest, or shortest-first.
+  - Top status pills now expose the active login profile mode, active ffmpeg source, and F-drive download free space.
+  - Settings drawer now highlights the currently effective ffmpeg candidate and explains F-drive storage/profile mode.
+  - Download completion shows a persistent "go to unselected zone" action and advances the flow state without auto-starting extraction.
+  - Batch video insertion now skips duplicate absolute video paths, preventing repeated "download existing file" actions from adding duplicate unselected entries.
+  - Browser smoke on course `67968` verified the productized UI, sorting, selected-duration stats, settings drawer, and download-complete handoff.
+  - API smoke verified downloading the already-present session `853828` twice leaves the target batch with exactly one unselected video.
+  - Real extraction smoke used a local 5-minute clip cut from the downloaded Yanhe MP4. With the existing extractor settings and unchanged extraction principle, it completed in about 12 seconds, saved 4 slides, and ZIP/PDF/PPTX exports downloaded successfully.
 - Next immediate steps:
-  - Commit and push the F-drive/sidecar ffmpeg/download reliability milestone.
-  - Productize the first-screen copy and settings diagnostics using early task-doc guidance.
+  - Commit and push the UI productization/extraction-smoke milestone.
   - Add a native file picker for ffmpeg and download directories; current text inputs/candidate buttons work but are not final product feel.
-  - Verify a short extraction smoke test on the downloaded MP4 without changing extraction principles.
+  - Continue frontend polish around batch zone guidance, export progress visibility, and mobile layout.

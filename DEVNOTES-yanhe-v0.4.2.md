@@ -77,6 +77,43 @@ Real download smoke result:
 - ffmpeg read: `1920x1080`, H.264 video, AAC audio, duration about `01:38:57`
 - Batch behavior: added to batch unselected zone, batch remains `idle`
 
+Duplicate-download smoke result:
+
+- A new batch was created and session `853828` was requested twice.
+- Because the MP4 already existed, both jobs completed quickly through the
+  "exists" path.
+- The batch stayed at exactly one item in `unselected`; `queue` and `completed`
+  stayed empty. This verifies that repeated download actions do not duplicate
+  the same source video in the batch workspace.
+
+Short extraction smoke result:
+
+- Sample source:
+  `F:\VidSlide\yanhe-batch-v0.4.2\downloads\smoke_67968_5min.mp4`
+- The sample is a 5-minute local clip cut from the real Yanhe download for
+  session `853828`.
+- Extraction settings stayed on the branch defaults: threshold `5`, ROI on,
+  fast mode on, GPU requested, speed mode `fast`, classroom mode `ppt`.
+- Result: completed in about `12s`, saved `4` slides, and moved to the batch
+  completed zone.
+- Export smoke: ZIP, PDF, and PPTX package downloads all returned HTTP `200`.
+- This validates the product chain without changing the PPT extraction
+  principle/algorithm.
+
+Browser productization smoke result:
+
+- Course `67968` loads as `生物仪器分析` with `16` recordings.
+- The Yanhe first screen now shows flow state, total duration, selected count,
+  selected duration, active profile mode, active ffmpeg source, and F-drive
+  free space.
+- Sorting by shortest-first puts session `853828` at the top; selecting it
+  updates the selected duration to about `1小时38分`.
+- Download completion shows a persistent action to go to the batch unselected
+  zone. Clicking it shows one unselected video and no queue work, so extraction
+  remains manual.
+- Browser console still shows extension-origin and blocked third-party traffic
+  unrelated to the app; app-origin smoke path passed.
+
 ## ffmpeg
 
 Real downloads require ffmpeg. The app now:

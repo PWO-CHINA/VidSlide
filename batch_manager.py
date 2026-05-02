@@ -276,8 +276,16 @@ def add_videos(bid, entries):
 
     added = []
     with batch['lock']:
+        existing_paths = {
+            os.path.normcase(os.path.abspath(t.get('video_path', '')))
+            for t in batch['tasks']
+            if t.get('video_path')
+        }
         for entry in entries:
             vpath = entry['path']
+            normalized_vpath = os.path.normcase(os.path.abspath(vpath))
+            if normalized_vpath in existing_paths:
+                continue
             dname = entry.get('name', '') or Path(vpath).stem or '未命名'
             vid_suffix = uuid.uuid4().hex[:4]
             safe_dir = _sanitize_dirname(dname, vid_suffix)
@@ -294,6 +302,7 @@ def add_videos(bid, entries):
                 'zone': task['zone'],
                 'status': task['status'],
             })
+            existing_paths.add(normalized_vpath)
 
     # 在锁外采集视频元数据和生成缩略图（IO 操作）
     for entry, info in zip(entries, added):

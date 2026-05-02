@@ -32,9 +32,22 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Make F: the active download location.
-2. Make ffmpeg available as a local sidecar and validated at runtime.
-3. Run a real download smoke test with course `https://www.yanhekt.cn/course/67968`.
-4. Verify downloaded video enters batch unselected zone and does not auto-start extraction.
-5. Productize the UI using early task-doc guidance: clear flow, human parameter
-   explanations, actionable errors, storage/ffmpeg clarity.
+1. Commit and push the verified productization/extraction-smoke milestone.
+2. Add native helper APIs/buttons for choosing ffmpeg and download directories.
+3. Polish batch zone guidance and export progress so the user always knows the
+   next manual action.
+4. Add more regression tests around download job SSE terminal events and
+   duplicate-path batch insertion.
+5. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
+   using short local clips for extraction unless a full-course overnight run is
+   intentionally useful.
+
+## Latest Verified Loop
+
+- `F:\VidSlide\yanhe-batch-v0.4.2\downloads` is the active download directory.
+- `bin\ffmpeg.exe` is the active sidecar ffmpeg and is intentionally ignored by Git.
+- Course `67968` loads, returns 16 recordings, and session `853828` downloads/exists correctly.
+- Downloaded videos enter batch unselected zone only; extraction does not auto-start.
+- Repeated download of the same existing MP4 no longer duplicates the batch entry.
+- A 5-minute clip from the real Yanhe download extracted 4 slides in about 12 seconds.
+- ZIP/PDF/PPTX export downloads for that sample returned HTTP 200.

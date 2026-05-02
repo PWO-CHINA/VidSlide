@@ -2,11 +2,13 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import settings_store
 import storage
 import yanhe_download_manager as ydm
 import yanhe_downloader_core as core
+import batch_manager
 
 
 class YanheBranchTests(unittest.TestCase):
@@ -16,6 +18,7 @@ class YanheBranchTests(unittest.TestCase):
         os.environ["LOCALAPPDATA"] = self.tmp.name
 
     def tearDown(self):
+        batch_manager._batches.clear()
         if self._old_localappdata is None:
             os.environ.pop("LOCALAPPDATA", None)
         else:
@@ -49,6 +52,19 @@ class YanheBranchTests(unittest.TestCase):
         result = ydm.download_preflight({"dry_run": True})
         self.assertTrue(result["ok"])
         self.assertIn("output_dir", result)
+
+    def test_batch_add_videos_skips_duplicate_paths(self):
+        video = Path(self.tmp.name) / "sample.mp4"
+        video.write_bytes(b"not a real mp4")
+        bid = batch_manager.create_batch(Path(self.tmp.name) / "sessions", {"threshold": 5}, 1)
+        with mock.patch.object(batch_manager, "get_video_metadata", return_value=(0, (0, 0), 0, "")), \
+             mock.patch.object(batch_manager, "_generate_thumbnail", return_value=False):
+            first = batch_manager.add_videos(bid, [{"path": str(video), "name": "sample"}])
+            second = batch_manager.add_videos(bid, [{"path": str(video), "name": "sample again"}])
+        state = batch_manager.get_batch_state(bid)
+        self.assertEqual(len(first), 1)
+        self.assertEqual(second, [])
+        self.assertEqual(len(state["zones"]["unselected"]), 1)
 
 
 if __name__ == "__main__":

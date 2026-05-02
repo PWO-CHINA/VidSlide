@@ -124,7 +124,7 @@
                 <div>
                     <p class="eyebrow">Yanhe Course</p>
                     <h2>延河课程下载与批量提取</h2>
-                    <p>粘贴课程链接，读取可下载录屏，下载后自动进入批量未选中区。</p>
+                    <p>粘贴课程链接，先下载到 F 盘，再进入批量未选中区。提取必须手动开始。</p>
                 </div>
                 <div class="yanhe-status-row">
                     <span class="status-pill" id="yanheLoginStatus">登录状态：检测中</span>
@@ -137,16 +137,38 @@
                 <button id="btnYanheLoad" class="btn-primary" onclick="loadYanheCourse()"><i data-lucide="search" class="w-4 h-4"></i> 读取课程</button>
                 <button id="btnYanheLogin" class="btn-secondary" onclick="startYanheLogin()"><i data-lucide="log-in" class="w-4 h-4"></i> 登录</button>
             </div>
+            <div id="yanheInlineNotice" class="yanhe-notice info" style="display:none"></div>
+            <div class="yanhe-flow" aria-label="处理流程">
+                <span class="flow-step active" id="flowCourse"><i data-lucide="book-open" class="w-4 h-4"></i> 课程</span>
+                <span class="flow-step" id="flowDownload"><i data-lucide="download" class="w-4 h-4"></i> 下载</span>
+                <span class="flow-step" id="flowBatch"><i data-lucide="list-plus" class="w-4 h-4"></i> 未选中区</span>
+                <span class="flow-step" id="flowExtract"><i data-lucide="play" class="w-4 h-4"></i> 手动提取</span>
+                <span class="flow-step" id="flowExport"><i data-lucide="archive" class="w-4 h-4"></i> 检查导出</span>
+            </div>
             <div id="yanheCourseSummary" class="yanhe-summary" style="display:none"></div>
+            <div id="yanheCourseStats" class="yanhe-stats" style="display:none">
+                <div><span id="yanheStatRecordings">0</span><small>录屏</small></div>
+                <div><span id="yanheStatDuration">--</span><small>总时长</small></div>
+                <div><span id="yanheStatSelected">0</span><small>已选</small></div>
+                <div><span id="yanheStatSelectedDuration">--</span><small>已选时长</small></div>
+            </div>
             <div class="yanhe-toolbar" id="yanheToolbar" style="display:none">
                 <input id="yanheSearch" class="yanhe-search" placeholder="筛选课堂标题" oninput="renderYanheSessions()">
+                <select id="yanheSort" class="yanhe-select" onchange="renderYanheSessions()">
+                    <option value="newest">最新在前</option>
+                    <option value="shortest">短课优先</option>
+                    <option value="oldest">最早在前</option>
+                </select>
                 <button class="btn-secondary" onclick="selectAllYanheSessions(true)">全选</button>
                 <button class="btn-secondary" onclick="selectAllYanheSessions(false)">清空</button>
                 <button id="btnYanheDownload" class="btn-primary" onclick="startYanheDownload()" disabled><i data-lucide="download" class="w-4 h-4"></i> 下载选中</button>
             </div>
             <div id="yanheDownloadProgress" class="yanhe-progress" style="display:none">
                 <div class="progress-bar"><div id="yanheDownloadBar" class="progress-fill" style="width:0%"></div></div>
-                <p id="yanheDownloadText">等待下载</p>
+                <div class="yanhe-progress-foot">
+                    <p id="yanheDownloadText">等待下载</p>
+                    <button id="btnYanheGoBatch" class="btn-secondary" style="display:none" onclick="switchWorkspace('batch')">去未选中区继续处理</button>
+                </div>
             </div>
             <div id="yanheSessionList" class="yanhe-session-list"></div>
         </div>
@@ -296,8 +318,8 @@
                 </div>
                 <div id="unselectedEmpty" class="text-center py-8 text-slate-400">
                     <span class="text-3xl mb-2 block"><i data-lucide="folder-open" class="w-8 h-8 inline-block"></i></span>
-                    <p class="text-sm mb-1">添加视频后将显示在这里</p>
-                    <p class="text-xs">支持多选文件或选择整个文件夹</p>
+                    <p class="text-sm mb-1">延河下载完成的视频会先放在这里</p>
+                    <p class="text-xs">勾选后移入处理队列，再点击开始处理；下载不会自动提取</p>
                 </div>
                 <div id="unselectedList" class="zone-list" style="display:none"></div>
             </section>
@@ -784,10 +806,10 @@
         </div>
         <div class="settings-section">
             <h3>下载</h3>
-            <label>ffmpeg.exe 路径 <input id="settingFfmpegPath" type="text" class="setting-input" placeholder="D:\path\to\ffmpeg.exe"></label>
+            <label>ffmpeg.exe 路径 <input id="settingFfmpegPath" type="text" class="setting-input" placeholder="留空时优先使用内置 bin\ffmpeg.exe"></label>
             <div id="settingsFfmpegCandidates" class="settings-info"></div>
             <label>下载目录 <input id="settingDownloadDir" type="text" class="setting-input" placeholder="F:\VidSlide\yanhe-batch-v0.4.2\downloads"></label>
-            <label class="setting-line"><input type="checkbox" id="settingUseGetvideoProfile"> 临时复用 getvideo 登录状态</label>
+            <label class="setting-line"><input type="checkbox" id="settingUseGetvideoProfile"> 临时使用 getvideo 的本机 Chrome profile（只复用登录态，不保存账号密码）</label>
             <label class="setting-line"><input type="checkbox" id="settingCleanSource"> 成功提取后清理受管源视频</label>
             <button class="btn-primary" onclick="saveSettingsDrawer()">保存下载设置</button>
             <button class="btn-secondary" onclick="checkYanheLogin()">检查登录状态</button>
