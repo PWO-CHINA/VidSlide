@@ -458,9 +458,20 @@ body {
 .setting-line {
     display: flex;
     gap: .55rem;
-    align-items: center;
+    align-items: flex-start;
     color: var(--text-secondary);
     font-size: .86rem;
+    line-height: 1.45;
+}
+.setting-line input {
+    flex: 0 0 auto;
+    margin-top: .2rem;
+}
+.setting-help {
+    margin: -.2rem 0 .1rem;
+    color: var(--text-muted);
+    font-size: .76rem;
+    line-height: 1.5;
 }
 .setting-path-row {
     display: grid;
@@ -610,12 +621,33 @@ body {
     .setting-path-row {
         grid-template-columns: 1fr;
     }
+    .settings-drawer-head {
+        position: sticky;
+        top: -1rem;
+        z-index: 2;
+        margin: -1rem -1rem 1rem;
+        padding: 1rem;
+        background: var(--bg-card);
+        border-bottom: 1px solid var(--border);
+    }
     .yanhe-session-item {
         grid-template-columns: auto minmax(0, 1fr);
     }
     .yanhe-session-item .status-pill {
         grid-column: 2;
         justify-self: start;
+    }
+}
+
+@media (max-width: 540px) {
+    .settings-drawer {
+        width: 100vw;
+        max-width: none;
+        border-left: 0;
+        box-shadow: none;
+    }
+    .settings-kv {
+        grid-template-columns: 4.6rem minmax(0, 1fr);
     }
 }
 

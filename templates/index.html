@@ -822,14 +822,16 @@
                 <input id="settingFfmpegPath" type="text" class="setting-input" placeholder="留空时优先使用内置 bin\ffmpeg.exe">
                 <button class="btn-secondary" onclick="chooseFfmpegPath()">选择</button>
             </div>
+            <p class="setting-help">真实下载必须能找到 ffmpeg。留空时会优先使用随包的 <code>bin\ffmpeg.exe</code>。</p>
             <div id="settingsFfmpegCandidates" class="settings-info"></div>
             <label>下载目录</label>
             <div class="setting-path-row">
                 <input id="settingDownloadDir" type="text" class="setting-input" placeholder="F:\VidSlide\yanhe-batch-v0.4.2\downloads">
                 <button class="btn-secondary" onclick="chooseDownloadDir()">选择</button>
             </div>
-            <label class="setting-line"><input type="checkbox" id="settingUseGetvideoProfile"> 临时使用 getvideo 的本机 Chrome profile（只复用登录态，不保存账号密码）</label>
-            <label class="setting-line"><input type="checkbox" id="settingCleanSource"> 成功提取后清理受管源视频</label>
+            <p class="setting-help">建议保留在 F 盘。浏览器拖放导入的视频仍会复制到受管 imports 目录。</p>
+            <label class="setting-line"><input type="checkbox" id="settingUseGetvideoProfile"> 临时复用 getvideo 登录状态（只使用本机 profile，不保存账号、密码或 token）</label>
+            <label class="setting-line"><input type="checkbox" id="settingCleanSource"> 提取成功后清理受管下载/导入源视频</label>
             <button class="btn-primary" onclick="saveSettingsDrawer()">保存下载设置</button>
             <button class="btn-secondary" onclick="checkYanheLogin()">检查登录状态</button>
             <button class="btn-secondary" onclick="startYanheLogin()">打开登录窗口</button>

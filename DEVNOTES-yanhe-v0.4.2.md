@@ -181,6 +181,12 @@ Mobile layout update:
 - Screenshots captured during verification:
   - `vidslide-mobile-yanhe-fixed.png`
   - `vidslide-mobile-batch-fixed.png`
+- Post-alpha settings polish made the settings drawer full-width on narrow
+  screens, added a sticky drawer title bar, and clarified the ffmpeg, F-drive
+  download directory, getvideo profile, and source-cleanup settings in plain
+  product copy.
+- Browser smoke captured `vidslide-mobile-settings-polish.png` and verified no
+  horizontal overflow or overflowing controls in the settings drawer.
 
 Download/SSE regression update:
 

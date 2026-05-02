@@ -216,6 +216,13 @@ handoff without losing decisions.
   - Pushed annotated tag `yanhe-v0.4.2-alpha.1`.
   - Created Draft PR `https://github.com/PWO-CHINA/VidSlide/pull/1` titled
     `Yanhe v0.4.2 batch branch - do not merge into main yet`.
+- Post-alpha settings polish:
+  - On narrow screens, the settings drawer now opens full-width with a sticky
+    title bar.
+  - The drawer explains ffmpeg, the F-drive download default, temporary getvideo
+    profile reuse, and source cleanup in clearer language.
+  - Browser smoke verified no horizontal overflow and no overflowing controls.
 - Next immediate steps:
-  - Commit and push the tag/PR documentation.
-  - Continue post-alpha polish and release-candidate smoke testing.
+  - Commit and push the settings polish milestone.
+  - Continue release-candidate smoke testing and decide whether to build a local
+    executable candidate.
