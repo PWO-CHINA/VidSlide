@@ -38,16 +38,28 @@ function _formatBatchTime(seconds) {
 // ============================================================
 const _BATCH_PREFS_KEY = 'vidslide_batch_prefs';
 
+function _normalizeBatchParams(params) {
+    const p = { ...(params || {}) };
+    p.classroom_mode = 'ppt';
+    if (p.speed_mode === 'turbo') {
+        p.speed_mode = 'fast';
+    }
+    if (!['eco', 'fast'].includes(p.speed_mode)) {
+        p.speed_mode = 'fast';
+    }
+    return p;
+}
+
 function _loadBatchPrefs() {
     try {
         const raw = localStorage.getItem(_BATCH_PREFS_KEY);
-        return raw ? JSON.parse(raw) : {};
+        return _normalizeBatchParams(raw ? JSON.parse(raw) : {});
     } catch { return {}; }
 }
 
 function _saveBatchPrefs(params) {
     try {
-        localStorage.setItem(_BATCH_PREFS_KEY, JSON.stringify(params));
+        localStorage.setItem(_BATCH_PREFS_KEY, JSON.stringify(_normalizeBatchParams(params)));
     } catch {}
 }
 
@@ -154,7 +166,8 @@ document.addEventListener('DOMContentLoaded', () => switchWorkspace(G.workspace 
 // ============================================================
 function _applyBatchPrefsToUI() {
     if (!G.batch) return;
-    const p = G.batch.params;
+    const p = _normalizeBatchParams(G.batch.params);
+    G.batch.params = p;
     const el = (id) => document.getElementById(id);
     el('batchThreshold').value = p.threshold ?? 5;
     el('batchThresholdVal').textContent = p.threshold ?? 5;
@@ -169,7 +182,7 @@ function _applyBatchPrefsToUI() {
 
 function _readBatchParams() {
     const el = (id) => document.getElementById(id);
-    return {
+    return _normalizeBatchParams({
         threshold: parseFloat(el('batchThreshold').value),
         fast_mode: el('batchFastMode').checked,
         use_roi: el('batchUseRoi').checked,
@@ -178,7 +191,7 @@ function _readBatchParams() {
         max_history: parseInt(el('batchMaxHistory').value),
         speed_mode: el('batchSpeedMode').value,
         classroom_mode: 'ppt',
-    };
+    });
 }
 
 // ============================================================
@@ -188,7 +201,7 @@ let _maxBatchWorkers = 3;
 
 async function _initBatch() {
     const prefs = _loadBatchPrefs();
-    const params = {
+    const params = _normalizeBatchParams({
         threshold: prefs.threshold ?? 5,
         fast_mode: prefs.fast_mode ?? true,
         use_roi: prefs.use_roi ?? true,
@@ -197,7 +210,7 @@ async function _initBatch() {
         max_history: prefs.max_history ?? 5,
         speed_mode: prefs.speed_mode ?? 'fast',
         classroom_mode: 'ppt',
-    };
+    });
     try {
         const res = await api('/api/batch/create', {
             method: 'POST',

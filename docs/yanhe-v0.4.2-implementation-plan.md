@@ -255,6 +255,20 @@ handoff without losing decisions.
   - The created batch stayed idle with one item in `unselected` and zero items in
     `queue`/`completed`, confirming the manual extraction boundary in the
     published exe.
+- PPT animation stability fix:
+  - Confirmed the current `extractor.py` is still the v0.4.1 extraction core;
+    diff versus `rollback/v0.4.1` only changes the version string.
+  - Confirmed the v0.6.x classroom/blackboard/hybrid/PyAV/MOG2 core is not in
+    this branch.
+  - Root cause for captured PPT animation middle frames was batch use of
+    `speed_mode=turbo` with low threshold, which weakens stable-frame
+    confirmation inside the v0.4.1 algorithm.
+  - Batch params now normalize `turbo` or unknown modes to `fast`, force
+    `classroom_mode=ppt`, and preserve only `eco`/`fast` for Yanhe batch runs.
+  - The guard is applied at API input, batch create/update, metadata recovery,
+    worker start, and frontend localStorage/UI boundaries.
+  - Regression tests cover API normalization, create/update normalization, and
+    recovery of legacy `batch.json` files containing `speed_mode=turbo`.
 - Next immediate steps:
   - Commit and push the published-exe exists-path smoke documentation.
   - Continue with real-user polish and consider a clean-profile login smoke.

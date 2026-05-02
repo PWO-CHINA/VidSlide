@@ -56,6 +56,18 @@ _batches_lock = threading.Lock()
 _batches = {}  # bid -> BatchQueue dict
 
 
+_YANHE_BATCH_SPEED_MODES = frozenset({'eco', 'fast'})
+
+
+def normalize_batch_params(params):
+    """Return safe Yanhe batch params for the v0.4.x PPT-only branch."""
+    params = dict(params or {})
+    params['classroom_mode'] = 'ppt'
+    if params.get('speed_mode') not in _YANHE_BATCH_SPEED_MODES:
+        params['speed_mode'] = 'fast'
+    return params
+
+
 # ============================================================
 #  数据结构
 # ============================================================
@@ -127,8 +139,7 @@ def _new_batch(base_dir, params, max_workers=1):
 # ============================================================
 def create_batch(sessions_root, params, max_workers=1):
     """创建空批量队列，返回 bid"""
-    params = dict(params or {})
-    params['classroom_mode'] = 'ppt'
+    params = normalize_batch_params(params)
     batch = _new_batch(sessions_root, params, max_workers)
     bid = batch['id']
     with _batches_lock:
@@ -596,8 +607,7 @@ def update_batch_params(bid, params):
     batch = get_batch(bid)
     if not batch:
         return
-    params = dict(params or {})
-    params['classroom_mode'] = 'ppt'
+    params = normalize_batch_params(params)
     with batch['lock']:
         batch['params'].update(params)
 
@@ -829,7 +839,8 @@ def _video_worker(bid, vid):
         task['status'] = 'running'
         task['progress'] = 0
         task['message'] = '正在初始化…'
-        params = dict(batch['params'])
+        params = normalize_batch_params(batch['params'])
+        batch['params'] = params
 
     _push_batch_event(bid, {
         'type': 'video_status',
@@ -1263,7 +1274,7 @@ def recover_batches_from_disk(sessions_root):
                 'id': bid,
                 'status': new_status,
                 'tasks': [],
-                'params': dict(meta.get('params', {}), classroom_mode='ppt'),
+                'params': normalize_batch_params(meta.get('params', {})),
                 'max_workers': meta.get('max_workers', 1),
                 'created_at': meta.get('created_at', time.time()),
                 'batch_dir': batch_dir,

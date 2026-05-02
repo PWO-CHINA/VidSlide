@@ -1792,9 +1792,7 @@ import batch_manager as _bm
 
 def _yanhe_batch_params(params):
     """批量分支固定为 4.1 的延河课堂 PPT 录屏提取。"""
-    params = dict(params or {})
-    params['classroom_mode'] = 'ppt'
-    return params
+    return _bm.normalize_batch_params(params)
 
 
 @app.route('/api/batch/create', methods=['POST'])

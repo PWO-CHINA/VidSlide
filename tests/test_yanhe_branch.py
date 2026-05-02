@@ -1,5 +1,7 @@
 import os
+import importlib
 import json
+import sys
 import tempfile
 import types
 import unittest
@@ -68,6 +70,58 @@ class YanheBranchTests(unittest.TestCase):
         result = ydm.download_preflight({"dry_run": True})
         self.assertTrue(result["ok"])
         self.assertIn("output_dir", result)
+
+    def test_yanhe_api_batch_params_clamp_turbo_to_fast(self):
+        sys.modules.pop("app", None)
+        app_module = importlib.import_module("app")
+        try:
+            params = app_module._yanhe_batch_params({
+                "threshold": 3,
+                "speed_mode": "turbo",
+                "classroom_mode": "blackboard",
+            })
+        finally:
+            sys.modules.pop("app", None)
+        self.assertEqual(params["speed_mode"], "fast")
+        self.assertEqual(params["classroom_mode"], "ppt")
+        self.assertEqual(params["threshold"], 3)
+
+    def test_batch_manager_clamps_turbo_on_create_and_update(self):
+        sessions = Path(self.tmp.name) / "sessions"
+        bid = batch_manager.create_batch(sessions, {
+            "threshold": 3,
+            "speed_mode": "turbo",
+            "classroom_mode": "hybrid",
+        }, 1)
+        state = batch_manager.get_batch_state(bid)
+        self.assertEqual(state["params"]["speed_mode"], "fast")
+        self.assertEqual(state["params"]["classroom_mode"], "ppt")
+
+        batch_manager.update_batch_params(bid, {
+            "speed_mode": "turbo",
+            "classroom_mode": "blackboard",
+        })
+        state = batch_manager.get_batch_state(bid)
+        self.assertEqual(state["params"]["speed_mode"], "fast")
+        self.assertEqual(state["params"]["classroom_mode"], "ppt")
+
+    def test_recovered_batch_metadata_clamps_turbo_to_fast(self):
+        sessions = Path(self.tmp.name) / "sessions"
+        batch_dir = sessions / "batch_legacy"
+        batch_dir.mkdir(parents=True)
+        (batch_dir / "batch.json").write_text(json.dumps({
+            "id": "legacy",
+            "params": {
+                "speed_mode": "turbo",
+                "classroom_mode": "blackboard",
+            },
+            "tasks": [],
+        }), encoding="utf-8")
+
+        batch_manager.recover_batches_from_disk(str(sessions))
+        state = batch_manager.get_batch_state("legacy")
+        self.assertEqual(state["params"]["speed_mode"], "fast")
+        self.assertEqual(state["params"]["classroom_mode"], "ppt")
 
     def test_batch_add_videos_skips_duplicate_paths(self):
         video = Path(self.tmp.name) / "sample.mp4"

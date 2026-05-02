@@ -78,3 +78,7 @@ Repeat until the product is materially better:
   with the exe and `THIRD_PARTY_NOTICES.md` attached.
 - Published alpha.2 exe non-dry-run smoke for session `853828` completed through
   the `exists` path and left the batch idle with one unselected item.
+- PPT animation middle-frame report was traced to batch `speed_mode=turbo`, not
+  extractor drift. Current `extractor.py` still matches v0.4.1 except the
+  version string; batch extraction now clamps `turbo`/unknown modes to `fast`
+  and keeps `classroom_mode=ppt` across API, recovery, worker, and UI paths.

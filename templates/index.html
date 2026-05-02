@@ -262,9 +262,8 @@
                         <select id="batchSpeedMode" class="w-full text-xs px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600">
                             <option value="eco">省电 (Eco)</option>
                             <option value="fast" selected>均衡 (Fast) — 推荐</option>
-                            <option value="turbo">极速 (Turbo)</option>
                         </select>
-                        <p class="text-xs text-slate-400 mt-0.5">省电适合后台跑；均衡是默认；极速更快但可能漏掉快速翻页</p>
+                        <p class="text-xs text-slate-400 mt-0.5">延河批量提取保留稳定帧确认；不使用极速，避免截到 PPT 动画中间态</p>
                     </div>
                 </div>
             </div>
@@ -661,9 +660,9 @@
                         <select class="js-speed-mode w-full px-3 py-2 text-sm rounded-xl border-2 border-gray-200 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition bg-white">
                             <option value="eco">后台静默 (Eco)</option>
                             <option value="fast" selected>全速狂飙 (Fast)</option>
-                            <option value="turbo">极速狂暴 (Turbo)</option>
+                            <option value="turbo">极速试跑 (Turbo，可能截到动画中间态)</option>
                         </select>
-                        <p class="text-xs text-gray-400 leading-relaxed mt-1">Eco 节省资源；Fast 释放算力；Turbo 极限压榜（2x跳帧+320p对比）</p>
+                        <p class="text-xs text-gray-400 leading-relaxed mt-1">Eco 节省资源；Fast 适合正式提取；Turbo 只适合快速预览参数，不建议导出成品</p>
                     </div>
                 </div>
                 <details class="mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl">
@@ -842,7 +841,7 @@
             <label class="setting-line"><input type="checkbox" id="settingUseRoi"> PPT 录屏裁剪</label>
             <label class="setting-line"><input type="checkbox" id="settingFastMode"> 快速模式</label>
             <label class="setting-line"><input type="checkbox" id="settingUseGpu"> 请求 GPU 解码</label>
-            <label>速度模式 <select id="settingSpeedMode" class="setting-input"><option value="eco">省电</option><option value="fast">均衡</option><option value="turbo">极速</option></select></label>
+            <label>速度模式 <select id="settingSpeedMode" class="setting-input"><option value="eco">省电</option><option value="fast">均衡</option><option value="turbo">极速试跑</option></select></label>
             <button class="btn-primary" onclick="saveSettingsDrawer()">保存设置</button>
         </div>
         <div class="settings-section">

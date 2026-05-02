@@ -208,6 +208,24 @@ Download/SSE regression update:
   session `863057`, and confirmed the late terminal SSE endpoint returns the
   final init event and closes immediately.
 
+PPT animation stability regression update:
+
+- Verified `extractor.py` against `rollback/v0.4.1`; the only branch diff is the
+  version string. The v0.6.x classroom/blackboard/hybrid/PyAV/MOG2 extraction
+  core has not been imported into this Yanhe branch.
+- Root cause for captured PPT animation intermediate frames was batch parameters,
+  not extractor drift. The active user batch metadata had `threshold=3` and
+  `speed_mode=turbo`.
+- In the v0.4.1 extractor, `turbo` uses 2-second stepping, 320px comparison, and
+  a 1-sample stable-frame check. That is intentionally less conservative and can
+  capture PPT animation mid-states.
+- Yanhe batch params are now normalized at API, batch create/update, recovered
+  metadata, worker-start, and frontend preference boundaries. Batch extraction
+  allows only `eco` or `fast` and always forces `classroom_mode=ppt`.
+- Regression tests cover API param normalization, batch create/update
+  normalization, and recovery of legacy `batch.json` files that still contain
+  `speed_mode=turbo`.
+
 ## ffmpeg
 
 Real downloads require ffmpeg. The app now:
