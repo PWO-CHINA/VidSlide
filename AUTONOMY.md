@@ -32,8 +32,8 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the runtime smoke documentation.
-2. Decide whether the branch is ready for `yanhe-v0.4.2-alpha.1`.
+1. Commit and push the tag/PR documentation.
+2. Continue post-alpha polish and release-candidate smoke testing.
 3. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
    using short local clips for extraction unless a full-course overnight run is
    intentionally useful.
@@ -63,3 +63,5 @@ Repeat until the product is materially better:
   Runtime resource discovery now checks Nuitka's onefile containing directory.
 - The current server was restarted on port `5882`; course `67968` loaded, a
   dry-run job completed, and late-terminal SSE closed immediately via `curl`.
+- Draft PR `https://github.com/PWO-CHINA/VidSlide/pull/1` and tag
+  `yanhe-v0.4.2-alpha.1` are both pushed.

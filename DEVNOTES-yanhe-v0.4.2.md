@@ -34,6 +34,13 @@ The existing getvideo profile can be reused during development:
 This is a migration convenience, not a product requirement. Never copy account
 passwords, tokens, signed video URLs, or Chrome databases into the repo.
 
+Branch management:
+
+- Draft PR: `https://github.com/PWO-CHINA/VidSlide/pull/1`
+- Alpha tag: `yanhe-v0.4.2-alpha.1`
+- The PR is a branch management and review anchor only. Do not merge this branch
+  into `main` until the branch owner explicitly decides to do so.
+
 ## Local Run
 
 ```powershell

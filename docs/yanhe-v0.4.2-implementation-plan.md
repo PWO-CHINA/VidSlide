@@ -212,7 +212,10 @@ handoff without losing decisions.
   - Course `67968` loads as `生物仪器分析` with `16` recordings.
   - A single-session dry-run job for `863057` completed with progress `100`.
   - Late-terminal SSE via `curl` returned only the final init event and closed.
+- M9 branch management update:
+  - Pushed annotated tag `yanhe-v0.4.2-alpha.1`.
+  - Created Draft PR `https://github.com/PWO-CHINA/VidSlide/pull/1` titled
+    `Yanhe v0.4.2 batch branch - do not merge into main yet`.
 - Next immediate steps:
-  - Commit and push the runtime smoke documentation.
-  - Continue settings drawer polish and decide whether this is ready for an
-    alpha tag.
+  - Commit and push the tag/PR documentation.
+  - Continue post-alpha polish and release-candidate smoke testing.
