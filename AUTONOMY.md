@@ -32,9 +32,8 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the alpha.2 prerelease documentation.
-2. Continue with real-user polish and decide whether to test one short real
-   download from the published exe.
+1. Commit and push the published-exe exists-path smoke documentation.
+2. Continue with real-user polish and consider a clean-profile login smoke.
 3. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
    using short local clips for extraction unless a full-course overnight run is
    intentionally useful.
@@ -77,3 +76,5 @@ Repeat until the product is materially better:
 - Published prerelease:
   `https://github.com/PWO-CHINA/VidSlide/releases/tag/yanhe-v0.4.2-alpha.2`
   with the exe and `THIRD_PARTY_NOTICES.md` attached.
+- Published alpha.2 exe non-dry-run smoke for session `853828` completed through
+  the `exists` path and left the batch idle with one unselected item.

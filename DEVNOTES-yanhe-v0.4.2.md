@@ -254,6 +254,14 @@ Packaging compatibility update:
 - `yanhe-v0.4.2-alpha.2` was tagged after the FFmpeg notice update and published
   as a GitHub prerelease. The uploaded exe asset SHA-256 reported by GitHub is
   `dd21d1dff84522c1fcacbcf4a687e795855f42fb9f5f928671f9f920b92b0103`.
+- Published alpha.2 exe non-dry-run smoke:
+  - Started on port `5884`.
+  - Requested course `67968`, session `853828`, `dry_run=false`.
+  - The already-present MP4 was detected through the `exists` path; no large
+    re-download was performed.
+  - Job `533ff7f1b3` completed with progress `100`.
+  - Batch `d1c90a73` stayed `idle` with `unselected=1`, `queue=0`,
+    `completed=0`.
 
 ## Verification
 

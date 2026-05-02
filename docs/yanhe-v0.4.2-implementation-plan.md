@@ -247,7 +247,14 @@ handoff without losing decisions.
     `VidSlide-yanhe-v0.4.2-alpha.2.exe` and `THIRD_PARTY_NOTICES.md`.
   - GitHub asset digest for the exe:
     `sha256:dd21d1dff84522c1fcacbcf4a687e795855f42fb9f5f928671f9f920b92b0103`.
+- Published exe exists-path smoke:
+  - Started alpha.2 exe on port `5884`.
+  - Submitted a non-dry-run job for course `67968`, session `853828`.
+  - Because the MP4 already existed on F drive, the job completed through
+    `status=exists` without downloading the large file again.
+  - The created batch stayed idle with one item in `unselected` and zero items in
+    `queue`/`completed`, confirming the manual extraction boundary in the
+    published exe.
 - Next immediate steps:
-  - Commit and push the prerelease documentation.
-  - Continue with real-user polish and decide whether to test one short real
-    download from the published exe.
+  - Commit and push the published-exe exists-path smoke documentation.
+  - Continue with real-user polish and consider a clean-profile login smoke.
