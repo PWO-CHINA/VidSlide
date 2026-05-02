@@ -12,6 +12,7 @@ import storage
 
 
 SETTINGS_VERSION = 1
+_ALLOWED_SPEED_MODES = {"eco", "fast"}
 
 
 DEFAULT_SETTINGS: dict[str, Any] = {
@@ -79,6 +80,14 @@ def _normalize_settings(data: dict[str, Any]) -> dict[str, Any]:
         settings["download"]["download_dir"] = str(storage.downloads_dir())
     if not settings["yanhe"].get("chrome_profile_dir"):
         settings["yanhe"]["chrome_profile_dir"] = str(storage.chrome_profile_dir())
+    extraction = settings["extraction"]
+    try:
+        threshold = float(extraction.get("threshold", DEFAULT_SETTINGS["extraction"]["threshold"]))
+    except (TypeError, ValueError):
+        threshold = DEFAULT_SETTINGS["extraction"]["threshold"]
+    extraction["threshold"] = min(15.0, max(4.5, threshold))
+    if extraction.get("speed_mode") not in _ALLOWED_SPEED_MODES:
+        extraction["speed_mode"] = "fast"
     settings["version"] = SETTINGS_VERSION
     return settings
 

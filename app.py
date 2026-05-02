@@ -1280,7 +1280,9 @@ def start_extraction(sid):
     use_roi = bool(data.get('use_roi', True))
     fast_mode = bool(data.get('fast_mode', True))
     use_gpu = bool(data.get('use_gpu', True))
-    speed_mode = data.get('speed_mode', 'fast')  # 'eco' | 'fast' | 'turbo'
+    speed_mode = data.get('speed_mode', 'fast')
+    if speed_mode not in ('eco', 'fast'):
+        speed_mode = 'fast'
 
     if not video_path:
         return jsonify(success=False, message='未提供视频路径')
@@ -1374,6 +1376,8 @@ def resume_extraction(sid):
     fast_mode = sess.get('fast_mode', meta.get('fast_mode', True))
     use_gpu = sess.get('use_gpu', meta.get('use_gpu', True))
     speed_mode = sess.get('speed_mode', meta.get('speed_mode', 'fast'))
+    if speed_mode not in ('eco', 'fast'):
+        speed_mode = 'fast'
 
     cache_dir = sess['cache_dir']
     video_name = Path(video_path).stem or '未命名视频'

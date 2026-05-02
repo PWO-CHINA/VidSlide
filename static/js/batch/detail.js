@@ -35,6 +35,7 @@ function _openUnselectedDetail(vid) {
         '<p class="text-xs">分辨率: ' + (task.resolution[0] || '?') + '×' + (task.resolution[1] || '?') + '</p>' +
         '</div>';
     info.textContent = '点击标题可重命名';
+    info.classList.remove('batch-detail-quality-warning');
     if (exportBar) exportBar.style.display = 'none';
     if (recycleBtn) recycleBtn.style.display = 'none';
 
@@ -79,6 +80,7 @@ async function openBatchDetail(vid) {
     const count = document.getElementById('batchDetailCount');
     const exportBar = document.getElementById('batchDetailExportBar');
     const recycleBtn = document.getElementById('batchDetailRecycleBtn');
+    const info = document.getElementById('batchDetailInfo');
 
     title.textContent = task.displayName;
     title.dataset.vid = vid;
@@ -92,6 +94,13 @@ async function openBatchDetail(vid) {
 
     if (exportBar) exportBar.style.display = '';
     if (recycleBtn) recycleBtn.style.display = 'none';
+    if (info) {
+        const qualityFlags = task.qualityFlags || [];
+        info.textContent = qualityFlags.length
+            ? qualityFlags.map(f => f.message).join('；')
+            : '点击图片放大预览 · Delete 删除 · Ctrl+Z 撤销 · 拖拽排序';
+        info.classList.toggle('batch-detail-quality-warning', qualityFlags.length > 0);
+    }
 
     const recyclePanel = document.getElementById('batchDetailRecyclePanel');
     if (recyclePanel) recyclePanel.style.display = 'none';

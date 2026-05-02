@@ -37,7 +37,8 @@ function _formatBatchTime(seconds) {
 //  参数记忆（localStorage）
 // ============================================================
 const _BATCH_PREFS_KEY = 'vidslide_batch_prefs';
-const _BATCH_PREFS_VERSION = 2;
+const _BATCH_PREFS_VERSION = 3;
+const _BATCH_MIN_FORMAL_THRESHOLD = 4.5;
 
 function _normalizeBatchParams(params, options = {}) {
     const p = { ...(params || {}) };
@@ -50,8 +51,8 @@ function _normalizeBatchParams(params, options = {}) {
         p.speed_mode = 'fast';
     }
     const threshold = Number.parseFloat(p.threshold);
-    p.threshold = Number.isFinite(threshold) ? Math.min(15, Math.max(1, threshold)) : 5;
-    if (options.migrateLegacy && !hadVersion && p.threshold < 4.5) {
+    p.threshold = Number.isFinite(threshold) ? Math.min(15, Math.max(_BATCH_MIN_FORMAL_THRESHOLD, threshold)) : 5;
+    if (options.migrateLegacy && !hadVersion && p.threshold < 5) {
         p.threshold = 5;
     }
     p.fast_mode = p.fast_mode ?? true;
@@ -185,6 +186,8 @@ function _applyBatchPrefsToUI() {
     const p = _normalizeBatchParams(G.batch.params);
     G.batch.params = p;
     const el = (id) => document.getElementById(id);
+    const thresholdEl = el('batchThreshold');
+    if (thresholdEl) thresholdEl.min = String(_BATCH_MIN_FORMAL_THRESHOLD);
     el('batchThreshold').value = p.threshold ?? 5;
     el('batchThresholdVal').textContent = p.threshold ?? 5;
     el('batchUseRoi').checked = p.use_roi ?? true;
@@ -372,6 +375,7 @@ function _mapTask(t) {
         progress: t.progress,
         message: t.message,
         savedCount: t.saved_count,
+        qualityFlags: t.quality_flags || [],
         etaSeconds: t.eta_seconds,
         elapsedSeconds: t.elapsed_seconds,
         errorMessage: t.error_message,
@@ -415,6 +419,7 @@ function _handleVideoProgress(data) {
     task.progress = data.progress || 0;
     task.message = data.message || '';
     task.savedCount = data.saved_count || task.savedCount;
+    task.qualityFlags = data.quality_flags || task.qualityFlags || [];
     task.etaSeconds = data.eta_seconds ?? -1;
     task.elapsedSeconds = data.elapsed_seconds ?? 0;
     _updateVideoItemInPlace(data.video_id);

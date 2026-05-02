@@ -80,14 +80,27 @@ window.addEventListener('scroll', () => {
 // ============================================================
 const _PREF_KEY = 'vidslide_prefs';
 function _loadPrefs() {
-    try { return JSON.parse(localStorage.getItem(_PREF_KEY)) || {}; } catch { return {}; }
+    try {
+        const prefs = JSON.parse(localStorage.getItem(_PREF_KEY)) || {};
+        return _normalizePanePrefs(prefs);
+    } catch { return {}; }
 }
 function _savePrefs(patch) {
-    const p = { ..._loadPrefs(), ...patch };
+    const p = _normalizePanePrefs({ ..._loadPrefs(), ...patch });
     try { localStorage.setItem(_PREF_KEY, JSON.stringify(p)); } catch { }
+}
+function _normalizePanePrefs(prefs) {
+    const p = { ...(prefs || {}) };
+    const threshold = Number.parseFloat(p.threshold);
+    p.threshold = Number.isFinite(threshold) ? Math.min(15, Math.max(4.5, threshold)) : _PREF_DEFAULTS.threshold;
+    if (!['eco', 'fast'].includes(p.speed_mode)) p.speed_mode = _PREF_DEFAULTS.speed_mode;
+    p.classroom_mode = 'ppt';
+    return p;
 }
 function _applyPrefsToPane(pane) {
     const p = _loadPrefs();
+    const thresholdInput = pane.querySelector('.js-threshold');
+    if (thresholdInput) thresholdInput.min = '4.5';
     if (p.threshold != null) {
         pane.querySelector('.js-threshold').value = p.threshold;
         pane.querySelector('.js-threshold-val').textContent = p.threshold;

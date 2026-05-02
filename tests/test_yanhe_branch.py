@@ -45,6 +45,16 @@ class YanheBranchTests(unittest.TestCase):
         self.assertEqual(updated["extraction"]["threshold"], 7.5)
         self.assertEqual(settings_store.load_settings()["extraction"]["threshold"], 7.5)
 
+    def test_settings_normalizes_formal_extraction_boundaries(self):
+        updated = settings_store.update_settings({
+            "extraction": {
+                "threshold": 1,
+                "speed_mode": "turbo",
+            }
+        })
+        self.assertEqual(updated["extraction"]["threshold"], 4.5)
+        self.assertEqual(updated["extraction"]["speed_mode"], "fast")
+
     def test_downloader_helpers(self):
         self.assertEqual(ydm._course_url("67968"), "https://www.yanhekt.cn/course/67968")
         self.assertEqual(core.parse_session_ids("1, 2;3\n4"), {"1", "2", "3", "4"})
@@ -86,7 +96,7 @@ class YanheBranchTests(unittest.TestCase):
             sys.modules.pop("app", None)
         self.assertEqual(params["speed_mode"], "fast")
         self.assertEqual(params["classroom_mode"], "ppt")
-        self.assertEqual(params["threshold"], 1.0)
+        self.assertEqual(params["threshold"], 4.5)
         self.assertEqual(params["max_history"], 20)
         self.assertFalse(params["use_roi"])
 
@@ -101,7 +111,7 @@ class YanheBranchTests(unittest.TestCase):
         state = batch_manager.get_batch_state(bid)
         self.assertEqual(state["params"]["speed_mode"], "fast")
         self.assertEqual(state["params"]["classroom_mode"], "ppt")
-        self.assertEqual(state["params"]["threshold"], 3)
+        self.assertEqual(state["params"]["threshold"], 4.5)
         self.assertEqual(state["params"]["max_history"], 2)
 
         batch_manager.update_batch_params(bid, {
@@ -131,6 +141,26 @@ class YanheBranchTests(unittest.TestCase):
         self.assertEqual(state["params"]["speed_mode"], "fast")
         self.assertEqual(state["params"]["classroom_mode"], "ppt")
         self.assertEqual(state["params"]["threshold"], 5.0)
+
+    def test_batch_quality_flags_for_unusual_saved_counts(self):
+        many = {
+            "saved_count": 80,
+            "fps": 30,
+            "total_frames": 30 * 60 * 10,
+        }
+        few = {
+            "saved_count": 1,
+            "fps": 30,
+            "total_frames": 30 * 60 * 45,
+        }
+        normal = {
+            "saved_count": 18,
+            "fps": 30,
+            "total_frames": 30 * 60 * 10,
+        }
+        self.assertTrue(any(f["code"] == "too_many" for f in batch_manager._quality_flags_for_task(many, {"threshold": 5})))
+        self.assertTrue(any(f["code"] == "too_few" for f in batch_manager._quality_flags_for_task(few, {"threshold": 5})))
+        self.assertEqual(batch_manager._quality_flags_for_task(normal, {"threshold": 5}), [])
 
     def test_batch_resume_counts_existing_and_new_saved_images(self):
         video = Path(self.tmp.name) / "sample.mp4"

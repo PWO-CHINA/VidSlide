@@ -57,7 +57,10 @@ _batches = {}  # bid -> BatchQueue dict
 
 
 _YANHE_BATCH_SPEED_MODES = frozenset({'eco', 'fast'})
-_YANHE_BATCH_PARAMS_VERSION = 2
+_YANHE_BATCH_PARAMS_VERSION = 3
+_YANHE_DEFAULT_THRESHOLD = 5.0
+_YANHE_MIN_FORMAL_THRESHOLD = 4.5
+_YANHE_MAX_THRESHOLD = 15.0
 
 
 def _coerce_bool(value, default=True):
@@ -105,9 +108,14 @@ def normalize_batch_params(params, migrate_legacy=False):
     params['classroom_mode'] = 'ppt'
     if params.get('speed_mode') not in _YANHE_BATCH_SPEED_MODES:
         params['speed_mode'] = 'fast'
-    params['threshold'] = _coerce_float(params.get('threshold', 5.0), 5.0, 1.0, 15.0)
-    if migrate_legacy and not had_version and params['threshold'] < 4.5:
-        params['threshold'] = 5.0
+    params['threshold'] = _coerce_float(
+        params.get('threshold', _YANHE_DEFAULT_THRESHOLD),
+        _YANHE_DEFAULT_THRESHOLD,
+        _YANHE_MIN_FORMAL_THRESHOLD,
+        _YANHE_MAX_THRESHOLD,
+    )
+    if migrate_legacy and not had_version and params['threshold'] < _YANHE_DEFAULT_THRESHOLD:
+        params['threshold'] = _YANHE_DEFAULT_THRESHOLD
     params['fast_mode'] = _coerce_bool(params.get('fast_mode', True), True)
     params['use_roi'] = _coerce_bool(params.get('use_roi', True), True)
     params['use_gpu'] = _coerce_bool(params.get('use_gpu', True), True)
@@ -115,6 +123,58 @@ def normalize_batch_params(params, migrate_legacy=False):
     params['max_history'] = _coerce_int(params.get('max_history', 5), 5, 2, 20)
     params['_param_version'] = _YANHE_BATCH_PARAMS_VERSION
     return params
+
+
+def _quality_flags_for_task(task, params):
+    """Small UX hints for likely over-capture or under-capture after extraction."""
+    flags = []
+    try:
+        saved = int(task.get('saved_count') or 0)
+    except (TypeError, ValueError):
+        saved = 0
+    try:
+        fps = float(task.get('fps') or 0)
+        total_frames = int(task.get('total_frames') or 0)
+    except (TypeError, ValueError):
+        fps = 0
+        total_frames = 0
+    duration_min = (total_frames / fps / 60.0) if fps > 0 and total_frames > 0 else 0
+
+    if saved <= 0:
+        flags.append({
+            'level': 'warning',
+            'code': 'no_slides',
+            'message': '没有保存到幻灯片，请确认视频可播放，必要时关闭裁剪后用精细复查。',
+        })
+        return flags
+
+    if duration_min >= 5:
+        low_limit = max(2, int(duration_min / 15))
+        high_limit = max(30, int(duration_min * 2.5))
+        if saved <= low_limit:
+            flags.append({
+                'level': 'warning',
+                'code': 'too_few',
+                'message': '保存张数偏少，可能漏页；可关闭 PPT 裁剪或使用“精细复查”重跑。',
+            })
+        if saved >= high_limit:
+            flags.append({
+                'level': 'warning',
+                'code': 'too_many',
+                'message': '保存张数偏多，可能包含动画过程；建议先删除多余图，或用“少动画复查”重跑。',
+            })
+
+    try:
+        threshold = float(params.get('threshold', _YANHE_DEFAULT_THRESHOLD))
+    except (TypeError, ValueError):
+        threshold = _YANHE_DEFAULT_THRESHOLD
+    if threshold <= _YANHE_MIN_FORMAL_THRESHOLD and any(f.get('code') == 'too_many' for f in flags):
+        flags.append({
+            'level': 'info',
+            'code': 'sensitive_threshold',
+            'message': '当前阈值较敏感，动画步骤更容易被保存。',
+        })
+    return flags
 
 
 # ============================================================
@@ -137,6 +197,7 @@ def _new_video_task(video_path, display_name, output_dir):
         'eta_seconds': -1,
         'elapsed_seconds': 0,
         'error_message': '',
+        'quality_flags': [],
         'retry_count': 0,
         'cancel_flag': False,
         '_pending_trash': False,   # 标记：running 视频等待移入回收站
@@ -246,6 +307,7 @@ def _task_snapshot(t):
         'eta_seconds': t['eta_seconds'],
         'elapsed_seconds': t['elapsed_seconds'],
         'error_message': t['error_message'],
+        'quality_flags': t.get('quality_flags', []),
         'retry_count': t['retry_count'],
         'total_frames': t['total_frames'],
         'fps': t.get('fps', 0),
@@ -496,6 +558,7 @@ def move_to_unselected(bid, video_ids):
                 task['progress'] = 0
                 task['message'] = ''
                 task['error_message'] = ''
+                task['quality_flags'] = []
                 task['eta_seconds'] = -1
                 task['elapsed_seconds'] = 0
                 moved += 1
@@ -735,6 +798,7 @@ def retry_video(bid, vid):
         task['progress'] = 0
         task['message'] = ''
         task['error_message'] = ''
+        task['quality_flags'] = []
         task['cancel_flag'] = False
         task['_pending_trash'] = False
         task['retry_count'] += 1
@@ -979,6 +1043,7 @@ def _video_worker(bid, vid):
         with batch['lock']:
             task['saved_count'] = actual_saved
             if status == 'done':
+                task['quality_flags'] = _quality_flags_for_task(task, params)
                 # 正常完成 → 移入已完成区域
                 task['zone'] = 'completed'
                 task['status'] = 'done'
@@ -1012,6 +1077,7 @@ def _video_worker(bid, vid):
                 'from_zone': 'queue',
                 'to_zone': 'completed',
                 'saved_count': task['saved_count'],
+                'quality_flags': task.get('quality_flags', []),
                 'message': task['message'],
                 'global_progress': _calc_global_progress(batch),
             })
@@ -1033,6 +1099,7 @@ def _video_worker(bid, vid):
             task['status'] = 'error'
             task['error_message'] = err_msg
             task['message'] = f'处理失败: {err_msg}'
+            task['quality_flags'] = []
             batch['failed_count'] += 1
         _push_batch_event(bid, {
             'type': 'video_error',
@@ -1271,7 +1338,7 @@ _META_SAVE_KEYS = (
 
 _TASK_SAVE_KEYS = (
     'id', 'video_path', 'display_name', 'zone', 'status', 'progress', 'message',
-    'saved_count', 'eta_seconds', 'elapsed_seconds', 'error_message',
+    'saved_count', 'eta_seconds', 'elapsed_seconds', 'error_message', 'quality_flags',
     'retry_count', 'total_frames', 'fps', 'resolution', 'last_frame_index',
     'resume_from_breakpoint', 'output_dir', 'cache_dir', 'pkg_dir',
 )
@@ -1389,6 +1456,7 @@ def recover_batches_from_disk(sessions_root):
                     'eta_seconds': tm.get('eta_seconds', -1),
                     'elapsed_seconds': tm.get('elapsed_seconds', 0),
                     'error_message': tm.get('error_message', '') if status == 'error' else '',
+                    'quality_flags': tm.get('quality_flags', []) if status == 'done' else [],
                     'retry_count': tm.get('retry_count', 0),
                     'cancel_flag': False,
                     '_pending_trash': False,
@@ -1931,6 +1999,7 @@ def restore_from_trash(bid, vid, action):
             'eta_seconds': -1,
             'elapsed_seconds': 0,
             'error_message': '',
+            'quality_flags': [],
             'retry_count': 0,
             'cancel_flag': False,
             '_pending_trash': False,
@@ -1968,6 +2037,7 @@ def restore_from_trash(bid, vid, action):
             'eta_seconds': -1,
             'elapsed_seconds': 0,
             'error_message': '',
+            'quality_flags': [],
             'retry_count': snap.get('retry_count', 0),
             'cancel_flag': False,
             '_pending_trash': False,
@@ -2010,6 +2080,7 @@ def restore_from_trash(bid, vid, action):
             'eta_seconds': -1,
             'elapsed_seconds': snap.get('elapsed_seconds', 0),
             'error_message': '',
+            'quality_flags': snap.get('quality_flags', []),
             'retry_count': snap.get('retry_count', 0),
             'cancel_flag': False,
             '_pending_trash': False,

@@ -170,11 +170,11 @@
                     clean_source_after_successful_extraction: $('settingCleanSource').checked,
                 },
                 extraction: {
-                    threshold: parseFloat($('settingThreshold').value || '5'),
+                    threshold: Math.min(15, Math.max(4.5, parseFloat($('settingThreshold').value || '5'))),
                     use_roi: $('settingUseRoi').checked,
                     fast_mode: $('settingFastMode').checked,
                     use_gpu: $('settingUseGpu').checked,
-                    speed_mode: $('settingSpeedMode').value,
+                    speed_mode: ['eco', 'fast'].includes($('settingSpeedMode').value) ? $('settingSpeedMode').value : 'fast',
                 },
             };
             const res = await api('/api/settings', {

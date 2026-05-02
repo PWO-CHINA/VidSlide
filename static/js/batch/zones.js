@@ -135,7 +135,12 @@ function _createZoneVideoItem(task, zone) {
         nameClickable = true;
         showCheckbox = true;
         const elapsed = _formatDuration(task.elapsedSeconds || 0);
-        infoHtml = elapsed + ' · ' + task.savedCount + ' 张幻灯片';
+        const qualityFlags = task.qualityFlags || [];
+        const qualityHint = qualityFlags.length
+            ? '<span class="batch-quality-hint" title="' + _escHtml(qualityFlags.map(f => f.message).join('；')) + '">' +
+              '<i data-lucide="triangle-alert" class="w-3 h-3 inline-block"></i> 建议复查</span>'
+            : '';
+        infoHtml = elapsed + ' · ' + task.savedCount + ' 张幻灯片' + (qualityHint ? ' · ' + qualityHint : '');
         actionsHtml =
             '<button onclick="_trashCompletedVideo(\'' + task.vid + '\')" class="btn-ghost-danger text-xs" title="移入回收站"><i data-lucide="trash-2" class="w-3 h-3"></i></button>';
     }
