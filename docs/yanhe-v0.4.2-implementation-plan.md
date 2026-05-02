@@ -230,7 +230,15 @@ handoff without losing decisions.
     extraction path, F-drive downloads, and zero external asset references.
   - Root HTML, course load for `67968`, one-session dry-run, and terminal SSE
     smoke all passed.
+- Third-party notice update:
+  - Added `docs/THIRD_PARTY_NOTICES.md` for bundled FFmpeg.
+  - The local Gyan.dev FFmpeg binary reports `--enable-gpl --enable-version3`;
+    release notes should include FFmpeg source/legal links before publishing a
+    bundled executable.
+  - Since `yanhe-v0.4.2-alpha.1` was tagged before post-alpha polish, publish the
+    next binary from a new `yanhe-v0.4.2-alpha.2` tag instead of attaching the
+    current exe to alpha.1.
 - Next immediate steps:
-  - Commit and push the executable smoke documentation.
-  - Decide whether to publish the existing alpha exe as a GitHub release asset
-    after adding ffmpeg license/source notes.
+  - Commit and push the notice update.
+  - Tag `yanhe-v0.4.2-alpha.2`, rebuild the exe with the matching name, smoke it,
+    and publish it as a prerelease asset if the smoke passes.

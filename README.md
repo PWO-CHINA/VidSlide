@@ -22,6 +22,7 @@
 真实下载需要 `ffmpeg.exe`。开发和发布推荐把它放在 `bin\ffmpeg.exe`；
 这个二进制不会提交到 Git，但 `build.bat` 和 `build_nuitka.bat` 会在本地存在时自动打进发布产物。
 发布前请看 [延河版打包说明](docs/yanhe-release-packaging.md)。
+如果发布产物包含 FFmpeg，也请保留 [第三方组件说明](docs/THIRD_PARTY_NOTICES.md) 中的 FFmpeg 许可和源码链接。
 
 ## 这是什么？
 

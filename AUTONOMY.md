@@ -32,8 +32,9 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the executable smoke documentation.
-2. Decide whether to publish the existing alpha exe as a GitHub release asset after adding ffmpeg license/source notes.
+1. Commit and push the FFmpeg notice update.
+2. Tag `yanhe-v0.4.2-alpha.2`, rebuild the exe with the matching name, smoke it,
+   and publish it as a prerelease asset if the smoke passes.
 3. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
    using short local clips for extraction unless a full-course overnight run is
    intentionally useful.
@@ -71,3 +72,5 @@ Repeat until the product is materially better:
 - Local PyInstaller exe candidate `dist\VidSlide-yanhe-v0.4.2-alpha.1.exe`
   was built and passed root-page, diagnostics, course-load, dry-run, and terminal
   SSE smoke on port `5883`.
+- Do not attach the alpha.1 exe to the alpha.1 tag: that tag was created before
+  later polish commits. Use alpha.2 for the first published binary asset.

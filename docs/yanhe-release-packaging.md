@@ -16,7 +16,8 @@ VidSlide-v0.4.2-yanhe-batch/
 
 `bin\ffmpeg.exe` is ignored by `.gitignore`. The current local sidecar is a
 Gyan.dev full build and reports GPL-enabled configuration, so any public release
-that bundles it should include the matching ffmpeg license/source notice.
+that bundles it should include the matching ffmpeg license/source notice. See
+`docs/THIRD_PARTY_NOTICES.md`.
 
 ## Build Scripts
 
@@ -68,6 +69,10 @@ After building, run the generated exe and verify:
 - A dry-run download works without writing video.
 - A short real/existing download enters batch `unselected` and does not start
   extraction automatically.
+
+Before uploading a release asset that bundles ffmpeg, include the
+`docs/THIRD_PARTY_NOTICES.md` FFmpeg section or equivalent links in the release
+notes.
 
 ## Do Not Commit
 

@@ -234,6 +234,9 @@ Packaging compatibility update:
 - Local verification confirmed `bin\ffmpeg.exe -version` works. The current local
   binary is a Gyan.dev full build with GPL-enabled configuration, so public
   release notes should include the matching ffmpeg license/source notice.
+- Added `docs/THIRD_PARTY_NOTICES.md` for the bundled FFmpeg executable. The
+  local Gyan.dev binary reports `--enable-gpl --enable-version3`, so release
+  notes should treat it as GPLv3-or-later and include source/legal links.
 - Built a local PyInstaller candidate:
   `dist\VidSlide-yanhe-v0.4.2-alpha.1.exe` (`173,348,247` bytes).
 - Exe smoke on port `5883` verified:
