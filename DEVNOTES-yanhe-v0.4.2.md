@@ -162,6 +162,19 @@ Resource policy update:
   Yanhe recording. Batch start succeeded and extraction completed in about `1s`
   with `1` slide saved.
 
+Mobile layout update:
+
+- The sticky header now wraps safely below `760px` wide screens. The workspace
+  switch, settings/shutdown buttons, and resource bar no longer force horizontal
+  page overflow.
+- `body` now hides accidental horizontal overflow, while the workspace switch can
+  scroll inside its own row if a very narrow browser cannot fit every control.
+- Browser smoke at a phone-sized viewport verified the Yanhe first screen, the
+  batch workspace, and the settings drawer all report no horizontal overflow.
+- Screenshots captured during verification:
+  - `vidslide-mobile-yanhe-fixed.png`
+  - `vidslide-mobile-batch-fixed.png`
+
 ## ffmpeg
 
 Real downloads require ffmpeg. The app now:

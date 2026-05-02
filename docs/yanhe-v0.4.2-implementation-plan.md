@@ -184,6 +184,15 @@ handoff without losing decisions.
   - Task creation/start hard blockers now trigger only on extreme CPU pressure, extreme memory pressure with very low available memory, or low disk space.
   - Added regression tests for soft-high-memory non-blocking behavior, extreme memory blocking, and low disk blocking.
   - Real 30-second Yanhe sample smoke verified batch start is allowed under normal pressure and completed in about 1 second.
+- M6 mobile workspace update:
+  - The sticky header wraps below `760px` so the title, workspace switch,
+    settings button, shutdown button, and resource bar stay readable on narrow
+    screens.
+  - Mobile browser checks verified the Yanhe first screen, batch workspace, and
+    settings drawer do not create horizontal page overflow.
+  - This is a layout-only change and does not alter download, batch, extraction,
+    or export behavior.
 - Next immediate steps:
-  - Commit and push the resource policy milestone.
-  - Continue mobile layout checks.
+  - Commit and push the mobile layout milestone.
+  - Continue settings drawer polish, release packaging notes, and SSE/download
+    state regression tests.

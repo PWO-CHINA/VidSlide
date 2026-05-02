@@ -32,7 +32,7 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the resource policy milestone.
+1. Commit and push the mobile layout milestone.
 2. Add more regression tests around download job SSE terminal events and
    duplicate-path batch insertion.
 3. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
@@ -40,7 +40,7 @@ Repeat until the product is materially better:
    intentionally useful.
 4. Review packaging/build notes so sidecar ffmpeg is included in release
    artifacts without being committed to Git.
-5. Continue mobile layout checks and visual polish.
+5. Continue settings drawer visual polish and narrow-screen QA.
 
 ## Latest Verified Loop
 
@@ -57,3 +57,5 @@ Repeat until the product is materially better:
   guide and better export progress status.
 - Soft resource warnings remain visible, but hard blocking now requires extreme
   pressure. A 30-second Yanhe sample batch run completed successfully.
+- Mobile header/resource layout now wraps on narrow screens. Yanhe, batch, and
+  settings drawer browser checks reported no horizontal overflow.
