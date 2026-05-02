@@ -32,13 +32,13 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the release packaging notes milestone.
-2. Add focused settings drawer polish where mobile QA still finds friction.
+1. Commit and push the runtime smoke documentation.
+2. Decide whether the branch is ready for `yanhe-v0.4.2-alpha.1`.
 3. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
    using short local clips for extraction unless a full-course overnight run is
    intentionally useful.
 4. Continue settings drawer visual polish and narrow-screen QA.
-5. Prepare an alpha tag only after one more full browser/API smoke pass.
+5. Keep the dev server on `http://127.0.0.1:5882` unless a port conflict appears.
 
 ## Latest Verified Loop
 
@@ -61,3 +61,5 @@ Repeat until the product is materially better:
   cover terminal events plus the existing-MP4 duplicate-download path.
 - Release packaging notes document the local `bin\ffmpeg.exe` sidecar strategy.
   Runtime resource discovery now checks Nuitka's onefile containing directory.
+- The current server was restarted on port `5882`; course `67968` loaded, a
+  dry-run job completed, and late-terminal SSE closed immediately via `curl`.

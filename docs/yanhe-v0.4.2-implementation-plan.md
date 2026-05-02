@@ -204,6 +204,15 @@ handoff without losing decisions.
   - Runtime resource discovery now checks Nuitka `__compiled__.containing_dir`
     as well as PyInstaller `_MEIPASS`, the app/exe directory, and source checkout.
   - README now has a v0.4.2 Yanhe batch quick flow and links to packaging notes.
+- M8 runtime smoke update:
+  - Restarted the local server on `http://127.0.0.1:5882` after backend changes.
+  - `/api/diagnostics/status` reports bundled ffmpeg at
+    `bin\ffmpeg.exe`, the getvideo development login profile, and F-drive
+    downloads with ample free space.
+  - Course `67968` loads as `生物仪器分析` with `16` recordings.
+  - A single-session dry-run job for `863057` completed with progress `100`.
+  - Late-terminal SSE via `curl` returned only the final init event and closed.
 - Next immediate steps:
-  - Commit and push the release packaging notes milestone.
-  - Continue settings drawer polish and another browser smoke pass.
+  - Commit and push the runtime smoke documentation.
+  - Continue settings drawer polish and decide whether this is ready for an
+    alpha tag.

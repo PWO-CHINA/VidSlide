@@ -186,6 +186,10 @@ Download/SSE regression update:
 - A manager-level mocked download test verifies that an already-existing MP4 is
   added to batch `unselected` once, leaves `queue` and `completed` empty, and
   does not start batch extraction.
+- Runtime smoke after restarting the local server on port `5882` loaded course
+  `67968`, returned `16` recordings for `生物仪器分析`, completed a dry-run job for
+  session `863057`, and confirmed the late terminal SSE endpoint returns the
+  final init event and closes immediately.
 
 ## ffmpeg
 
