@@ -32,14 +32,13 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the mobile layout milestone.
-2. Add more regression tests around download job SSE terminal events and
-   duplicate-path batch insertion.
+1. Commit and push the download/SSE regression milestone.
+2. Review packaging/build notes so sidecar ffmpeg is included in release
+   artifacts without being committed to Git.
 3. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
    using short local clips for extraction unless a full-course overnight run is
    intentionally useful.
-4. Review packaging/build notes so sidecar ffmpeg is included in release
-   artifacts without being committed to Git.
+4. Add focused settings drawer polish where mobile QA still finds friction.
 5. Continue settings drawer visual polish and narrow-screen QA.
 
 ## Latest Verified Loop
@@ -59,3 +58,5 @@ Repeat until the product is materially better:
   pressure. A 30-second Yanhe sample batch run completed successfully.
 - Mobile header/resource layout now wraps on narrow screens. Yanhe, batch, and
   settings drawer browser checks reported no horizontal overflow.
+- Download-job SSE now closes cleanly for late terminal subscribers, and tests
+  cover terminal events plus the existing-MP4 duplicate-download path.

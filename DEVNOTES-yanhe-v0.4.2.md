@@ -175,6 +175,18 @@ Mobile layout update:
   - `vidslide-mobile-yanhe-fixed.png`
   - `vidslide-mobile-batch-fixed.png`
 
+Download/SSE regression update:
+
+- Download job SSE now closes immediately for late subscribers when the job is
+  already in a terminal state (`completed`, `error`, or `cancelled`). The init
+  event still carries the final job snapshot, so a reconnecting UI can render
+  the correct final state without waiting for heartbeats.
+- Regression tests now cover terminal-event delivery, late terminal subscribers,
+  and cleanup of download SSE queues.
+- A manager-level mocked download test verifies that an already-existing MP4 is
+  added to batch `unselected` once, leaves `queue` and `completed` empty, and
+  does not start batch extraction.
+
 ## ffmpeg
 
 Real downloads require ffmpeg. The app now:

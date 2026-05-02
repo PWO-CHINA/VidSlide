@@ -192,7 +192,12 @@ handoff without losing decisions.
     settings drawer do not create horizontal page overflow.
   - This is a layout-only change and does not alter download, batch, extraction,
     or export behavior.
+- M8 download regression update:
+  - Download-job SSE now terminates cleanly when a UI subscribes after a job has
+    already reached `completed`, `error`, or `cancelled`.
+  - Tests cover terminal event delivery, late terminal subscribers, SSE cleanup,
+    and the existing-MP4 path adding exactly one video to batch unselected
+    without auto-starting extraction.
 - Next immediate steps:
-  - Commit and push the mobile layout milestone.
-  - Continue settings drawer polish, release packaging notes, and SSE/download
-    state regression tests.
+  - Commit and push the download/SSE regression milestone.
+  - Continue settings drawer polish and release packaging notes.

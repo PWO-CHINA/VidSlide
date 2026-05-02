@@ -17,6 +17,7 @@ import yanhe_downloader_core as core
 
 
 MAX_EVENT_QUEUE_SIZE = 200
+TERMINAL_JOB_STATUSES = {"completed", "error", "cancelled"}
 
 _jobs_lock = threading.RLock()
 _jobs: dict[str, dict[str, Any]] = {}
@@ -592,12 +593,15 @@ def generate_job_sse(job_id: str):
 
     def gen():
         try:
-            yield f"data: {json.dumps({'type': 'init', 'job': _job_snapshot(job)}, ensure_ascii=False)}\n\n"
+            initial = _job_snapshot(job)
+            yield f"data: {json.dumps({'type': 'init', 'job': initial}, ensure_ascii=False)}\n\n"
+            if initial.get("status") in TERMINAL_JOB_STATUSES:
+                return
             while True:
                 try:
                     event = q.get(timeout=15)
                     yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
-                    if job.get("status") in {"completed", "error", "cancelled"} and q.empty():
+                    if job.get("status") in TERMINAL_JOB_STATUSES and q.empty():
                         break
                 except queue.Empty:
                     yield f"data: {json.dumps({'type': 'heartbeat', 'job_id': job_id}, ensure_ascii=False)}\n\n"
