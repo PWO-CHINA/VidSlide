@@ -225,6 +225,13 @@ PPT animation stability regression update:
 - Regression tests cover API param normalization, batch create/update
   normalization, and recovery of legacy `batch.json` files that still contain
   `speed_mode=turbo`.
+- Built local candidate `dist\VidSlide-yanhe-v0.4.2-alpha.3.exe` with bundled
+  ffmpeg and PyInstaller runtime extraction directed to
+  `F:\VidSlide\pyinstaller-runtime` because C: had reached zero free bytes.
+- Alpha.3 smoke on port `5885` verified diagnostics/root page availability and
+  created a test batch with `speed_mode=turbo` plus `classroom_mode=blackboard`;
+  the API returned `speed_mode=fast` and `classroom_mode=ppt`. The temporary
+  test batch and test process were cleaned up.
 
 ## ffmpeg
 

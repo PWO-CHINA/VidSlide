@@ -82,3 +82,6 @@ Repeat until the product is materially better:
   extractor drift. Current `extractor.py` still matches v0.4.1 except the
   version string; batch extraction now clamps `turbo`/unknown modes to `fast`
   and keeps `classroom_mode=ppt` across API, recovery, worker, and UI paths.
+- Local `alpha.3` candidate was built with bundled ffmpeg and F-drive
+  PyInstaller runtime extraction, then smoke-tested on port `5885` with an
+  intentionally unsafe batch request. It returned `fast` + `ppt` as expected.

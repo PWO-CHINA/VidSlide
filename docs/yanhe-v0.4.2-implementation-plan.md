@@ -269,6 +269,11 @@ handoff without losing decisions.
     worker start, and frontend localStorage/UI boundaries.
   - Regression tests cover API normalization, create/update normalization, and
     recovery of legacy `batch.json` files containing `speed_mode=turbo`.
+  - Built local `dist\VidSlide-yanhe-v0.4.2-alpha.3.exe` with bundled ffmpeg and
+    PyInstaller runtime extraction on F: to avoid the current C: disk pressure.
+  - Alpha.3 smoke on port `5885` created a deliberately unsafe test batch
+    (`turbo` + `blackboard`) and verified the returned params were clamped to
+    `fast` + `ppt`.
 - Next immediate steps:
   - Commit and push the published-exe exists-path smoke documentation.
   - Continue with real-user polish and consider a clean-profile login smoke.
