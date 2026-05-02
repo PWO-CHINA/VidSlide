@@ -32,16 +32,15 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the batch guidance/export feedback milestone.
-2. Review resource-warning policy so high memory is shown clearly without
-   blocking short/manual smoke runs too aggressively.
-3. Add more regression tests around download job SSE terminal events and
+1. Commit and push the resource policy milestone.
+2. Add more regression tests around download job SSE terminal events and
    duplicate-path batch insertion.
-4. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
+3. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
    using short local clips for extraction unless a full-course overnight run is
    intentionally useful.
-5. Review packaging/build notes so sidecar ffmpeg is included in release
+4. Review packaging/build notes so sidecar ffmpeg is included in release
    artifacts without being committed to Git.
+5. Continue mobile layout checks and visual polish.
 
 ## Latest Verified Loop
 
@@ -56,3 +55,5 @@ Repeat until the product is materially better:
   mock the dialogs to avoid unattended hangs.
 - Batch workspace now shows a three-step unselected -> queue -> completed/export
   guide and better export progress status.
+- Soft resource warnings remain visible, but hard blocking now requires extreme
+  pressure. A 30-second Yanhe sample batch run completed successfully.

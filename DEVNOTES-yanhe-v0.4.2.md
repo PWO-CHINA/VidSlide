@@ -147,6 +147,21 @@ Batch workspace guidance update:
 - Browser smoke verified the guide strip, calmer speed labels, zone subtitles,
   and progress-bar styling on the batch page.
 
+Resource policy update:
+
+- `/api/system/status` still reports soft warnings such as high memory. This is
+  useful for user awareness and product diagnostics.
+- Starting sessions/batch work now hard-blocks only on more severe conditions:
+  extreme CPU pressure, extreme memory pressure plus very low available memory,
+  or low disk space.
+- Regression tests cover:
+  - 92% memory with enough available memory does not block.
+  - 98% memory with very low available memory blocks.
+  - Low disk space blocks.
+- Real smoke used `smoke_67968_30s.mp4`, a 30-second clip from the downloaded
+  Yanhe recording. Batch start succeeded and extraction completed in about `1s`
+  with `1` slide saved.
+
 ## ffmpeg
 
 Real downloads require ffmpeg. The app now:

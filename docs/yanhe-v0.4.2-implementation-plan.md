@@ -179,7 +179,11 @@ handoff without losing decisions.
   - Runtime mode labels were toned down to product-facing language: Eco, balanced Fast, and Turbo.
   - Batch export progress bar now has local CSS and stays visible briefly after completion instead of disappearing immediately.
   - Single-video export from the completed detail view now reports packaging progress and errors in the detail status line.
+- M7 resource policy update:
+  - Soft resource warnings remain visible through `/api/system/status`.
+  - Task creation/start hard blockers now trigger only on extreme CPU pressure, extreme memory pressure with very low available memory, or low disk space.
+  - Added regression tests for soft-high-memory non-blocking behavior, extreme memory blocking, and low disk blocking.
+  - Real 30-second Yanhe sample smoke verified batch start is allowed under normal pressure and completed in about 1 second.
 - Next immediate steps:
-  - Commit and push the batch guidance/export feedback milestone.
-  - Review resource-warning policy so high memory is visible without unnecessarily blocking short/manual batch runs.
+  - Commit and push the resource policy milestone.
   - Continue mobile layout checks.

@@ -161,6 +161,9 @@ _sessions = {}
 CPU_WARN_THRESHOLD = 90
 MEMORY_WARN_THRESHOLD = 85
 DISK_WARN_THRESHOLD_MB = 500
+CPU_BLOCK_THRESHOLD = 98
+MEMORY_BLOCK_THRESHOLD = 97
+MEMORY_BLOCK_FREE_MB = 512
 
 # ── 后台 CPU 采样 ──
 _cpu_cache = {'percent': 0.0}
@@ -1742,20 +1745,24 @@ def system_status():
 
 
 def _check_resource_warning():
+    """Return only hard blockers. Softer warnings are surfaced by /api/system/status."""
     if not HAS_PSUTIL:
         return None
     try:
         cpu = _cpu_cache['percent']
         mem = psutil.virtual_memory()
         disk = psutil.disk_usage(BASE_DIR)
-        warnings = []
-        if cpu > CPU_WARN_THRESHOLD:
-            warnings.append(f'CPU 使用率 {cpu:.0f}% 超过 {CPU_WARN_THRESHOLD}%')
-        if mem.percent > MEMORY_WARN_THRESHOLD:
-            warnings.append(f'内存使用率 {mem.percent:.0f}% 超过 {MEMORY_WARN_THRESHOLD}%')
+        blockers = []
+        if cpu > CPU_BLOCK_THRESHOLD:
+            blockers.append(f'CPU 使用率 {cpu:.0f}% 超过 {CPU_BLOCK_THRESHOLD}%')
+        free_mb = getattr(mem, 'available', 0) / (1024 * 1024)
+        if mem.percent > MEMORY_BLOCK_THRESHOLD and free_mb < MEMORY_BLOCK_FREE_MB:
+            blockers.append(
+                f'内存使用率 {mem.percent:.0f}% 超过 {MEMORY_BLOCK_THRESHOLD}% 且可用内存不足 {MEMORY_BLOCK_FREE_MB} MB'
+            )
         if disk.free < DISK_WARN_THRESHOLD_MB * 1024 * 1024:
-            warnings.append(f'磁盘空间仅剩 {disk.free / (1024**3):.1f} GB')
-        return '；'.join(warnings) if warnings else None
+            blockers.append(f'磁盘空间仅剩 {disk.free / (1024**3):.1f} GB')
+        return '；'.join(blockers) if blockers else None
     except Exception:
         return None
 
