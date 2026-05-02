@@ -233,6 +233,22 @@ PPT animation stability regression update:
   the API returned `speed_mode=fast` and `classroom_mode=ppt`. The temporary
   test batch and test process were cleaned up.
 
+Batch detail thumbnail index regression update:
+
+- Fixed completed-video detail preview after image deletion. The root cause was
+  stale thumbnail click handlers capturing the original render index; after
+  deleting an earlier image, the visible thumbnail moved but still opened the
+  old index.
+- Thumbnail open/delete now resolve the current image index from the thumbnail's
+  `data-filename`, and drag-sort synchronization rebuilds `_batchDetailImages`
+  from the current grid order.
+- A follow-up review found the same class of bug during fast consecutive
+  deletes: a removing card can remain in the DOM during its transition. DOM
+  removal now locates the card by `data-filename` instead of `grid.children[idx]`,
+  and disables pointer events on removing cards.
+- Added a frontend regression test to prevent reintroducing the stale
+  `idx`-closure pattern.
+
 ## ffmpeg
 
 Real downloads require ffmpeg. The app now:

@@ -161,10 +161,13 @@ function _renderBatchDetailGrid() {
                 '<span class="bg-black/60 text-white text-xs px-2 py-0.5 rounded-full font-bold backdrop-blur">' + (idx + 1) + '</span>' +
                 '<button class="batch-detail-del-btn" title="删除"><i data-lucide="x" class="w-3 h-3"></i></button>' +
             '</div>';
-        div.querySelector('img').addEventListener('click', () => _openBatchPreview(idx));
+        div.querySelector('img').addEventListener('click', () => {
+            const curIdx = _batchDetailIndexForCard(div);
+            if (curIdx >= 0) _openBatchPreview(curIdx);
+        });
         div.querySelector('.batch-detail-del-btn').addEventListener('click', (e) => {
             e.stopPropagation();
-            const curIdx = Array.from(grid.children).indexOf(div);
+            const curIdx = _batchDetailIndexForCard(div);
             if (curIdx >= 0) _deleteBatchDetailImage(curIdx);
         });
         frag.appendChild(div);
@@ -174,6 +177,33 @@ function _renderBatchDetailGrid() {
     document.getElementById('batchDetailCount').textContent = _batchDetailImages.length + ' 张图片';
     _updateBatchDetailRecycleBtn();
     _initBatchDetailSortable();
+}
+
+function _batchDetailIndexForCard(card) {
+    if (!card) return -1;
+    const filename = card.dataset ? card.dataset.filename : '';
+    if (!filename) return -1;
+    return _batchDetailImages.indexOf(filename);
+}
+
+function _batchDetailCardForFilename(filename) {
+    const grid = document.getElementById('batchDetailGrid');
+    if (!grid || !filename) return null;
+    return Array.from(grid.children).find(card =>
+        card.dataset && card.dataset.filename === filename
+    ) || null;
+}
+
+function _syncBatchDetailImagesFromGrid() {
+    const grid = document.getElementById('batchDetailGrid');
+    if (!grid) return;
+    const known = new Set(_batchDetailImages);
+    const ordered = Array.from(grid.children)
+        .map(card => card.dataset ? card.dataset.filename : '')
+        .filter(filename => filename && known.has(filename));
+    if (ordered.length === _batchDetailImages.length) {
+        _batchDetailImages = ordered;
+    }
 }
 
 function _initBatchDetailSortable() {
@@ -186,9 +216,8 @@ function _initBatchDetailSortable() {
         chosenClass: 'sortable-chosen',
         delay: 120,
         delayOnTouchOnly: true,
-        onEnd(evt) {
-            const [moved] = _batchDetailImages.splice(evt.oldIndex, 1);
-            _batchDetailImages.splice(evt.newIndex, 0, moved);
+        onEnd() {
+            _syncBatchDetailImagesFromGrid();
             _refreshBatchDetailBadges();
         },
     });
@@ -200,7 +229,10 @@ function _refreshBatchDetailBadges() {
     const cards = grid.children;
     for (let i = 0; i < cards.length; i++) {
         const badge = cards[i].querySelector('.batch-detail-thumb-overlay span');
-        if (badge) badge.textContent = i + 1;
+        if (badge) {
+            const imageIndex = _batchDetailIndexForCard(cards[i]);
+            badge.textContent = imageIndex >= 0 ? imageIndex + 1 : '';
+        }
     }
     document.getElementById('batchDetailCount').textContent = _batchDetailImages.length + ' 张图片';
 }
@@ -299,9 +331,9 @@ async function _deleteBatchDetailImage(idx) {
     const task = G.batch.zones.completed.find(t => t.vid === _batchDetailVid);
     if (task) task.savedCount = _batchDetailImages.length;
 
-    const grid = document.getElementById('batchDetailGrid');
-    const card = grid.children[idx];
+    const card = _batchDetailCardForFilename(img);
     if (card) {
+        card.style.pointerEvents = 'none';
         card.classList.add('removing');
         card.addEventListener('transitionend', () => { card.remove(); _refreshBatchDetailBadges(); }, { once: true });
         setTimeout(() => { if (card.parentNode) { card.remove(); _refreshBatchDetailBadges(); } }, 350);
