@@ -32,9 +32,9 @@ Repeat until the product is materially better:
 
 ## Current Priority Queue
 
-1. Commit and push the FFmpeg notice update.
-2. Tag `yanhe-v0.4.2-alpha.2`, rebuild the exe with the matching name, smoke it,
-   and publish it as a prerelease asset if the smoke passes.
+1. Commit and push the alpha.2 prerelease documentation.
+2. Continue with real-user polish and decide whether to test one short real
+   download from the published exe.
 3. Continue real smoke tests with course `https://www.yanhekt.cn/course/67968`,
    using short local clips for extraction unless a full-course overnight run is
    intentionally useful.
@@ -74,3 +74,6 @@ Repeat until the product is materially better:
   SSE smoke on port `5883`.
 - Do not attach the alpha.1 exe to the alpha.1 tag: that tag was created before
   later polish commits. Use alpha.2 for the first published binary asset.
+- Published prerelease:
+  `https://github.com/PWO-CHINA/VidSlide/releases/tag/yanhe-v0.4.2-alpha.2`
+  with the exe and `THIRD_PARTY_NOTICES.md` attached.

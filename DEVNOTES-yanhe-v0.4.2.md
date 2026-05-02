@@ -38,6 +38,10 @@ Branch management:
 
 - Draft PR: `https://github.com/PWO-CHINA/VidSlide/pull/1`
 - Alpha tag: `yanhe-v0.4.2-alpha.1`
+- Published prerelease: `https://github.com/PWO-CHINA/VidSlide/releases/tag/yanhe-v0.4.2-alpha.2`
+- Published prerelease assets:
+  - `VidSlide-yanhe-v0.4.2-alpha.2.exe` (`173,349,849` bytes)
+  - `THIRD_PARTY_NOTICES.md`
 - The PR is a branch management and review anchor only. Do not merge this branch
   into `main` until the branch owner explicitly decides to do so.
 
@@ -247,6 +251,9 @@ Packaging compatibility update:
   - Late terminal SSE returns the final init snapshot and closes.
 - The generated `build/`, `dist/`, and `.spec` files remain ignored and were not
   committed.
+- `yanhe-v0.4.2-alpha.2` was tagged after the FFmpeg notice update and published
+  as a GitHub prerelease. The uploaded exe asset SHA-256 reported by GitHub is
+  `dd21d1dff84522c1fcacbcf4a687e795855f42fb9f5f928671f9f920b92b0103`.
 
 ## Verification
 

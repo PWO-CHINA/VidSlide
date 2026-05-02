@@ -238,7 +238,16 @@ handoff without losing decisions.
   - Since `yanhe-v0.4.2-alpha.1` was tagged before post-alpha polish, publish the
     next binary from a new `yanhe-v0.4.2-alpha.2` tag instead of attaching the
     current exe to alpha.1.
+- Alpha 2 prerelease:
+  - Pushed tag `yanhe-v0.4.2-alpha.2`.
+  - Built and smoke-tested `dist\VidSlide-yanhe-v0.4.2-alpha.2.exe`.
+  - Published prerelease:
+    `https://github.com/PWO-CHINA/VidSlide/releases/tag/yanhe-v0.4.2-alpha.2`
+  - Uploaded assets:
+    `VidSlide-yanhe-v0.4.2-alpha.2.exe` and `THIRD_PARTY_NOTICES.md`.
+  - GitHub asset digest for the exe:
+    `sha256:dd21d1dff84522c1fcacbcf4a687e795855f42fb9f5f928671f9f920b92b0103`.
 - Next immediate steps:
-  - Commit and push the notice update.
-  - Tag `yanhe-v0.4.2-alpha.2`, rebuild the exe with the matching name, smoke it,
-    and publish it as a prerelease asset if the smoke passes.
+  - Commit and push the prerelease documentation.
+  - Continue with real-user polish and decide whether to test one short real
+    download from the published exe.
